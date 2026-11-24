@@ -1,6 +1,7 @@
 import { IEnvironment } from './ienvironment';
 import * as dotenv from 'dotenv';
 import * as path from 'node:path';
+import { apiTokenSettingError, readApiTokenSetting } from '../common/api-token';
 
 // __dirname is available in CommonJS by default
 
@@ -33,8 +34,15 @@ function validateProductionEnvironment(): void {
 		errors.push('API_BASE_URL or GAUZY_API_BASE_URL is required');
 	}
 
+	// A personal API token signs the server in by itself: an email and a password are not needed with it
+	const apiToken = readApiTokenSetting();
+	const apiTokenError = apiTokenSettingError(apiToken);
+	if (apiTokenError) {
+		errors.push(apiTokenError);
+	}
+
 	// Check for authentication credentials
-	if (process.env.GAUZY_AUTO_LOGIN === 'true') {
+	if (process.env.GAUZY_AUTO_LOGIN === 'true' && !apiToken) {
 		if (!process.env.GAUZY_AUTH_EMAIL) {
 			errors.push('GAUZY_AUTH_EMAIL is required when GAUZY_AUTO_LOGIN is enabled');
 		}
@@ -69,6 +77,10 @@ function getTimeout(): number {
 	return timeout;
 }
 
+// The token signs in at start, as the GAUZY_AUTO_LOGIN account does, and comes before an email and a password
+const apiToken = readApiTokenSetting();
+const signsInWithApiToken = apiToken !== '';
+
 export const environment: IEnvironment = {
 	production: true,
 	envName: 'production',
@@ -81,6 +93,7 @@ export const environment: IEnvironment = {
 	auth: {
 		email: process.env.GAUZY_AUTH_EMAIL || '',
 		password: process.env.GAUZY_AUTH_PASSWORD || '',
-		autoLogin: process.env.GAUZY_AUTO_LOGIN === 'true'
+		apiToken,
+		autoLogin: process.env.GAUZY_AUTO_LOGIN === 'true' || signsInWithApiToken
 	}
 };

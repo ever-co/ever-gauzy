@@ -26,12 +26,102 @@ export const TaskTypeEnum = z.enum(['BUG', 'FEATURE', 'STORY', 'TASK', 'EPIC']);
 export const PayPeriodEnum = z.enum(['NONE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']);
 export const CurrenciesEnum = z.enum(['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY']);
 export const DailyPlanStatusEnum = z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED']);
+
+// ===== FILTER VALUES =====
+// The task and daily plan enums above name the API's values by key, and the API stores `in-progress` or `urgent`:
+// a filter sent as the key matches no row. A filter takes the key or the stored value, and is sent as the value.
+
+export const TASK_STATUS_VALUES: Record<string, string> = {
+	OPEN: 'open',
+	IN_PROGRESS: 'in-progress',
+	READY_FOR_REVIEW: 'ready-for-review',
+	IN_REVIEW: 'in-review',
+	BLOCKED: 'blocked',
+	COMPLETED: 'completed'
+};
+// The API has no lowest or highest priority: they are its low and urgent ones.
+export const TASK_PRIORITY_VALUES: Record<string, string> = {
+	LOWEST: 'low',
+	LOW: 'low',
+	MEDIUM: 'medium',
+	HIGH: 'high',
+	HIGHEST: 'urgent'
+};
+export const TASK_SIZE_VALUES: Record<string, string> = {
+	X_SMALL: 'tiny',
+	SMALL: 'small',
+	MEDIUM: 'medium',
+	LARGE: 'large',
+	X_LARGE: 'x-large'
+};
+export const TASK_TYPE_VALUES: Record<string, string> = {
+	BUG: 'bug',
+	FEATURE: 'feature',
+	STORY: 'story',
+	TASK: 'task',
+	EPIC: 'epic'
+};
+export const DAILY_PLAN_STATUS_VALUES: Record<string, string> = {
+	OPEN: 'open',
+	IN_PROGRESS: 'in-progress',
+	COMPLETED: 'completed'
+};
+
+/** A filter on an enum named by key: the key, the value the API stores for it, or another value the API stores. */
+const filterEnum = (values: Record<string, string>, otherValues: string[] = []) =>
+	z.enum([...new Set([...Object.keys(values), ...Object.values(values), ...otherValues])] as [string, ...string[]]);
+
+// The payment schemas name statuses and methods the API does not store: each is sent as the stored one it means.
+// No payment is stored with the OTHER method.
+export const PAYMENT_STATUS_VALUES: Record<string, string> = {
+	PENDING: 'AUTHORIZED',
+	PROCESSING: 'PARTIALLY_CAPTURED',
+	COMPLETED: 'CAPTURED',
+	FAILED: 'FAILED',
+	CANCELLED: 'CANCELED',
+	REFUNDED: 'REFUNDED'
+};
+export const PAYMENT_METHOD_VALUES: Record<string, string> = {
+	CREDIT_CARD: 'CREDIT_CARD',
+	DEBIT_CARD: 'DEBIT',
+	BANK_TRANSFER: 'BANK_TRANSFER',
+	PAYPAL: 'ONLINE',
+	STRIPE: 'ONLINE',
+	CASH: 'CASH',
+	CHECK: 'CHEQUE',
+	OTHER: 'OTHER'
+};
+// The invoice statuses include ones the API does not store: a cancelled invoice is stored as VOID. No invoice is stored
+// as ACTIVE.
+export const INVOICE_STATUS_VALUES: Record<string, string> = {
+	CANCELLED: 'VOID'
+};
+
+export const TaskStatusFilter = filterEnum(TASK_STATUS_VALUES, ['backlog', 'done']);
+export const TaskPriorityFilter = filterEnum(TASK_PRIORITY_VALUES);
+export const TaskSizeFilter = filterEnum(TASK_SIZE_VALUES);
+export const TaskTypeFilter = filterEnum(TASK_TYPE_VALUES, ['memo']);
+export const DailyPlanStatusFilter = filterEnum(DAILY_PLAN_STATUS_VALUES);
+export const PaymentStatusFilter = filterEnum(PAYMENT_STATUS_VALUES, ['PARTIALLY_REFUNDED']);
+export const PaymentMethodFilter = filterEnum(PAYMENT_METHOD_VALUES);
 export const ContactTypeEnum = z.enum(['CLIENT', 'CUSTOMER', 'LEAD']);
 export const BonusTypeEnum = z.enum(['PROFIT_BASED_BONUS', 'REVENUE_BASED_BONUS']);
 export const DefaultValueDateTypeEnum = z.enum(['TODAY', 'END_OF_MONTH', 'START_OF_MONTH']);
 export const WeekDaysEnum = z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
 export const ProductTypeEnum = z.enum(['DIGITAL', 'PHYSICAL', 'SERVICE']);
-export const InvoiceStatusEnum = z.enum(['DRAFT', 'SENT', 'VIEWED', 'ACCEPTED', 'ACTIVE', 'FULLY_PAID', 'CANCELLED']);
+export const InvoiceStatusEnum = z.enum([
+	'DRAFT',
+	'SENT',
+	'VIEWED',
+	'ACCEPTED',
+	'ACTIVE',
+	'FULLY_PAID',
+	'CANCELLED',
+	'PARTIALLY_PAID',
+	'OVERPAID',
+	'VOID',
+	'REJECTED'
+]);
 export const InvoiceTypeEnum = z.enum([
 	'BY_EMPLOYEE_HOURS',
 	'BY_PROJECT_HOURS',
@@ -78,7 +168,10 @@ export const PaymentMethodEnum = z.enum([
 	'STRIPE',
 	'CASH',
 	'CHECK',
-	'OTHER'
+	'OTHER',
+	'CHEQUE',
+	'DEBIT',
+	'ONLINE'
 ]);
 export const EquipmentTypeEnum = z.enum([
 	'LAPTOP',

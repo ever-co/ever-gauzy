@@ -5,6 +5,12 @@ import { ITimeLog, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * Breaks (#11920) on the timer paths that the other timer specs do not reach: a break never cuts other entries
  * when it stops, and the worked status never reports a break's time as worked.
@@ -32,6 +38,7 @@ describe('TimerService and breaks', () => {
 		const handleConflictingTimeLogs = jest.fn(async () => undefined);
 		Object.assign(service, {
 			logger: { warn: jest.fn(), debug: jest.fn(), log: jest.fn() },
+			typeOrmTimeLogRepository: {},
 			findEmployee: jest.fn(async () => ({ id: 'employee-1', organizationId: 'organization-1' })),
 			getLastRunningLog: jest.fn(async () => log),
 			// What the stop reads besides the run: the runs going, the logs it overlaps, then the tracking status it writes

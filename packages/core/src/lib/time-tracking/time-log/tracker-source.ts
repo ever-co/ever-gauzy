@@ -6,7 +6,7 @@ import { TimeLogSourceEnum } from '@gauzy/contracts';
  * would keep the tracked time on the machine for good. They also send time slots while they run, so the time slots of
  * their runs say when work on them stopped (see `TimerService.stopPreviousRunningTimers`).
  */
-const TRACKER_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.DESKTOP];
+export const TRACKER_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.DESKTOP];
 
 /**
  * Whether a timer start or a time upload comes from a tracker whose time is never refused, or a run from one.
@@ -15,6 +15,21 @@ const TRACKER_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.DESKTOP];
  */
 export function isTrackerSource(source: string | null | undefined): boolean {
 	return TRACKER_SOURCES.includes(source);
+}
+
+/**
+ * The clients that post no time slot while a run goes: the Gauzy web timer and the timers embedded in other products
+ * (the Ever Teams kit). A stop gives their runs the time slots of their range, so the day's worked time counts them.
+ */
+const RANGE_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.WEB_TIMER, TimeLogSourceEnum.EMBED];
+
+/**
+ * Whether a stop always gives a run of this source the time slots of its range (web timer, embedded timer).
+ *
+ * @param source The run's source.
+ */
+export function takesRangeSlotsOnStop(source: string | null | undefined): boolean {
+	return RANGE_SLOT_SOURCES.includes(source);
 }
 
 /**

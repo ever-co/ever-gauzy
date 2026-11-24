@@ -3,7 +3,13 @@
 		<h5 class="title">
 			{{ 'INVOICES_PAGE.INTERNAL_NOTE.ADD_INTERNAL_NOTE' | translate }}
 		</h5>
-		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="cancel()">
+		<button
+			type="button"
+			class="cancel"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			[disabled]="saving"
+			(click)="cancel()"
+		>
 			<i class="fas fa-times" aria-hidden="true"></i>
 		</button>
 	</nb-card-header>
@@ -23,11 +29,11 @@
 		}
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button nbButton ghost status="basic" size="small" (click)="cancel()">
+		<button nbButton ghost status="basic" size="small" [disabled]="saving" (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		@if (form) {
-		<button (click)="addNote()" status="success" nbButton size="small">
+		<button (click)="addNote()" status="success" [disabled]="saving" nbButton size="small">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 		}

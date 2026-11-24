@@ -26,6 +26,25 @@ export function sessionIdForLog(sessionId: string | null | undefined): string {
 }
 
 /**
+ * The reason the API gave for refusing a request, from the answer the HTTP client keeps on its error: the validation
+ * sends a list, a guard one sentence. None for an answer without one (a proxy's page, a bare status).
+ */
+function apiReasonOf(error: unknown): string | undefined {
+	const data = (error as { response?: { data?: unknown } } | undefined)?.response?.data;
+	if (typeof data !== 'object' || data === null) {
+		return undefined;
+	}
+	const message = (data as { message?: unknown }).message;
+	if (Array.isArray(message)) {
+		return message.map(String).join('; ');
+	}
+	if (typeof message === 'string' && message.length > 0) {
+		return message;
+	}
+	return undefined;
+}
+
+/**
  * Sanitize an error message for safe logging/display
  * Removes sensitive information and normalizes error format
  */
@@ -39,6 +58,10 @@ export function sanitizeErrorMessage(error: unknown): string {
 	}
 
 	if (error instanceof Error) {
+		const reason = apiReasonOf(error);
+		if (reason) {
+			return sanitizeString(`${error.message}: ${reason}`);
+		}
 		return sanitizeString(error.message);
 	}
 
@@ -83,7 +106,8 @@ export function sanitizeForLogging(data: unknown): string {
 		return JSON.stringify({
 			name: data.name,
 			message: sanitizeString(data.message),
-			stack: data.stack?.split('\n').slice(0, 5).join('\n')
+			// The stack opens with the message: it is sanitized the same way
+			stack: sanitizeStack(data.stack)
 		});
 	}
 
@@ -101,6 +125,17 @@ export function sanitizeForLogging(data: unknown): string {
 }
 
 /**
+ * The first lines of a stack, sanitized
+ */
+function sanitizeStack(stack: string | undefined): string | undefined {
+	if (!stack) {
+		return stack;
+	}
+	const firstLines = stack.split('\n').slice(0, 5).join('\n');
+	return sanitizeString(firstLines);
+}
+
+/**
  * Sanitize a string by removing potentially sensitive patterns
  */
 function sanitizeString(str: string): string {
@@ -110,6 +145,9 @@ function sanitizeString(str: string): string {
 
 	// Remove potential JWT tokens
 	result = result.replace(/eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g, '[JWT_TOKEN]');
+
+	// Remove personal API tokens (GAUZY_API_TOKEN), whole or cut short
+	result = result.replace(/gzp_[A-Za-z0-9_-]+/g, '[API_TOKEN]');
 
 	// Remove potential passwords in URLs
 	result = result.replace(/:\/\/[^:]+:[^@]+@/g, '://[CREDENTIALS]@');

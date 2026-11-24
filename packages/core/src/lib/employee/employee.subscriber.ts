@@ -15,6 +15,8 @@ import {
 	readOrganizationScreenshotCapture,
 	screenshotCaptureFromOrganization
 } from './employee-screenshot-capture-default';
+import { keepsTrackingAtWrite } from './tracking-kept-at-write';
+import { setEmployeeFullName } from './employee-full-name';
 
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
@@ -257,8 +259,16 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				: entity.allowScreenshotCapture !== undefined && entity.allowScreenshotCapture !== null;
 			const requestedScreenshotCapture = statesScreenshotCapture ? entity.allowScreenshotCapture : undefined;
 
-			// Updates the employee's status based on the start and end work dates.
-			await this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
+			// Updates the employee's status based on the start and end work dates. A caller who may not turn this
+			// employee's tracking on or off never moves it through the dates: the write leaves the switch out, and the
+			// row keeps the value it holds when written, even one an admin set after the request read it.
+			await this.updateEmployeeStatus(
+				entity,
+				em,
+				hasStartedWork || hasResumedWork,
+				hasEndedWork,
+				keepsTrackingAtWrite(entity.id)
+			);
 
 			// Issue #9872: starting or resuming work turns screen capture on only where the organization allows it,
 			// and never against an "off" the same write states.
@@ -435,6 +445,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * @param {MultiOrmEntityManager} em - The entity manager used to interact with the database.
 	 * @param {boolean} hasStartedWork - True when the write sets a start work date.
 	 * @param {boolean} hasEndedWork - True when the write sets an end work date.
+	 * @param {boolean} keepsTracking - True when the write leaves the tracking switch as the row holds it.
 	 * @returns {Promise<void>} Resolves once the membership update has run, so it runs inside the write's
 	 *   transaction rather than after the entity manager has committed or released it.
 	 */
@@ -442,11 +453,12 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		entity: Employee,
 		em: MultiOrmEntityManager,
 		hasStartedWork: boolean,
-		hasEndedWork: boolean
+		hasEndedWork: boolean,
+		keepsTracking = false
 	): Promise<void> {
 		// Update the employee's status based on the work dates
 		if (hasStartedWork || hasEndedWork) {
-			this.setEmployeeStatus(entity, hasStartedWork, hasEndedWork);
+			this.setEmployeeStatus(entity, hasStartedWork, hasEndedWork, keepsTracking);
 			await this.setUserOrganizationStatus(em, entity, hasStartedWork, hasEndedWork);
 
 			if (hasStartedWork) {
@@ -461,9 +473,12 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * @param {Employee} entity - The employee entity.
 	 * @param {boolean} isActive - True if the employee is active; false otherwise.
 	 * @param {boolean} isArchived - True if the employee is archived; false otherwise.
+	 * @param {boolean} keepsTracking - True to leave the tracking switch out of the write.
 	 */
-	private setEmployeeStatus(entity: Employee, isActive: boolean, isArchived: boolean): void {
-		entity.isTrackingEnabled = isActive;
+	private setEmployeeStatus(entity: Employee, isActive: boolean, isArchived: boolean, keepsTracking = false): void {
+		if (!keepsTracking) {
+			entity.isTrackingEnabled = isActive;
+		}
 		entity.allowScreenshotCapture = isActive;
 		entity.isActive = isActive;
 		entity.isArchived = isArchived;
@@ -476,9 +491,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * @returns {Promise<void>} - Returns a promise indicating the completion of the operation.
 	 */
 	private async setFullName(entity: Employee): Promise<void> {
-		if (entity?.user?.name) {
-			entity.fullName = entity.user.name;
-		}
+		setEmployeeFullName(entity);
 	}
 
 	/**

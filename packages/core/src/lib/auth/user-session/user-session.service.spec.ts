@@ -11,7 +11,7 @@ jest.mock('../login-attempt.service', () => ({
 
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
+import { DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME, environment } from '@gauzy/config';
 import { RequestContext } from '../../core/context/request-context';
 import { TokenStatus } from '../../token/interfaces/token.interface';
 import { USER_SESSION_SIGNED_OUT_REASON } from './user-session-revocation';
@@ -465,7 +465,8 @@ describe('UserSessionService.signOut', () => {
 		expect(events.filter((event) => event.startsWith('mark'))).toEqual(['mark laptop']);
 		const [userId, sessionId, expiresAt, reason] = services.accessTokenService.markSessionSignedOut.mock.calls[0];
 		expect([userId, sessionId, reason]).toEqual([MARIE, 'laptop', USER_SESSION_SIGNED_OUT_REASON]);
-		const refreshLifetimeMs = (Number(environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 30 * 24 * 60 * 60) * 1000;
+		const refreshLifetimeMs =
+			(Number(environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME) * 1000;
 		expect((expiresAt as Date).getTime()).toBeGreaterThanOrEqual(before + refreshLifetimeMs);
 	});
 

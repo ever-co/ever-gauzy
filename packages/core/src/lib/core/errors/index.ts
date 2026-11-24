@@ -5,4 +5,5 @@ export * from './api-exception.filter';
 export * from './database-error';
 export * from './database-error.filter';
 export * from './database-unavailable';
+export * from './foreign-key-violation';
 export * from './unique-violation';

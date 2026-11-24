@@ -182,11 +182,13 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 	};
 
 	const OPERATOR_ROUTES: Array<[string, string, unknown]> = [
+		['get', '/api/ever-connect/probe', undefined],
 		['post', '/api/ever-connect/connect', { code: 'EVC-AAAA-BBBB-CCCC' }],
 		['post', '/api/ever-connect/disconnect', { confirm: true }],
 		['get', '/api/ever-connect/policy', undefined],
 		['put', '/api/ever-connect/policy/stats_link', { allowed: false }],
 		['put', '/api/ever-connect/public-url', { url: 'https://gauzy.acme.example' }],
+		['delete', '/api/ever-connect/public-url', undefined],
 		['post', '/api/ever-connect/integrations/stats_link/accept', { accepted: true }],
 		['post', '/api/ever-connect/entitlement/import', { jws: 'a.b.c' }]
 	];
@@ -233,7 +235,15 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 			{ EVER_INSTALL_SOURCE: 'cloud', EVER_OPERATOR_USER_IDS: 'x' },
 			'operator'
 		],
-		['an employee', { EVER_OPERATOR_USER_IDS: 'x' }, 'employee']
+		['an employee', { EVER_OPERATOR_USER_IDS: 'x' }, 'employee'],
+		[
+			'a super admin the operator list of Ever Cloud does not name',
+			{
+				EVER_INSTALL_SOURCE: 'cloud',
+				EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: '00000000-0000-4000-8000-000000000000'
+			},
+			'operator'
+		]
 	])('operator routes answer 404 to %s', async (_name, env: Record<string, string | undefined>, user) => {
 		const listed: Record<string, string | undefined> =
 			env['EVER_OPERATOR_USER_IDS'] === 'x' ? { ...env, EVER_OPERATOR_USER_IDS: acme.superAdminId } : env;
@@ -244,9 +254,37 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 		expect(calls).toEqual([]);
 	});
 
+	it('Ever Cloud: a super admin listed in EVER_CONNECT_CLOUD_OPERATOR_USER_IDS operates the connection; nobody else', async () => {
+		app = await start({
+			EVER_INSTALL_SOURCE: 'cloud',
+			EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: acme.superAdminId,
+			JWT_SECRET: 'request-test-secret'
+		});
+		expect((await call('get', '/api/ever-connect/policy', 'operator')).status).toBe(200);
+		const check = await call('post', '/api/ever-connect/connection/check', 'operator', {});
+		expect([check.status, check.body]).toEqual([200, { status: 'disconnected' }]);
+		const status = await call('get', '/api/ever-connect/status', 'operator');
+		expect(status.body).toMatchObject({ managed_by: 'ever_cloud', operator: true });
+		expect(status.body.installation_links).toEqual({ total: 0, items: [] });
+		expect((await call('get', '/api/ever-connect/probe', 'operator')).body).toMatchObject({
+			loaded: true,
+			managed_by: 'ever_cloud'
+		});
+		expect((await call('get', '/api/ever-connect/probe', 'stranger')).status).toBe(404);
+		expect((await call('get', '/api/ever-connect/policy', 'stranger')).status).toBe(404);
+		expect((await call('get', '/api/ever-connect/policy', 'employee')).status).toBe(404);
+		expect(calls).toEqual([]);
+	});
+
 	it('the operator reaches the operator routes (connect is refused before any call without a strong secret)', async () => {
 		app = await start({ EVER_OPERATOR_USER_IDS: acme.superAdminId, JWT_SECRET: 'secretKey' });
 		expect((await call('get', '/api/ever-connect/policy', 'operator')).status).toBe(200);
+		// The web app's menu probe: the operator only, no id, nothing sent.
+		const probe = await call('get', '/api/ever-connect/probe', 'operator');
+		expect([probe.status, probe.body]).toEqual([
+			200,
+			{ loaded: true, managed_by: 'operator', status: 'disconnected', connected: false }
+		]);
 		const noSecret = await call('post', '/api/ever-connect/connect', 'operator', { code: 'EVC-AAAA-BBBB-CCCC' });
 		expect(noSecret.status).toBe(422);
 		expect(noSecret.body.code).toBe('key_material_missing');

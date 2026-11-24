@@ -4,9 +4,29 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { TaskStatusEnum, TaskPriorityEnum, TaskSizeEnum, TaskTypeEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
+import {
+	TASK_PRIORITY_VALUES,
+	TASK_SIZE_VALUES,
+	TASK_STATUS_VALUES,
+	TASK_TYPE_VALUES,
+	TaskPriorityFilter,
+	TaskSizeFilter,
+	TaskStatusFilter,
+	TaskTypeFilter
+} from '../input-schemas';
 import { registerTool } from './tool-helper';
-import { applyInTurn, buildListQuery, countByGroup, isWithinDates, readAllPages } from './utils';
+import { TOOL_HINTS } from './tool-hints';
+import {
+	applyInTurn,
+	buildListQuery,
+	countByGroup,
+	isWithinDates,
+	ListQueryOptions,
+	pageOf,
+	readAllPages,
+	toApiValue
+} from './utils';
 
 const logger = new Logger('TaskTools');
 
@@ -29,6 +49,29 @@ const convertDateFields = (data: TaskDateFields) => ({
 			: new Date(data.startDate)
 		: undefined
 });
+
+/** The task fields the tool schemas name by key, with the values the API stores for those keys. */
+const TASK_FIELD_VALUES: Record<string, Record<string, string>> = {
+	status: TASK_STATUS_VALUES,
+	priority: TASK_PRIORITY_VALUES,
+	size: TASK_SIZE_VALUES,
+	issueType: TASK_TYPE_VALUES
+};
+
+/**
+ * A task to write, with a status, priority, size or type given by its key (`OPEN`, `HIGH`) turned into the value the
+ * API stores (`open`, `high`), as the list filters send it. Any other value, a custom status included, is kept.
+ */
+const withStoredTaskValues = <T extends Record<string, unknown>>(data: T): T => {
+	const stored: Record<string, unknown> = { ...data };
+	for (const [field, values] of Object.entries(TASK_FIELD_VALUES)) {
+		const value = stored[field];
+		if (typeof value === 'string') {
+			stored[field] = toApiValue(values, value);
+		}
+	}
+	return stored as T;
+};
 
 type TaskWithMembers = { title: string; status: string; members?: { id: string }[] };
 
@@ -63,6 +106,26 @@ const withRequiredTaskFields = async (id: string, data: Record<string, unknown>)
 	return { ...data, title: data.title ?? task.title, status: data.status ?? task.status };
 };
 
+/**
+ * The route and query of a task list. `/api/tasks` matches a title only exactly: a search reads the pagination
+ * route, which matches part of the title and reads `skip` as a page number.
+ */
+const taskListQuery = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	search: string | undefined,
+	options: ListQueryOptions
+) => {
+	if (!search) {
+		return { path: '/api/tasks', params: buildListQuery(defaultParams, where, options) };
+	}
+
+	return {
+		path: '/api/tasks/pagination',
+		params: buildListQuery(defaultParams, { ...where, title: search }, { ...options, skipIsPage: true })
+	};
+};
+
 export const registerTaskTools = (server: McpServer) => {
 	// Get tasks tool
 	registerTool(
@@ -72,13 +135,15 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
-			priority: TaskPriorityEnum.optional().describe('Filter by task priority'),
-			size: TaskSizeEnum.optional().describe('Filter by task size'),
-			issueType: TaskTypeEnum.optional().describe('Filter by task issue type'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
+			priority: TaskPriorityFilter.optional().describe(
+				'Filter by task priority (HIGHEST matches urgent, LOWEST matches low)'
+			),
+			size: TaskSizeFilter.optional().describe('Filter by task size'),
+			issueType: TaskTypeFilter.optional().describe('Filter by task issue type'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			search: z.string().optional().describe('Search term for task title or description'),
+			search: z.string().optional().describe('Search term for the task title (partial match)'),
 			relations: z
 				.array(z.string())
 				.optional()
@@ -118,22 +183,18 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(projectId && { projectId }),
-					...(employeeId && { employeeId }),
-					...(status && { status }),
-					...(priority && { priority }),
-					...(size && { size }),
-					...(issueType && { issueType }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations })
+				// A task has no `employeeId`: it is matched on the employees it is assigned to
+				const where = {
+					projectId,
+					status: toApiValue(TASK_STATUS_VALUES, status),
+					priority: toApiValue(TASK_PRIORITY_VALUES, priority),
+					size: toApiValue(TASK_SIZE_VALUES, size),
+					issueType: toApiValue(TASK_TYPE_VALUES, issueType),
+					...(employeeId && { members: { id: employeeId } })
 				};
+				const { path, params } = taskListQuery(defaultParams, where, search, { page, limit, relations });
 
-				const response = await apiClient.get('/api/tasks', { params });
+				const response = await apiClient.get(path, { params });
 
 				return {
 					content: [
@@ -144,11 +205,12 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching tasks:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				logger.error('Error fetching tasks:', sanitizeForLogging(error));
+				const message = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks: ${message}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get task count tool
@@ -158,8 +220,9 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status')
+			status: TaskStatusFilter.optional().describe('Filter by task status')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ projectId, employeeId, status }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -176,7 +239,7 @@ export const registerTaskTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					...(projectId && { projectId }),
 					...(employeeId && { employeeId }),
-					...(status && { status })
+					...(status && { status: toApiValue(TASK_STATUS_VALUES, status) })
 				};
 
 				const response = await apiClient.get('/api/tasks/count', { params });
@@ -190,8 +253,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching task count:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error fetching task count:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task count: ${errorMsg}`);
 			}
 		}
@@ -204,11 +267,12 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ projectId, employeeId, status, page = 1, limit = 10, relations }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -220,16 +284,13 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(projectId && { projectId }),
-					...(employeeId && { employeeId }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
+				// A task has no `employeeId`: it is matched on the employees it is assigned to
+				const where = {
+					projectId,
+					status: toApiValue(TASK_STATUS_VALUES, status),
+					...(employeeId && { members: { id: employeeId } })
 				};
+				const params = buildListQuery(defaultParams, where, { page, limit, relations, skipIsPage: true });
 
 				const response = await apiClient.get('/api/tasks/pagination', { params });
 
@@ -242,8 +303,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching tasks pagination:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error fetching tasks pagination:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks pagination: ${errorMsg}`);
 			}
 		}
@@ -255,11 +316,14 @@ export const registerTaskTools = (server: McpServer) => {
 		'Get tasks assigned to a specific employee',
 		{
 			employeeId: z.string().uuid().describe('The employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
-			priority: TaskPriorityEnum.optional().describe('Filter by task priority'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
+			priority: TaskPriorityFilter.optional().describe(
+				'Filter by task priority (HIGHEST matches urgent, LOWEST matches low)'
+			),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ employeeId, status, priority, page = 1, limit = 10 }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -271,16 +335,14 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					...(priority && { priority }),
-					page,
-					limit
+				const where = {
+					status: toApiValue(TASK_STATUS_VALUES, status),
+					priority: toApiValue(TASK_PRIORITY_VALUES, priority)
 				};
-
-				const response = await apiClient.get(`/api/tasks/employee/${employeeId}`, { params });
+				// The route answers every task of the employee, whatever page is asked: the page is cut here
+				const params = { where: buildListQuery(defaultParams, where).where };
+				const tasks = await apiClient.get<unknown[]>(`/api/tasks/employee/${employeeId}`, { params });
+				const response = pageOf(tasks, page, limit);
 
 				return {
 					content: [
@@ -291,8 +353,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching tasks by employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error fetching tasks by employee:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks by employee: ${errorMsg}`);
 			}
 		}
@@ -303,11 +365,14 @@ export const registerTaskTools = (server: McpServer) => {
 		'get_my_tasks',
 		'Get tasks assigned to the current authenticated user',
 		{
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
-			priority: TaskPriorityEnum.optional().describe('Filter by task priority'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
+			priority: TaskPriorityFilter.optional().describe(
+				'Filter by task priority (HIGHEST matches urgent, LOWEST matches low)'
+			),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ status, priority, page = 1, limit = 10 }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -320,12 +385,13 @@ export const registerTaskTools = (server: McpServer) => {
 				}
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					...(priority && { priority }),
-					page,
-					limit
+					...buildListQuery(
+						defaultParams,
+						{ status: toApiValue(TASK_STATUS_VALUES, status) },
+						{ page, limit, skipIsPage: true }
+					),
+					// The route reads no priority in `where`: its advanced filters carry it
+					...(priority && { filters: { priorities: [toApiValue(TASK_PRIORITY_VALUES, priority)] } })
 				};
 
 				const response = await apiClient.get('/api/tasks/me', { params });
@@ -339,8 +405,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error fetching my tasks:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch my tasks: ${errorMsg}`);
 			}
 		}
@@ -352,10 +418,11 @@ export const registerTaskTools = (server: McpServer) => {
 		'Get tasks assigned to a specific team',
 		{
 			teamId: z.string().uuid().describe('The team ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ teamId, status, page = 1, limit = 10 }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -369,7 +436,7 @@ export const registerTaskTools = (server: McpServer) => {
 
 				const params = buildListQuery(
 					defaultParams,
-					{ teams: [teamId], status },
+					{ teams: [teamId], status: toApiValue(TASK_STATUS_VALUES, status) },
 					{ page, limit, skipIsPage: true }
 				);
 
@@ -384,8 +451,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching team tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error fetching team tasks:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch team tasks: ${errorMsg}`);
 			}
 		}
@@ -396,9 +463,12 @@ export const registerTaskTools = (server: McpServer) => {
 		'create_task',
 		"Create a new task in the authenticated user's organization",
 		{
-			task_data: z.object({ title: z.string().describe('The title (required)') }).passthrough()
+			task_data: z
+				.object({ title: z.string().describe('The title (required)') })
+				.passthrough()
 				.describe('The data for creating the task')
 		},
+		TOOL_HINTS.write,
 		async ({ task_data }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -410,11 +480,13 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const createData = convertDateFields({
-					...task_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertDateFields(
+					withStoredTaskValues({
+						...task_data,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/tasks', createData);
 
@@ -427,8 +499,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error creating task:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to create task: ${errorMsg}`);
 			}
 		}
@@ -445,6 +517,7 @@ export const registerTaskTools = (server: McpServer) => {
 				.optional()
 				.describe('Relations to include (e.g., ["members", "tags", "project"])')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ id, relations }) => {
 			try {
 				const params = {
@@ -462,8 +535,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error fetching task:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task: ${errorMsg}`);
 			}
 		}
@@ -477,9 +550,10 @@ export const registerTaskTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The task ID'),
 			task_data: z.record(z.string(), z.any()).describe('The data for updating the task')
 		},
+		TOOL_HINTS.destructive,
 		async ({ id, task_data }) => {
 			try {
-				const updateData = convertDateFields(task_data);
+				const updateData = convertDateFields(withStoredTaskValues(task_data));
 
 				const response = await apiClient.put(`/api/tasks/${id}`, updateData);
 
@@ -492,8 +566,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error updating task:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to update task: ${errorMsg}`);
 			}
 		}
@@ -506,6 +580,7 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			id: z.string().uuid().describe('The task ID')
 		},
+		TOOL_HINTS.idempotentDestructive,
 		async ({ id }) => {
 			try {
 				await apiClient.delete(`/api/tasks/${id}`);
@@ -519,8 +594,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error deleting task:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to delete task: ${errorMsg}`);
 			}
 		}
@@ -533,11 +608,14 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			tasks: z
 				.array(
-					z.object({ title: z.string().describe('The title (required)') }).passthrough()
+					z
+						.object({ title: z.string().describe('The title (required)') })
+						.passthrough()
 						.describe('Task data')
 				)
 				.describe('Array of task data to create')
 		},
+		TOOL_HINTS.write,
 		async ({ tasks }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -551,11 +629,13 @@ export const registerTaskTools = (server: McpServer) => {
 
 				// Add organization and tenant ID to each task
 				const tasksWithDefaults = tasks.map((task) =>
-					convertDateFields({
-						...task,
-						organizationId: defaultParams.organizationId,
-						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-					})
+					convertDateFields(
+						withStoredTaskValues({
+							...task,
+							organizationId: defaultParams.organizationId,
+							...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+						})
+					)
 				);
 
 				const response = await apiClient.post('/api/tasks/bulk', { items: tasksWithDefaults });
@@ -569,8 +649,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk creating tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error bulk creating tasks:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk create tasks: ${errorMsg}`);
 			}
 		}
@@ -590,12 +670,13 @@ export const registerTaskTools = (server: McpServer) => {
 				)
 				.describe('Array of task updates')
 		},
+		TOOL_HINTS.destructive,
 		async ({ updates }) => {
 			try {
 				// Process date conversions for each update
 				const processedUpdates = updates.map((update) => ({
 					...update,
-					data: convertDateFields(update.data)
+					data: convertDateFields(withStoredTaskValues(update.data))
 				}));
 
 				const response = await applyInTurn(processedUpdates, async ({ id, data }) =>
@@ -611,8 +692,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk updating tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error bulk updating tasks:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk update tasks: ${errorMsg}`);
 			}
 		}
@@ -625,6 +706,7 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			ids: z.array(z.string().uuid()).describe('Array of task IDs to delete')
 		},
+		TOOL_HINTS.idempotentDestructive,
 		async ({ ids }) => {
 			try {
 				await applyInTurn(ids, (id) => apiClient.delete(`/api/tasks/${id}`));
@@ -642,8 +724,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk deleting tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error bulk deleting tasks:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk delete tasks: ${errorMsg}`);
 			}
 		}
@@ -659,6 +741,7 @@ export const registerTaskTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for statistics (ISO format)')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ projectId, employeeId, startDate, endDate }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -696,8 +779,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching task statistics:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error fetching task statistics:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task statistics: ${errorMsg}`);
 			}
 		}
@@ -711,6 +794,7 @@ export const registerTaskTools = (server: McpServer) => {
 			taskId: z.string().uuid().describe('The task ID'),
 			employeeId: z.string().uuid().describe('The employee ID')
 		},
+		TOOL_HINTS.destructive,
 		async ({ taskId, employeeId }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -735,8 +819,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error assigning task to employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error assigning task to employee:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to assign task to employee: ${errorMsg}`);
 			}
 		}
@@ -750,6 +834,7 @@ export const registerTaskTools = (server: McpServer) => {
 			taskId: z.string().uuid().describe('The task ID'),
 			employeeId: z.string().uuid().describe('The employee ID')
 		},
+		TOOL_HINTS.idempotentDestructive,
 		async ({ taskId, employeeId }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -774,8 +859,8 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error unassigning task from employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				logger.error('Error unassigning task from employee:', sanitizeForLogging(error));
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to unassign task from employee: ${errorMsg}`);
 			}
 		}

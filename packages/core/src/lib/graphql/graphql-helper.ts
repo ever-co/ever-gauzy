@@ -1,3 +1,4 @@
+import type { MikroORM } from '@mikro-orm/core';
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { HttpException, HttpStatus } from '@nestjs/common';
@@ -28,12 +29,15 @@ import { GraphqlExceptionFilter } from './errors/graphql-exception.filter';
  * @param {ConfigService} configService - The NestJS configuration service for retrieving environment variables.
  * @param {GraphQLTypesLoader} typesLoader - A utility to dynamically load GraphQL type definitions.
  * @param {GraphQLApiConfigurationOptions} options - Configuration options for the GraphQL API.
+ * @param {MikroORM} [orm] - The MikroORM instance of this process, when it has one: under DB_ORM=mikro-orm each
+ * operation on the subscription socket runs on a MikroORM fork of its own, as an HTTP request on the endpoint does.
  * @returns {Promise<GqlModuleOptions>} A promise that resolves to GraphQL module options.
  */
 export async function createGraphqlModuleOptions(
 	configService: ConfigService,
 	typesLoader: GraphQLTypesLoader,
-	options: GraphQLApiConfigurationOptions
+	options: GraphQLApiConfigurationOptions,
+	orm?: MikroORM | null
 ): Promise<GqlModuleOptions> {
 	// What this deployment publishes and accepts, resolved once per boot. The environment overrides
 	// the configuration and the development behaviour is the default, so a workstation keeps the
@@ -208,8 +212,10 @@ export async function createGraphqlModuleOptions(
 		// Each socket operation also runs inside a request context of its own, built from the request
 		// the `context` factory above gave it. `RequestContextMiddleware` opens that context for an HTTP
 		// request and never sees a WebSocket message, so without this the guards and every tenant-scoped
-		// read found no caller on the socket.
-		...subscriptionTransportOptions({ validationRules, maxTokens: policy.maxTokens })
+		// read found no caller on the socket. Under DB_ORM=mikro-orm the same goes for MikroORM's request context:
+		// the bootstrap opens it for an HTTP request on this endpoint, and the socket opens one per operation, per
+		// pull of a stream and per judgement of a connection's credential with the instance handed over here.
+		...subscriptionTransportOptions({ validationRules, maxTokens: policy.maxTokens, orm })
 	} as GqlModuleOptions;
 }
 

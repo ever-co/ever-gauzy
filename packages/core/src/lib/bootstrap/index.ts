@@ -73,6 +73,10 @@ import { memoizeRequestQuery } from './request-query-memo';
 import { createResponseCompression, resolveResponseCompression } from './response-compression';
 import { applyClassValidatorMetadataPatches } from '../shared/validators/class-validator-metadata.patches';
 import { applyClassTransformerMetadataPatches } from '../core/interceptors/class-transformer-metadata.patches';
+import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { EmbedAllowedOriginService } from '../embed/embed-allowed-origin.service';
+import { createEmbedCorsDelegate } from '../embed/embed-cors';
+import { isEmbedEnabled } from '../embed/embed.utils';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -216,7 +220,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		);
 	}
 
-	app.enableCors({
+	const corsOptions: CorsOptions = {
 		origin: validOrigins ? createCorsOriginCallback(validOrigins) : '*',
 		credentials: !!validOrigins, // Only enable credentials when origins are explicitly specified
 		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
@@ -240,6 +244,9 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'X-APP-ID',
 			'X-API-KEY',
 			'X-Channel-Id',
+			// A first-party app names itself ("Ever Teams") so the sessions list can tell it from the other apps of
+			// the same API (ever-co/ever-gauzy#11983). Informational: nothing is decided on it.
+			'X-Client-App',
 			// Retry-safe writes and conditional updates.
 			'Idempotency-Key',
 			'If-Match',
@@ -258,7 +265,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		// cross-origin caller that did NOT send its own `x-correlation-id` had a value written to the
 		// response but no way to read it back via `fetch`/`XMLHttpRequest`.
 		exposedHeaders: ['X-Correlation-Id']
-	});
+	};
+
+	// The sites an organization allows to embed its timer (embed allowed origins) get CORS answers for the timer routes
+	// too, while embeds are on and ALLOWED_ORIGINS is set (unset, every origin is already answered).
+	if (validOrigins && isEmbedEnabled()) {
+		app.enableCors(createEmbedCorsDelegate(corsOptions, validOrigins, app.get(EmbedAllowedOriginService, { strict: false })));
+	} else {
+		app.enableCors(corsOptions);
+	}
 
 	// TODO: enable csurf is not good idea because it was deprecated.
 	// Maybe review https://github.com/Psifi-Solutions/csrf-csrf as alternative?

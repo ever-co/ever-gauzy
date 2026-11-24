@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbRadioModule, NbCardModule, NbButtonModule } from '@nebular/theme';
+import { NbRadioModule, NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { RecurringExpenseDeleteConfirmationComponent } from './recurring-expense-delete-confirmation.component';
 
@@ -13,6 +13,7 @@ import { RecurringExpenseDeleteConfirmationComponent } from './recurring-expense
 		NbRadioModule,
 		NbCardModule,
 		NbButtonModule,
+		NbInputModule,
 		TranslatePipe
 	],
 	exports: [RecurringExpenseDeleteConfirmationComponent],

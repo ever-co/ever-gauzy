@@ -166,6 +166,10 @@ export class EmailService {
 	 * @param token
 	 * @param originUrl
 	 * @param organization
+	 * @param publicToken The token of the invoice's public page, which the email of an invoice links to. An estimate's
+	 * email links to its accept and decline pages instead.
+	 * @returns Whether the email was handed to the mail transport: false for an address of a domain the platform never
+	 * emails, which is not sent.
 	 */
 	async emailInvoice(
 		languageCode: LanguagesEnum,
@@ -176,8 +180,9 @@ export class EmailService {
 		isEstimate: boolean,
 		token: any,
 		origin: string,
-		organization: IOrganization
-	) {
+		organization: IOrganization,
+		publicToken?: string | null
+	): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 		const baseUrl = this.emailBaseUrl(origin);
@@ -199,7 +204,9 @@ export class EmailService {
 				locale: languageCode,
 				host: baseUrl,
 				acceptUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=accept&email=${email}`,
-				rejectUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=reject&email=${email}`
+				rejectUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=reject&email=${email}`,
+				// The invoice's public page, the same route the payment reminders link to
+				invoiceUrl: !isEstimate && publicToken ? `${baseUrl}#/share/invoices/${invoiceId}/${publicToken}` : ''
 			}
 		};
 		const body = {
@@ -225,6 +232,7 @@ export class EmailService {
 				await this.createEmailRecord(body);
 			}
 		}
+		return !isEmailBlocked;
 	}
 
 	/**

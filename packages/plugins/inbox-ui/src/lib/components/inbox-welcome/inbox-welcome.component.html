@@ -1,0 +1,255 @@
+<div class="welcome-inner">
+	<header class="welcome-head">
+		<h3>{{ headKey() + '.TITLE' | translate }}</h3>
+		<p>{{ headKey() + '.TEXT' | translate }}</p>
+	</header>
+
+	<div class="tiles">
+		<section class="tile wide">
+			<div class="tile-inner">
+				<div class="tile-text">
+					<h4>{{ 'INBOX.TABS.decisions' | translate }}</h4>
+					<p>{{ 'INBOX.WELCOME.DECISIONS_TEXT' | translate }}</p>
+					<div class="tile-cta">
+						<button nbButton status="primary" type="button" data-test="welcome-decisions" (click)="openTab.emit('decisions')">
+							<nb-icon icon="checkmark-square-2-outline"></nb-icon>
+							{{ 'INBOX.WELCOME.OPEN_DECISIONS' | translate }}
+						</button>
+						<p class="kinds">
+							<span>{{ 'INBOX.WELCOME.KINDS' | translate }}</span>
+							@for (kind of decisionKinds; track kind) {
+								<strong><nb-icon [icon]="kindIcon(kind)"></nb-icon> {{ 'INBOX.KIND.' + kind | translate }}</strong>
+							}
+						</p>
+					</div>
+				</div>
+				<div class="tile-art dotted" aria-hidden="true">
+					<div class="mock window">
+						<div class="mock-bar">
+							<nb-icon icon="checkmark-square-2-outline"></nb-icon>
+							<i class="line w30"></i>
+							<span class="spacer"></span>
+							<i class="line time"></i>
+						</div>
+						<div class="decision">
+							<div class="decision-head">
+								<span class="chip"></span>
+								<span class="spacer"></span>
+								<span class="dot mini" data-tone="2"></span>
+							</div>
+							<i class="line strong w70"></i>
+							<i class="line w90"></i>
+							<i class="line w60"></i>
+							@if (answered()) {
+								<div class="answered">
+									<span class="answered-line"><nb-icon icon="checkmark-circle-2-outline"></nb-icon><i class="line"></i></span>
+									<i class="line w45"></i>
+								</div>
+							} @else {
+								<div class="choices">
+									<span
+										class="choice"
+										[class.is-chosen]="approveChosen()"
+										[class.is-pressed]="decisionCursor().at === 'approve' && !!decisionCursor().press"
+									>
+										<span class="choice-dot"></span><i class="line"></i>
+									</span>
+									<span class="choice"><span class="choice-dot"></span><i class="line"></i></span>
+								</div>
+								<div class="composer">
+									<span class="note"><i class="line w40"></i></span>
+									<span
+										class="send"
+										[class.is-ready]="approveChosen()"
+										[class.is-pressed]="decisionCursor().at === 'send' && !!decisionCursor().press"
+									>
+										<nb-icon icon="paper-plane-outline"></nb-icon>
+									</span>
+								</div>
+							}
+						</div>
+						<span class="cursor" [attr.data-at]="decisionCursor().at" [class.is-pressing]="!!decisionCursor().press">
+							<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+							<span class="cursor-label">{{ 'INBOX.WELCOME.YOU' | translate }}</span>
+						</span>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		@if (emailAvailable()) {
+			<section class="tile">
+				<div class="tile-inner">
+					<div class="tile-text">
+						<h4>{{ 'INBOX.TABS.email' | translate }}</h4>
+						<p>{{ 'INBOX.WELCOME.EMAIL_TEXT' | translate }}</p>
+					</div>
+					<div class="tile-row">
+						<nb-icon icon="email-outline"></nb-icon>
+						<span>{{ 'INBOX.WELCOME.EMAIL_LABEL' | translate }}</span>
+						<button
+							nbButton
+							status="basic"
+							type="button"
+							data-test="welcome-email"
+							[attr.aria-label]="'INBOX.WELCOME.OPEN_TAB_LABEL' | translate: { tab: ('INBOX.TABS.email' | translate) }"
+							(click)="openTab.emit('email')"
+						>
+							{{ 'INBOX.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon>
+						</button>
+					</div>
+					<div class="tile-art bottom" aria-hidden="true">
+						<div class="mock mail">
+							@if (mailPill()) {
+								<span class="new-pill" [class.is-pressed]="mailCursor().at === 'pill' && !!mailCursor().press">
+									<nb-icon icon="arrow-upward-outline"></nb-icon><i class="line"></i>
+								</span>
+							}
+							@if (mailShown()) {
+								<div
+									class="mail-row is-new"
+									[class.unread]="!mailRead()"
+									[class.is-open]="mailRead()"
+									[class.is-pressed]="mailCursor().at === 'row' && !!mailCursor().press"
+								>
+									<span class="dot" data-tone="3"></span>
+									<span class="mock-lines">
+										<span class="name-row"><i class="line strong w35"></i><i class="line time"></i></span>
+										<i class="line w80"></i>
+									</span>
+									<span class="unread-dot"></span>
+								</div>
+							}
+							@for (row of mailRows; track $index) {
+								<div class="mail-row" [class.unread]="row.unread">
+									<span class="dot" [attr.data-tone]="row.tone"></span>
+									<span class="mock-lines">
+										<span class="name-row"><i class="line strong" [style.width.%]="row.name"></i><i class="line time"></i></span>
+										<i class="line" [style.width.%]="row.text"></i>
+									</span>
+									<span class="unread-dot"></span>
+								</div>
+							}
+							<span class="cursor" [attr.data-at]="mailCursor().at" [class.is-pressing]="!!mailCursor().press">
+								<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+								<span class="cursor-label">{{ 'INBOX.WELCOME.YOU' | translate }}</span>
+							</span>
+						</div>
+					</div>
+				</div>
+			</section>
+		}
+
+		<section class="tile" [class.full]="!emailAvailable()">
+			<div class="tile-inner">
+				<div class="tile-text">
+					<h4>{{ 'INBOX.TABS.notifications' | translate }}</h4>
+					<p>{{ 'INBOX.WELCOME.NOTIFICATIONS_TEXT' | translate }}</p>
+				</div>
+				<div class="tile-row">
+					<nb-icon icon="bell-outline"></nb-icon>
+					<span>{{ 'INBOX.WELCOME.NOTIFICATIONS_LABEL' | translate }}</span>
+					<button
+						nbButton
+						status="basic"
+						type="button"
+						data-test="welcome-notifications"
+						[attr.aria-label]="'INBOX.WELCOME.OPEN_TAB_LABEL' | translate: { tab: ('INBOX.TABS.notifications' | translate) }"
+						(click)="openTab.emit('notifications')"
+					>
+						{{ 'INBOX.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon>
+					</button>
+				</div>
+				<div class="tile-art bottom" aria-hidden="true">
+					<div class="mock notes">
+						<div class="notes-bar">
+							@if (notesRead()) {
+								<span class="caught-up"><nb-icon icon="checkmark-outline"></nb-icon><i class="line"></i></span>
+							} @else {
+								<span class="unread-summary"><i class="line strong"></i><span class="count-chip"></span></span>
+							}
+							<span class="spacer"></span>
+							<span class="mark-all" [class.is-pressed]="notesCursor().at === 'markAll' && !!notesCursor().press">
+								<nb-icon icon="done-all-outline"></nb-icon><i class="line"></i>
+							</span>
+						</div>
+						@for (note of notes; track $index) {
+							<div class="note-row" [class.unread]="note.unread && !notesRead()">
+								<span class="note-icon"><nb-icon [icon]="note.icon"></nb-icon></span>
+								<span class="mock-lines">
+									<span class="name-row"><i class="line strong" [style.width.%]="note.name"></i><i class="line time"></i></span>
+									<i class="line" [style.width.%]="note.text"></i>
+								</span>
+								<span class="unread-dot"></span>
+							</div>
+						}
+						<span class="cursor" [attr.data-at]="notesCursor().at" [class.is-pressing]="!!notesCursor().press">
+							<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+							<span class="cursor-label">{{ 'INBOX.WELCOME.YOU' | translate }}</span>
+						</span>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="tile wide">
+			<div class="tile-inner">
+				<div class="tile-text">
+					<h4>{{ 'INBOX.WELCOME.LATER_TITLE' | translate }}</h4>
+					<p>{{ 'INBOX.WELCOME.LATER_TEXT' | translate }}</p>
+					<div class="tile-cta">
+						<div class="tab-buttons">
+							@for (entry of laterTabs; track entry) {
+								<button
+									nbButton
+									status="basic"
+									type="button"
+									[attr.data-test]="'welcome-' + entry"
+									[attr.aria-label]="'INBOX.WELCOME.OPEN_TAB_LABEL' | translate: { tab: ('INBOX.TABS.' + entry | translate) }"
+									(click)="openTab.emit(entry)"
+								>
+									<nb-icon [icon]="tabIcons[entry]"></nb-icon>
+									{{ 'INBOX.TABS.' + entry | translate }}
+								</button>
+							}
+						</div>
+						<button nbButton ghost status="basic" size="small" type="button" class="shortcuts" data-test="welcome-shortcuts" (click)="openShortcuts.emit()">
+							<nb-icon icon="keypad-outline"></nb-icon>
+							{{ 'INBOX.SHORTCUTS.TITLE' | translate }}
+							<kbd>?</kbd>
+						</button>
+					</div>
+				</div>
+				<div class="tile-art dotted" aria-hidden="true">
+					<div class="mock window later">
+						<div class="mock-bar">
+							<nb-icon icon="inbox-outline"></nb-icon>
+							<i class="line w30"></i>
+						</div>
+						<div class="later-rows">
+							@for (row of laterRows(); track row.id) {
+								<div class="later-row" [class.is-open]="row.id === laterStep().open" [class.is-leaving]="row.id === leavingRow()">
+									<span class="dot mini" [attr.data-tone]="row.tone"></span>
+									<i class="line" [style.width.%]="row.width"></i>
+								</div>
+							}
+						</div>
+						<div class="toast-slot">
+							@if (toastShown()) {
+								<span class="toast">
+									<span>{{ 'INBOX.UNDO.ARCHIVED' | translate: { count: 1 } }}</span>
+									<span class="toast-undo">{{ 'INBOX.UNDO.ACTION' | translate }}</span>
+								</span>
+							}
+						</div>
+						<div class="keycaps">
+							@for (key of keys; track key) {
+								<kbd [class.is-pressed]="laterStep().key === key">{{ key }}</kbd>
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>

@@ -1,10 +1,33 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { Logger } from '@nestjs/common';
 import { environment } from '../environments/environment';
 import { authManager } from './auth-manager';
 import { sanitizeErrorMessage } from './error-utils';
 
 const logger = new Logger('ApiClient');
+
+/** The header the API's tenant guard reads first, in the casing it accepts. */
+const TENANT_HEADER = 'Tenant-Id';
+
+/**
+ * Sends the tenant of the login whose token the request carries, as the web app does on every call: without it the
+ * tenant guard looks for a top-level `tenantId` in the query, which a list query keeps inside `where`. A tenant the
+ * caller set is kept.
+ */
+const setSessionTenant = (config: InternalAxiosRequestConfig): void => {
+	if (config.headers.has(TENANT_HEADER)) {
+		return;
+	}
+	const { tenantId } = authManager.getDefaultParams();
+	if (tenantId) {
+		config.headers.set(TENANT_HEADER, tenantId);
+	}
+};
+
+/** A request sent again after its 401 had GAUZY_API_TOKEN exchanged again */
+interface IApiTokenRetryConfig extends InternalAxiosRequestConfig {
+	isRetryAfterApiTokenExchange?: boolean;
+}
 
 export class GauzyApiClient {
 	private static instance: GauzyApiClient;
@@ -47,6 +70,7 @@ export class GauzyApiClient {
 						const token = authManager.getAccessToken();
 						if (token) {
 							config.headers.Authorization = `Bearer ${token}`;
+							setSessionTenant(config);
 						}
 					}
 				} else {
@@ -54,6 +78,7 @@ export class GauzyApiClient {
 					const token = authManager.getAccessToken();
 					if (token) {
 						config.headers.Authorization = `Bearer ${token}`;
+						setSessionTenant(config);
 					}
 				}
 			}
@@ -70,7 +95,7 @@ export class GauzyApiClient {
 						url: error.config?.url,
 						method: error.config?.method?.toUpperCase(),
 						status: error.response?.status,
-						message: error.message,
+						message: sanitizeErrorMessage(error),
 						response: error.response?.data ? sanitizeErrorMessage(error.response.data) : undefined
 					};
 					logger.debug('🔴 API Client Error Details:\n' + JSON.stringify(errorDetails, null, 2));
@@ -82,6 +107,12 @@ export class GauzyApiClient {
 					!error.config?.url?.includes('/api/auth/') &&
 					!error.config?.url?.includes('/auth/')
 				) {
+					const config = error.config as IApiTokenRetryConfig | undefined;
+					// A login from GAUZY_API_TOKEN is exchanged again once per request: the answer to the retry stands
+					if (config?.isRetryAfterApiTokenExchange) {
+						return Promise.reject(error);
+					}
+
 					if (environment.debug) {
 						logger.warn('🔄 Received 401, attempting token refresh...');
 					}
@@ -92,9 +123,14 @@ export class GauzyApiClient {
 						const token = authManager.getAccessToken();
 						if (token) {
 							error.config.headers.Authorization = `Bearer ${token}`;
+							if (authManager.isApiTokenLogin()) {
+								config.isRetryAfterApiTokenExchange = true;
+							}
 							return this.client.request(error.config);
 						}
 					}
+
+					this.explainApiTokenFailure(error);
 				}
 
 				return Promise.reject(error);
@@ -123,8 +159,22 @@ export class GauzyApiClient {
 			await authManager.initialize();
 		} catch (error) {
 			if (this.isDebug()) {
-				logger.error('❌ Auto-login failed:', error instanceof Error ? error.message : 'Unknown error');
+				logger.error(
+					'❌ Auto-login failed:',
+					error instanceof Error ? sanitizeErrorMessage(error) : 'Unknown error'
+				);
 			}
+		}
+	}
+
+	/**
+	 * A request refused because GAUZY_API_TOKEN gives no session says why, in place of a bare 401: the tool that made
+	 * it answers with that message
+	 */
+	private explainApiTokenFailure(error: AxiosError): void {
+		const apiTokenError = authManager.getApiTokenError();
+		if (apiTokenError) {
+			error.message = apiTokenError;
 		}
 	}
 
@@ -153,6 +203,14 @@ export class GauzyApiClient {
 	public async login(email?: string, password?: string): Promise<{ success: boolean; error?: string }> {
 		try {
 			const success = await authManager.login(email, password);
+			if (success || email || password) {
+				return { success };
+			}
+			// Signed in with the configured credentials: when they hold GAUZY_API_TOKEN, say why it gave no session
+			const apiTokenError = authManager.getApiTokenError();
+			if (apiTokenError) {
+				return { success, error: apiTokenError };
+			}
 			return { success };
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Login failed';
@@ -246,7 +304,7 @@ export class GauzyApiClient {
 		if (this.isDebug()) {
 			logger.error(
 				`🔴 ${method} ${path} failed`,
-				error instanceof Error ? error.stack : sanitizeErrorMessage(error)
+				error instanceof Error ? sanitizeErrorMessage(error.stack) : sanitizeErrorMessage(error)
 			);
 		}
 	}
@@ -313,7 +371,7 @@ export class GauzyApiClient {
 					if (this.isDebug()) {
 						logger.warn(
 							'Authenticated endpoint test failed:',
-							error instanceof Error ? error.message : 'Unknown error'
+							error instanceof Error ? sanitizeErrorMessage(error) : 'Unknown error'
 						);
 					}
 				}

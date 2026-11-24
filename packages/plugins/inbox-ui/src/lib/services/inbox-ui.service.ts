@@ -39,6 +39,18 @@ export class InboxUiService {
 		this.changes.next();
 	}
 
+	private readonly itemRequests = new Subject<string>();
+
+	/**
+	 * Emits the id of an item chosen in the header's dropdown, so an Inbox page already shown opens it: also when its
+	 * link (`?item=`) is already the page's URL, or the Notifications tab, which cannot show an item, is chosen.
+	 */
+	readonly itemRequested$: Observable<string> = this.itemRequests.asObservable();
+
+	requestItem(id: string): void {
+		this.itemRequests.next(id);
+	}
+
 	/** A page of my items for a tab and filters, newest first. */
 	list(input: IInboxItemFindInput = {}): Observable<IInboxItemPage> {
 		let params = new HttpParams();

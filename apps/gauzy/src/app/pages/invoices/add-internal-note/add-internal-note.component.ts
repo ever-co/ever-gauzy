@@ -18,6 +18,12 @@ import { ToastrService } from '@gauzy/ui-core/core';
 export class AddInternalNoteComponent extends TranslationBaseComponent implements OnInit {
 	invoice: IInvoice;
 	form: UntypedFormGroup;
+	/** The note is being saved: the dialog cannot be cancelled meanwhile, or the list behind would miss it (#12011). */
+	saving = false;
+	/** The note was saved. */
+	private saved = false;
+	/** Ends with the save on its way, if any. */
+	private _settled: Promise<void> = Promise.resolve();
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -40,11 +46,33 @@ export class AddInternalNoteComponent extends TranslationBaseComponent implement
 	}
 
 	async addNote() {
-		await this.invoiceService.updateAction(this.invoice.id, {
-			internalNote: this.form.value.internalNote
-		});
-		this.toastrService.success('INVOICES_PAGE.INTERNAL_NOTE.NOTE_SAVED');
-		this.dialogRef.close();
+		if (this.saving) {
+			return;
+		}
+		this.saving = true;
+		let settle = (): void => undefined;
+		this._settled = new Promise<void>((resolve) => (settle = resolve));
+		try {
+			await this.invoiceService.updateAction(this.invoice.id, {
+				internalNote: this.form.value.internalNote
+			});
+			this.saved = true;
+			this.toastrService.success('INVOICES_PAGE.INTERNAL_NOTE.NOTE_SAVED');
+			// The list behind it refreshes only on this answer, not on a cancel
+			this.dialogRef.close(true);
+		} finally {
+			this.saving = false;
+			settle();
+		}
+	}
+
+	/**
+	 * Whether the note was saved, once a save on its way has ended. Escape and the backdrop close the dialog
+	 * without an answer, even mid-save: the list behind asks this instead (#12011).
+	 */
+	async changed(): Promise<boolean> {
+		await this._settled;
+		return this.saved;
 	}
 
 	cancel() {

@@ -26,7 +26,10 @@
 
 	<!-- Header -->
 	<div class="docs-browse-header">
-		<h4 class="docs-browse-title">{{ 'DOCS.TITLE' | translate }}</h4>
+		<div class="docs-browse-title-group">
+			<gz-docs-folders-button></gz-docs-folders-button>
+			<h4 class="docs-browse-title">{{ 'DOCS.TITLE' | translate }}</h4>
+		</div>
 		<div class="docs-browse-actions">
 			<ng-template [ngxPermissionsOnly]="docsPermissions.review">
 				<button nbButton size="small" appearance="ghost" (click)="goToReviewQueue()">
@@ -34,37 +37,6 @@
 					{{ 'DOCS.REVIEW.QUEUE_TITLE' | translate }}
 				</button>
 			</ng-template>
-			<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB.
-      `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
-      rules only neutralize the user-agent fieldset chrome so the layout is unchanged. -->
-			<fieldset
-				class="docs-view-toggle"
-				style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
-				[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
-			>
-				<button
-					nbButton
-					size="small"
-					[status]="isCardsView ? 'basic' : 'primary'"
-					[appearance]="isCardsView ? 'outline' : 'filled'"
-					[attr.aria-pressed]="!isCardsView"
-					[nbTooltip]="'DOCS.VIEWS.TABLE' | translate"
-					(click)="setLayout(layoutStyles.TABLE)"
-				>
-					<nb-icon icon="list-outline"></nb-icon>
-				</button>
-				<button
-					nbButton
-					size="small"
-					[status]="isCardsView ? 'primary' : 'basic'"
-					[appearance]="isCardsView ? 'filled' : 'outline'"
-					[attr.aria-pressed]="isCardsView"
-					[nbTooltip]="'DOCS.VIEWS.CARDS' | translate"
-					(click)="setLayout(layoutStyles.CARDS_GRID)"
-				>
-					<nb-icon icon="grid-outline"></nb-icon>
-				</button>
-			</fieldset>
 			<ng-template [ngxPermissionsOnly]="docsPermissions.create">
 				<!-- `New ▾` (`01-ux-spec.md` §2): Folder | Page. A folder was previously
         unreachable from here, so a brand-new organization — whose tree is empty and
@@ -146,21 +118,55 @@
 			(clearAll)="onClearAll()"
 			(applyView)="onApplySavedView($event)"
 			(presetToggled)="onPresetToggled($event)"
-		></gz-docs-filter-bar>
+		>
+			<!-- Always-visible drop strip, first on the toolbar row, before search.
+			VISUAL-ONLY: the page-root gzDocsUploadDropzone owns every drop (a second
+			directive instance would double-fire); the strip mirrors its drag state and
+			clicks through to the same upload flow. -->
+			<gz-docs-drop-strip
+				docsFilterBarExtra
+				*ngxPermissionsOnly="docsPermissions.create"
+				[active]="dropActive"
+				[maxFileSizeBytes]="uploadQueue.maxFileSizeBytes"
+				[maxFiles]="uploadQueue.maxFilesPerUpload"
+				[accept]="uploadAccept"
+				(browse)="openUploadFlow()"
+			></gz-docs-drop-strip>
+			<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB. Projected into the end
+			of the filter bar's toolbar row, with the other list controls. `<fieldset>` is the
+			semantic grouping element (implicit `group` role); the inline rules only neutralize
+			the user-agent fieldset chrome. -->
+			<fieldset
+				docsFilterBarEnd
+				class="docs-view-toggle"
+				style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+				[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
+			>
+				<button
+					nbButton
+					ghost
+					size="small"
+					[class.active]="!isCardsView"
+					[attr.aria-pressed]="!isCardsView"
+					[nbTooltip]="'DOCS.VIEWS.TABLE' | translate"
+					(click)="setLayout(layoutStyles.TABLE)"
+				>
+					<nb-icon icon="list-outline"></nb-icon>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="small"
+					[class.active]="isCardsView"
+					[attr.aria-pressed]="isCardsView"
+					[nbTooltip]="'DOCS.VIEWS.CARDS' | translate"
+					(click)="setLayout(layoutStyles.CARDS_GRID)"
+				>
+					<nb-icon icon="grid-outline"></nb-icon>
+				</button>
+			</fieldset>
+		</gz-docs-filter-bar>
 	</div>
-
-	<!-- Always-visible drop strip. VISUAL-ONLY: the page-root gzDocsUploadDropzone
-  owns every drop (a second directive instance would double-fire); the strip
-  mirrors its drag state and clicks through to the same upload flow. -->
-	<ng-template [ngxPermissionsOnly]="docsPermissions.create">
-		<gz-docs-drop-strip
-			[active]="dropActive"
-			[maxFileSizeBytes]="uploadQueue.maxFileSizeBytes"
-			[maxFiles]="uploadQueue.maxFilesPerUpload"
-			[accept]="uploadAccept"
-			(browse)="openUploadFlow()"
-		></gz-docs-drop-strip>
-	</ng-template>
 
 	<!-- Upload progress -->
 	<gz-docs-upload-progress

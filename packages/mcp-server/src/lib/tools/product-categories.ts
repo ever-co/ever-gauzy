@@ -3,11 +3,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { nameTexts, readSearchedList, validateOrganizationContext } from './utils';
 import { ProductCategoryInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('ProductCategoryTools');
 
 export const registerProductCategoryTools = (server: McpServer) => {
@@ -27,17 +28,17 @@ export const registerProductCategoryTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(langCode && { langCode })
-				};
+				// The list route drops paging: the pagination route reads it, `skip` as a page number. The API reads the
+				// language of the translations from the `language` header. It has no search: one of the name is kept here.
+				const headers = { ...(langCode && { language: langCode }) };
+				const listOptions = { page, limit, relations, skipIsPage: true };
+				const path = '/api/product-categories/pagination';
 
-				const response = await apiClient.get('/api/product-categories', { params });
+				const response = await readSearchedList(path, defaultParams, {}, listOptions, {
+					search,
+					textsOf: nameTexts,
+					headers
+				});
 
 				return {
 					content: [
@@ -51,7 +52,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error fetching product categories:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch product categories: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get product category count tool
@@ -83,7 +85,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error fetching product category count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch product category count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create product category tool
@@ -133,7 +136,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error creating product category:', sanitizeForLogging(error));
 				throw new Error(`Failed to create product category: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update product category tool
@@ -175,7 +179,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error updating product category:', sanitizeForLogging(error));
 				throw new Error(`Failed to update product category: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Get products by category tool
@@ -220,6 +225,7 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error fetching products by category:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch products by category: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

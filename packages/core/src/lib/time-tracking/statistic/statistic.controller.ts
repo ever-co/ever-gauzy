@@ -1,4 +1,5 @@
-import { Controller, UseGuards, HttpStatus, Get, Query, Body, Post } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query, Body, Post, UseInterceptors } from '@nestjs/common';
+import { HiddenProjectRows, HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { DataSource } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -32,6 +33,7 @@ import { StatisticService } from './statistic.service';
 	PermissionsEnum.ALL_ORG_EDIT,
 	PermissionsEnum.ALL_ORG_VIEW
 )
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/timesheet/statistics')
 export class StatisticController {
 	constructor(
@@ -133,6 +135,8 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@UseGuards(EmployeeTrackedDataGuard)
+	// Each row is a project with its tracked time: a hidden one keeps its id and its time
+	@HiddenProjectRows({ rootRowsAreProjects: { keep: ['duration', 'durationPercentage'] } })
 	@Get('/projects')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getProjectsStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IProjectsStatistics[]> {

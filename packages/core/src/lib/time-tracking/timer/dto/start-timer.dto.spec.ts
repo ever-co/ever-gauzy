@@ -70,4 +70,41 @@ describe('StartTimerDTO', () => {
 
 		expect(dto.planDay).toBeUndefined();
 	});
+
+	it('keeps the tags the run is filed under', async () => {
+		const meeting = '00000000-0000-4000-8000-0000000000a1';
+		const dto = await validateBody({ ...START_BODY, tags: [meeting] });
+
+		expect(dto.tags).toEqual([meeting]);
+	});
+
+	it('refuses a tag that is not a tag id with a 400', async () => {
+		const attempt = validateBody({ ...START_BODY, tags: ['meeting'] });
+
+		await expect(attempt).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it('accepts a start without tags, as every client on develop sends it', async () => {
+		const dto = await validateBody(START_BODY);
+
+		expect(dto.tags).toBeUndefined();
+	});
+
+	it("keeps a start's ask to be billable as its project is set", async () => {
+		const dto = await validateBody({ ...START_BODY, billableFromProject: true });
+
+		expect(dto.billableFromProject).toBe(true);
+	});
+
+	it('refuses a billableFromProject that is not a boolean with a 400', async () => {
+		const attempt = validateBody({ ...START_BODY, billableFromProject: 'yes' });
+
+		await expect(attempt).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it('accepts a start without billableFromProject, as every client on develop sends it', async () => {
+		const dto = await validateBody(START_BODY);
+
+		expect(dto.billableFromProject).toBeUndefined();
+	});
 });

@@ -84,6 +84,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	private cardsRequest = 0;
 	public readonly employeeKindEnum = EmployeeKindEnum;
 	public loading: boolean = false;
+
+	/**
+	 * The card body's large spinner, for the table only. The card grid draws its own card-shaped placeholder while it
+	 * reads, and keeps its cards while the next page is read: a spinner over either said it twice, or hid the cards.
+	 */
+	public get showsBodySpinner(): boolean {
+		return this.loading && this.dataLayoutStyle !== ComponentLayoutStyleEnum.CARDS_GRID;
+	}
+
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
 	public employees$: Subject<any> = this.subject$;
@@ -570,18 +579,23 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 		try {
 			const { id: organizationId, tenantId } = this.organization;
-			const { isTrackingEnabled } = this.selectedEmployee;
+			// What the row showed when the person clicked; the button offers the other state
+			const isShownEnabled = this.selectedEmployee.isTrackingEnabled === true;
+			const turnsTrackingOn = !isShownEnabled;
 
 			// // Get the full name of the selected employee
 			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 
-			// Update the employee's timeTrackingEnabled property
-			await this._employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
-				organizationId,
-				tenantId
-			});
+			// Turns tracking to the state the button offered. The save names what the row showed: when someone changed
+			// it since, the API refuses it and the list reloads below with the stored state.
+			await this._employeesService.setEmployeeTimeTrackingStatus(
+				this.selectedEmployee.id,
+				turnsTrackingOn,
+				{ organizationId, tenantId },
+				isShownEnabled
+			);
 
-			const toastMessageKey = isTrackingEnabled
+			const toastMessageKey = isShownEnabled
 				? 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED'
 				: 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED';
 
@@ -607,7 +621,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			this.loading = true; // Indicate loading state
 			const { id: organizationId, tenantId } = this.organization;
 
-			this.smartTableSource = new ServerDataSource(this._httpClient, {
+			const source: ServerDataSource = new ServerDataSource(this._httpClient, {
 				endPoint: `${API_PREFIX}/employee/pagination`,
 				relations: ['user', 'tags'],
 				withDeleted: this.includeDeleted, // Include soft-deleted records if flag is true
@@ -624,10 +638,16 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					};
 				},
 				finalize: () => {
-					this.updatePagination(this.smartTableSource.count());
+					// A source since replaced (another Kind, say) answers for a list no longer shown: its count and
+					// its end must not end the loading state of the newer read (#12012).
+					if (source !== this.smartTableSource) {
+						return;
+					}
+					this.updatePagination(source.count());
 					this.loading = false; // Update loading state
 				}
 			});
+			this.smartTableSource = source;
 		} finally {
 			this.loading = false; // Update loading state
 		}
@@ -666,6 +686,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				const request = ++this.cardsRequest;
 				const source = this.smartTableSource;
+				// The source's set-up has already put `loading` back: without it the grid would say there are no
+				// employees while this page is read. The source's `finalize` ends it, on an answer or an error.
+				this.loading = true;
 				await source.getElements();
 				// The Kind filter (or a newer request) changed the list while this page was loading: its rows
 				// belong to the previous list, which the grid no longer shows.

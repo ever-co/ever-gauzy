@@ -8,6 +8,7 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.OrganizationProject]: 'fas fa-book',
 	[BaseEntityEnum.Task]: 'fas fa-tasks',
 	[BaseEntityEnum.Employee]: 'fas fa-user-friends',
+	[BaseEntityEnum.EmployeeAppointment]: 'fas fa-calendar-alt',
 	[BaseEntityEnum.Candidate]: 'fas fa-user-tie',
 	[BaseEntityEnum.Contact]: 'fas fa-address-book',
 	[BaseEntityEnum.OrganizationTeam]: 'fas fa-users',
@@ -110,6 +111,8 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.OrganizationProject]: (id) => `/pages/organization/projects/${id}/edit`,
 	[BaseEntityEnum.Task]: (id) => `/pages/tasks/view/${id}`,
 	[BaseEntityEnum.Employee]: (id) => `/pages/employees/view/${id}`,
+	// An appointment is read in the appointments of the employees.
+	[BaseEntityEnum.EmployeeAppointment]: () => `/pages/employees/appointments`,
 	[BaseEntityEnum.Candidate]: (id) => `/pages/employees/candidates/edit/${id}`,
 	// The address/contact-details row has no page; the contacts hub is where contacts are read.
 	[BaseEntityEnum.Contact]: () => `/pages/contacts`,
@@ -218,3 +221,27 @@ export const ENTITY_TITLES: Partial<Record<BaseEntityEnum, (record: IFavoriteRec
 		return translations?.find((translation) => translation?.name)?.name;
 	}
 };
+
+const DESCRIPTION_FIELDS: Partial<Record<BaseEntityEnum, string[]>> = {
+	[BaseEntityEnum.Document]: ['summary', 'description'],
+	[BaseEntityEnum.Employee]: ['short_description', 'description'],
+	[BaseEntityEnum.OrganizationSprint]: ['goal']
+};
+
+const DESCRIPTION_MAX_LENGTH = 200;
+
+export function favoriteDescription(
+	entity: BaseEntityEnum,
+	record: IFavoriteRecord,
+	title?: string
+): string | undefined {
+	const fields = DESCRIPTION_FIELDS[entity] ?? ['description'];
+	const text = fields
+		.map((field) => textOf(record?.[field]))
+		.find((value) => !!value)
+		?.trim();
+	if (!text || text === title) {
+		return undefined;
+	}
+	return text.length > DESCRIPTION_MAX_LENGTH ? `${text.slice(0, DESCRIPTION_MAX_LENGTH - 1)}…` : text;
+}

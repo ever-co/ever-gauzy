@@ -20,6 +20,12 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 	isEstimate: boolean;
 	invoiceItems: IInvoiceItem[];
 	createdInvoice: IInvoice;
+	/** The email is being sent: the dialog cannot be cancelled meanwhile, or the list behind would miss it (#12011). */
+	sending = false;
+	/** The email went out: closing the dialog still brings the list up to date, even after a later step failed. */
+	private sent = false;
+	/** Ends with the send on its way, if any. */
+	private _settled: Promise<void> = Promise.resolve();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -44,29 +50,50 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 	}
 
 	async sendEmail() {
+		if (this.sending) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.invoice.fromOrganization;
 		const { email } = this.form.value;
 
-		await this.invoiceService.sendEmail(
-			email,
-			this.invoice.invoiceNumber,
-			this.invoice.id ? this.invoice.id : this.createdInvoice.id,
-			this.isEstimate,
-			organizationId,
-			tenantId
-		);
+		this.sending = true;
+		let settle = (): void => undefined;
+		this._settled = new Promise<void>((resolve) => (settle = resolve));
+		try {
+			await this.invoiceService.sendEmail(
+				email,
+				this.invoice.invoiceNumber,
+				this.invoice.id ? this.invoice.id : this.createdInvoice.id,
+				this.isEstimate,
+				organizationId,
+				tenantId
+			);
+			this.sent = true;
 
-		if (this.invoice.id) {
-			await this.invoiceService.updateAction(this.invoice.id, {
-				status: InvoiceStatusTypesEnum.SENT
-			});
+			if (this.invoice.id) {
+				await this.invoiceService.updateAction(this.invoice.id, {
+					status: InvoiceStatusTypesEnum.SENT
+				});
+			}
+
+			await this.invoiceEstimateSendHistory();
+
+			this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
+			this.dialogRef.close('ok');
+		} finally {
+			this.sending = false;
+			settle();
 		}
+	}
 
-		await this.invoiceEstimateSendHistory();
-
-		this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
-		this.dialogRef.close('ok');
+	/**
+	 * Whether the email went out, once a send on its way has ended. Escape and the backdrop close the dialog
+	 * without an answer, even mid-send: the list behind asks this instead (#12011).
+	 */
+	async changed(): Promise<boolean> {
+		await this._settled;
+		return this.sent;
 	}
 
 	async invoiceEstimateSendHistory() {
@@ -92,6 +119,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 	}
 
 	cancel() {
-		this.dialogRef.close();
+		// Once the email went out, the invoice changed even if its status or history then failed: the list behind
+		// still reads it again (#12011)
+		this.dialogRef.close(this.sent ? 'ok' : undefined);
 	}
 }

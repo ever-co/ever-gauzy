@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { And, Equal, FindOperator, In, IsNull, Not } from 'typeorm';
 import { BaseEntityEnum } from '@gauzy/contracts';
 import { convertTypeORMWhereToMikroORM } from '../../core/utils';
-import { scopeCommentReadToParents } from './scope-comment-read';
+import { recordsNamedByEveryAlternative, scopeCommentReadToParents } from './scope-comment-read';
 
 const CONTACT = BaseEntityEnum.OrganizationContact;
 const PROJECT = BaseEntityEnum.OrganizationProject;
@@ -151,5 +151,51 @@ describe('scopeCommentReadToParents', () => {
 		['a type stated as a list', { entity: [PROJECT, CONTACT] }]
 	])('refuses %s, which it cannot keep to the policies', (_label, where) => {
 		expect(() => scopeCommentReadToParents(where as object, GOVERNED)).toThrow(BadRequestException);
+	});
+});
+
+describe('recordsNamedByEveryAlternative', () => {
+	const TASK = BaseEntityEnum.Task;
+	const OPENED = [TASK];
+	const TASK_ID = '2b3c4d5e-6f70-4812-9a3b-4c5d6e7f8091';
+	const OTHER_TASK_ID = '3c4d5e6f-7081-4923-8b4c-5d6e7f809102';
+
+	it('names the record of a read of one task, beside whatever else it states', () => {
+		const where = { entity: TASK, entityId: TASK_ID, tenantId: 'tenant-1', organizationId: 'org-1' };
+
+		expect(recordsNamedByEveryAlternative(where, OPENED)).toEqual([{ entity: TASK, entityId: TASK_ID }]);
+	});
+
+	it('names every record of a list whose each alternative names one task', () => {
+		const where = [
+			{ entity: TASK, entityId: TASK_ID },
+			{ entity: TASK, entityId: OTHER_TASK_ID, parentId: PROJECT_ID }
+		];
+
+		expect(recordsNamedByEveryAlternative(where, OPENED)).toEqual([
+			{ entity: TASK, entityId: TASK_ID },
+			{ entity: TASK, entityId: OTHER_TASK_ID }
+		]);
+	});
+
+	it.each([
+		['no criteria', undefined],
+		['null criteria', null],
+		['an empty list, read as no criteria', []],
+		['a read of every task', { entity: TASK }],
+		['a read of another type', { entity: PROJECT, entityId: PROJECT_ID }],
+		['a read by author only', { employeeId: 'employee-1' }],
+		['an id that is not one', { entity: TASK, entityId: 'not-a-uuid' }],
+		['a list of ids', { entity: TASK, entityId: In([TASK_ID]) }],
+		['the type as a find operator', { entity: Equal(TASK), entityId: TASK_ID }],
+		['another spelling of the type', { entity: 'task', entityId: TASK_ID }],
+		['a list where one alternative names no task', [{ entity: TASK, entityId: TASK_ID }, { entity: PROJECT }]],
+		['text criteria', 'entity=Task']
+	])('names no record for %s', (_label, where) => {
+		expect(recordsNamedByEveryAlternative(where, OPENED)).toEqual([]);
+	});
+
+	it('names no record when no record type is opened', () => {
+		expect(recordsNamedByEveryAlternative({ entity: TASK, entityId: TASK_ID }, [])).toEqual([]);
 	});
 });

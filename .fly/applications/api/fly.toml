@@ -30,7 +30,7 @@ primary_region = "lax"
   #   fly secrets set JWT_SECRET=... JWT_REFRESH_TOKEN_SECRET=... JWT_VERIFICATION_TOKEN_SECRET=... EXPRESS_SESSION_SECRET=...
   # with each value from `openssl rand -hex 64`. Until they are set, this DEMO=true app still falls
   # back to the published defaults in code (held, see resolveSecret in @gauzy/config).
-  JWT_REFRESH_TOKEN_EXPIRATION_TIME="86400"
+  JWT_REFRESH_TOKEN_EXPIRATION_TIME="604800"
 
 [http_service]
   internal_port = 3000

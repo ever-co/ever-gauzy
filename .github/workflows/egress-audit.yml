@@ -255,6 +255,9 @@ jobs:
       - name: The mock platform's clock patch applies to the pinned harness, and does what it says
         run: node --test tools/egress-audit/patch-mock-clock.test.mjs
 
+      - name: The adapter's requests are the ones Gauzy's own UI makes
+        run: node --test tools/egress-audit/adapter.test.mjs
+
       - name: No Ever host named outside the Ever Platform modules beyond the baseline (sources)
         run: node --test tools/egress-audit/static-hostnames.test.mjs
 

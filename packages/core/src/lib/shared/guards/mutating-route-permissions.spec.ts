@@ -253,10 +253,14 @@ describe('OrganizationPermissionGuard placement', () => {
 	it('gates exactly the manual time-log routes on the organization policy', () => {
 		// `bulk` is `POST /timesheet/time-log/bulk`: many `addManualTime` bodies in one request. It carries
 		// the single route's guard and grant, and asks the same guard about every item again.
+		// `splitTimeLog` is `POST /timesheet/time-log/:id/split`: an edit of the log, under the update's grant (CORE-26).
+		// `updateTimeLogTags` is `PUT /timesheet/time-log/:id/tags`: an edit of the log, under the update's grant.
 		expect(organizationGuardedRoutes(TimeLogController)).toEqual({
 			addManualTime: [PermissionsEnum.ALLOW_MANUAL_TIME],
 			bulk: [PermissionsEnum.ALLOW_MANUAL_TIME],
 			updateManualTime: [PermissionsEnum.ALLOW_MODIFY_TIME],
+			splitTimeLog: [PermissionsEnum.ALLOW_MODIFY_TIME],
+			updateTimeLogTags: [PermissionsEnum.ALLOW_MODIFY_TIME],
 			deleteTimeLog: [PermissionsEnum.ALLOW_DELETE_TIME]
 		});
 	});
@@ -273,6 +277,12 @@ describe('OrganizationPermissionGuard placement', () => {
 		// the body while the handler loads and rewrites a record of an organization whose policy is off.
 		expect(
 			Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeLogController.prototype.updateManualTime)
+		).toEqual({ entity: TimeLog, param: 'id', source: 'params' });
+		expect(
+			Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeLogController.prototype.splitTimeLog)
+		).toEqual({ entity: TimeLog, param: 'id', source: 'params' });
+		expect(
+			Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeLogController.prototype.updateTimeLogTags)
 		).toEqual({ entity: TimeLog, param: 'id', source: 'params' });
 		expect(Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeSlotController.prototype.update)).toEqual({
 			entity: TimeSlot,
@@ -336,6 +346,12 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'AuthZitadelController.linkConfirm', // pending link must belong to the caller (pendingFor), plus the e-mail code for same-address accounts
 	'AuthZitadelController.linkPreview', // reads the caller's own pending link (pendingFor rejects another user's key)
 	'AuthZitadelController.unlink', // findOwnLink(id, caller): another user's link id is a 404; the last sign-in method is a 409
+	// BoardNotificationController: the Boards app tells colleagues about a Board, as the caller and in the caller's
+	// organization only: the sender is the caller's own working employee there, and each colleague told must work
+	// there too (board-notification.ts boardNotificationsOf); a third-party app's sign-in without a write scope is
+	// refused (employee-notification.service.ts notifyAboutBoard)
+	'BoardNotificationController.mention',
+	'BoardNotificationController.share',
 	// CommentController: user-owned: CommentService pins the author to the employee of the caller, and only a
 	// CHANGE_SELECTED_EMPLOYEE holder may edit or delete another employee comment
 	// (comment.service.ts:52, 125)
@@ -346,6 +362,13 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'CommentController.update',
 	// EmailVerificationController: re-sends the confirmation link to the address of the caller
 	'EmailVerificationController.resendConfirmationLink',
+	// EmbedSiteGrantController: the signed-in person's own site grants. authorize issues tokens for the caller only: the
+	// user and the tenant come from the session, and the service refuses a person who may not track time, a site the
+	// organization does not allow and one it does not let people sign in from (embed-site-grant.service.ts authorize).
+	// revokeGrant reads the grant in the caller's tenant and answers 404 unless it is the caller's own or the caller
+	// holds ALL_ORG_EDIT (embed-site-grant.service.ts revokeGrant)
+	'EmbedSiteGrantController.authorize',
+	'EmbedSiteGrantController.revokeGrant',
 	// EmployeeController: own presence: the employee comes from RequestContext.currentUser().employeeId, never from the
 	// request, and the body only carries isIdle (employee.service.ts updatePresence)
 	'EmployeeController.updatePresence',
@@ -357,6 +380,9 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// findOneByIdString, and delete adds the receiver to its criteria, so a non-holder only reaches their own rows
 	'EmployeeNotificationController.create',
 	'EmployeeNotificationController.delete',
+	// inviteToBoard files Invitations as the caller, to members of a team the caller is an active member of, in the
+	// caller's tenant (board-invitation.ts boardInvitationsOf)
+	'EmployeeNotificationController.inviteToBoard',
 	'EmployeeNotificationController.markAllAsRead',
 	'EmployeeNotificationController.softRecover',
 	'EmployeeNotificationController.softRemove',
@@ -405,6 +431,11 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'FavoriteController.softRecover',
 	'FavoriteController.softRemove',
 	'FavoriteController.update',
+	// InviteController: the caller's own invitations: the service reads the invitation by id AND the caller's own e-mail,
+	// still open and unexpired, before it accepts or refuses anything (invite.service.ts handleInvitationResponse). A role
+	// without ORG_INVITE_EDIT (Manager, Viewer, Candidate) has no other way to accept: an account that already exists
+	// accepts from its own session only (invite-accept.handler.ts requireSessionOfExistingAccount)
+	'InviteController.handleInvitationResponse',
 	// KeyResultUpdateController: user-owned progress updates: the author is stamped from the request; KeyResultUpdateService
 	// refuses to change, withdraw, restore or remove an update somebody else wrote unless the caller is a tenant admin, and
 	// the bulk removal removes the caller's own updates only (keyresult-update.service.ts assertCallerMayChange,
@@ -471,6 +502,14 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// TenantController: onboarding: a user without a tenant creates their own and becomes its SUPER_ADMIN
 	// (tenant.service.ts onboardTenant)
 	'TenantController.create',
+	// TwoFactorController: the caller's own two-factor authentication: each route reads RequestContext.currentUser() /
+	// currentUserId(), nothing in the body names a user, and a first-party session is required (assertFirstPartyRequest);
+	// turning it off and new recovery codes also need a current code (two-factor.controller.ts). Resetting another
+	// member's goes through resetForMember, behind ORG_USERS_EDIT
+	'TwoFactorController.confirm',
+	'TwoFactorController.disable',
+	'TwoFactorController.enroll',
+	'TwoFactorController.regenerateRecoveryCodes',
 	// UserApiTokenController: own personal API tokens: a token is exchanged for a session with exactly its user's
 	// role and permissions, so it grants nothing the caller does not hold already. Each write states the caller's
 	// own user id (another user's token id is a 404), only a first-party session may make or revoke one (a

@@ -2,7 +2,8 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { IDocument } from '@gauzy/contracts';
 
 /**
- * `Updated` cell — one truncating line plus the full timestamp in a tooltip.
+ * `Updated` cell — date and time ("Nov 16, 2026, 3:43 PM") on one truncating line,
+ * the full timestamp in a tooltip.
  */
 @Component({
 	selector: 'gz-docs-updated-cell',
@@ -19,7 +20,7 @@ import { IDocument } from '@gauzy/contracts';
 			}
 			.docs-updated {
 				display: block;
-				width: var(--docs-updated-cell-width, 9.5rem);
+				width: var(--docs-updated-cell-width, 9rem);
 				max-width: 100%;
 				overflow: hidden;
 				text-overflow: ellipsis;
@@ -58,7 +59,7 @@ export class UpdatedCellComponent {
 		const valid = !!date && !Number.isNaN(date.getTime());
 		this.cache = {
 			raw,
-			display: valid ? date.toLocaleString() : '',
+			display: valid ? date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '',
 			tooltip: valid ? date.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'medium' }) : ''
 		};
 		return this.cache;

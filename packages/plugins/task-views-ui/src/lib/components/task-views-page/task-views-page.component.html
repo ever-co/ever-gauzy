@@ -10,16 +10,51 @@
 	</nb-card>
 } @else {
 	<div class="task-views" data-test="task-views-page">
-		<!-- The views switcher -->
-		<nav class="switcher" [attr.aria-label]="'TASK_VIEWS.SWITCHER.TITLE' | translate" data-test="views-switcher">
-			<div class="switcher-head">
-				<h5>{{ 'TASK_VIEWS.SWITCHER.TITLE' | translate }}</h5>
+		<!-- The open view's title, with the search and "New view" at the end. -->
+		<div class="page-head">
+			<div class="view-title">
+				<h4 data-test="view-title">
+					@if (builtInTitleKey(); as key) {
+						{{ key | translate }}
+					} @else {
+						{{ title() }}
+					}
+				</h4>
+				@if (savedView(); as view) {
+					<span class="badge" [class.personal]="view.visibility === 'personal'" data-test="view-visibility">
+						{{
+							(view.visibility === 'personal'
+								? 'TASK_VIEWS.VIEW.PERSONAL_BADGE'
+								: 'TASK_VIEWS.VIEW.SHARED_BADGE'
+							) | translate
+						}}
+						@if (viewScope() === 'team' || viewScope() === 'project') {
+							· {{ 'TASK_VIEWS.SWITCHER.' + viewScope()!.toUpperCase() | translate }}
+						}
+					</span>
+				}
+				@if (dirty()) {
+					<span class="unsaved" data-test="view-unsaved">{{ 'TASK_VIEWS.VIEW.UNSAVED' | translate }}</span>
+				}
+				<span class="count">{{ 'TASK_VIEWS.VIEW.COUNT' | translate: { count: total() } }}</span>
+			</div>
+			<div class="switcher-end">
+				@if (views().length > 8 || viewSearch()) {
+					<input
+						nbInput
+						fieldSize="small"
+						type="search"
+						class="switcher-search"
+						[placeholder]="'TASK_VIEWS.SWITCHER.SEARCH' | translate"
+						[ngModel]="viewSearch()"
+						(ngModelChange)="viewSearch.set($event)"
+					/>
+				}
 				@if (canAdd()) {
 					<button
 						nbButton
-						size="tiny"
+						size="small"
 						status="primary"
-						ghost
 						type="button"
 						data-test="new-view"
 						[disabled]="saving()"
@@ -29,90 +64,63 @@
 					</button>
 				}
 			</div>
-			@if (views().length > 8) {
-				<input
-					nbInput
-					fullWidth
-					fieldSize="tiny"
-					type="search"
-					class="switcher-search"
-					[placeholder]="'TASK_VIEWS.SWITCHER.SEARCH' | translate"
-					[ngModel]="viewSearch()"
-					(ngModelChange)="viewSearch.set($event)"
-				/>
-			}
-			<h6>{{ 'TASK_VIEWS.SWITCHER.BUILT_IN' | translate }}</h6>
-			<ul>
-				@for (key of builtInViews; track key) {
-					<li>
-						<a
-							[routerLink]="linkOf({ kind: 'built-in', key: key })"
-							routerLinkActive="active"
-							[attr.data-view]="key"
-							>{{ builtInKey(key) | translate }}</a
-						>
-					</li>
-				}
-			</ul>
-			@for (section of ['personal', 'team', 'project', 'organization']; track section) {
-				@if ($any(groupedViews())[section].length) {
-					<h6>{{ 'TASK_VIEWS.SWITCHER.' + section.toUpperCase() | translate }}</h6>
-					<ul>
-						@for (view of $any(groupedViews())[section]; track view.id) {
-							<li>
-								<a
-									[routerLink]="linkOf({ kind: 'saved', id: view.id })"
-									routerLinkActive="active"
-									[attr.data-view]="view.id"
-									>{{ view.name }}</a
-								>
-							</li>
-						}
-					</ul>
-				}
-			}
-			@if (!views().length) {
-				<p class="switcher-empty">{{ 'TASK_VIEWS.SWITCHER.EMPTY' | translate }}</p>
-			}
-		</nav>
+		</div>
 
 		<!-- The open view -->
 		<nb-card class="view" [nbSpinner]="loading()" nbSpinnerStatus="primary">
 			<nb-card-header class="view-head">
-				<div class="view-title">
-					<h4 data-test="view-title">
-						@if (current().kind === 'built-in') {
-							{{ builtInKey($any(current()).key) | translate }}
-						} @else {
-							{{ title() }}
-						}
-					</h4>
-					@if (savedView(); as view) {
-						<span
-							class="badge"
-							[class.personal]="view.visibility === 'personal'"
-							data-test="view-visibility"
-						>
-							{{
-								(view.visibility === 'personal'
-									? 'TASK_VIEWS.VIEW.PERSONAL_BADGE'
-									: 'TASK_VIEWS.VIEW.SHARED_BADGE'
-								) | translate
-							}}
-							@if (viewScope() === 'team' || viewScope() === 'project') {
-								· {{ 'TASK_VIEWS.SWITCHER.' + viewScope()!.toUpperCase() | translate }}
+				<!-- The views switcher: a dropdown grouped by section (built-in, then saved views by scope). -->
+				<nav
+					class="switcher"
+					[attr.aria-label]="'TASK_VIEWS.SWITCHER.TITLE' | translate"
+					data-test="views-switcher"
+				>
+					<nb-select
+						size="tiny"
+						class="switcher-select"
+						[attr.aria-label]="'TASK_VIEWS.SWITCHER.TITLE' | translate"
+						data-test="views-select"
+						[selected]="currentOption()"
+						(selectedChange)="selectView($event)"
+					>
+						<nb-option-group [title]="'TASK_VIEWS.SWITCHER.BUILT_IN' | translate">
+							@for (key of builtInViews; track key) {
+								<nb-option [value]="'built-in:' + key" [attr.data-view]="key">{{
+									builtInKey(key) | translate
+								}}</nb-option>
 							}
-						</span>
-					}
-					@if (dirty()) {
-						<span class="unsaved" data-test="view-unsaved">{{
-							'TASK_VIEWS.VIEW.UNSAVED' | translate
-						}}</span>
-					}
-					<span class="count">{{ 'TASK_VIEWS.VIEW.COUNT' | translate: { count: total() } }}</span>
-				</div>
+						</nb-option-group>
+						@for (section of viewSections(); track section.scope) {
+							<nb-option-group [title]="section.titleKey | translate">
+								@for (view of section.views; track view.id) {
+									<nb-option [value]="'saved:' + view.id" [attr.data-view]="view.id">{{
+										view.name
+									}}</nb-option>
+								}
+							</nb-option-group>
+						}
+						@if (!views().length) {
+							<nb-option-group [title]="'TASK_VIEWS.SWITCHER.EMPTY' | translate"></nb-option-group>
+						}
+					</nb-select>
+				</nav>
+				<!-- The selected tasks' actions, beside the view's title while a selection is open. -->
+				@if (selection().ids.length) {
+					<ngx-task-views-bulk-toolbar
+						class="view-bulk"
+						[count]="selection().ids.length"
+						[limit]="selectionLimit"
+						[options]="options()"
+						[busy]="busy()"
+						[canEdit]="canEdit()"
+						[canDelete]="canDeleteTasks() || canEdit()"
+						(applied)="applyBulk($event)"
+						(deleted)="deleteSelected()"
+						(cleared)="clearSelection()"
+					></ngx-task-views-bulk-toolbar>
+				}
 				<div class="view-actions">
-					<ngx-task-views-go-to-box size="small"></ngx-task-views-go-to-box>
+					<ngx-task-views-go-to-box size="tiny"></ngx-task-views-go-to-box>
 					<button
 						nbButton
 						ghost
@@ -400,20 +408,6 @@
 						}
 					}
 
-					@if (selection().ids.length) {
-						<ngx-task-views-bulk-toolbar
-							[count]="selection().ids.length"
-							[limit]="selectionLimit"
-							[options]="options()"
-							[busy]="busy()"
-							[canEdit]="canEdit()"
-							[canDelete]="canDeleteTasks() || canEdit()"
-							(applied)="applyBulk($event)"
-							(deleted)="deleteSelected()"
-							(cleared)="clearSelection()"
-						></ngx-task-views-bulk-toolbar>
-					}
-
 					@if (error()) {
 						<p class="error" role="alert">
 							{{ 'TASK_VIEWS.ERROR' | translate }}
@@ -445,23 +439,28 @@
 								(pageToggled)="onPageToggle($event)"
 							></ngx-task-views-task-list>
 						}
-						<div class="paging">
-							<span class="shown">{{
-								'TASK_VIEWS.LIST.SHOWING' | translate: { shown: items().length, total: total() }
-							}}</span>
+						<!-- Drawn as the Documents page's pager: the control on the left, "1 - N of M Items" on the right. The view
+						     loads more rather than turning pages, since a saved view pages by cursor. -->
+						<div class="paging" data-test="paging">
 							@if (hasMore()) {
 								<button
-									nbButton
-									size="small"
-									status="basic"
 									type="button"
+									class="pager-more"
 									data-test="load-more"
 									[disabled]="loadingMore() || loading()"
 									(click)="loadMore()"
 								>
+									<nb-icon icon="arrow-ios-downward-outline" aria-hidden="true"></nb-icon>
 									{{ 'TASK_VIEWS.LIST.LOAD_MORE' | translate }}
 								</button>
 							}
+							<span class="shown"
+								>{{
+									'TASK_VIEWS.LIST.SHOWING'
+										| translate: { shown: '1 - ' + items().length, total: total() }
+								}}
+								{{ 'PAGINATION.ITEMS' | translate }}</span
+							>
 						</div>
 					}
 				}
@@ -470,27 +469,34 @@
 	</div>
 
 	@if (undo(); as pending) {
-		<div class="undo-bar" role="status" aria-live="polite" data-test="undo-bar">
-			<span>{{ pending.messageKey | translate: pending.params }}</span>
+		<!-- After a bulk change: what changed, Undo, and close — drawn as the selection bar is. -->
+		<div class="undo-bar" role="status" aria-live="polite" data-test="undo-bar" [style.left.px]="contentCenter()">
+			<nb-icon class="undo-icon" icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+			<span class="undo-text">{{ pending.messageKey | translate: pending.params }}</span>
 			@if (pending.request) {
+				<span class="undo-divider" aria-hidden="true"></span>
 				<button
 					nbButton
 					size="small"
-					status="control"
+					ghost
 					type="button"
+					class="undo-action"
 					data-test="undo"
 					[disabled]="busy()"
 					(click)="undoLast()"
 				>
+					<nb-icon icon="undo-outline"></nb-icon>
 					{{ 'TASK_VIEWS.BULK.UNDO' | translate }}
 				</button>
 			}
+			<span class="undo-divider" aria-hidden="true"></span>
 			<button
 				nbButton
 				size="small"
 				ghost
-				status="control"
 				type="button"
+				class="undo-close"
+				[nbTooltip]="'TASK_VIEWS.DIALOG.CLOSE' | translate"
 				[attr.aria-label]="'TASK_VIEWS.DIALOG.CLOSE' | translate"
 				(click)="clearUndo()"
 			>

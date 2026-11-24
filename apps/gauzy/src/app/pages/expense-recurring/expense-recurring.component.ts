@@ -23,11 +23,11 @@ import {
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
-	IRecordViewSection,
+	IRecordViewScope,
 	RecurringExpenseDeleteConfirmationComponent,
+	RecurringExpenseHistoryDialogComponent,
 	RecurringExpenseMutationComponent
 } from '@gauzy/ui-core/shared';
-import { buildOrganizationRecurringExpenseViewSections } from './recurring-expense-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,7 +40,6 @@ import { buildOrganizationRecurringExpenseViewSections } from './recurring-expen
 export class ExpenseRecurringComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	selectedDateRange: IDateRangePicker;
 	expenses: IOrganizationRecurringExpense[] = [];
-	fetchedHistories: any = {};
 	loading: boolean;
 	organization: IOrganization;
 	expenses$: Subject<any> = new Subject();
@@ -52,13 +51,12 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 	};
 
 	/*
-	 * Read-only View: a recurring expense is a small record, so it opens in the
-	 * right-side drawer rather than on a page of its own.
+	 * Read-only View: the recurring expense opens in the right-side drawer, as
+	 * the quick look its own page shows; the drawer's expand icon leads there.
 	 */
 	viewedRecurringExpense: IOrganizationRecurringExpense;
-	viewSections: IRecordViewSection[] = [];
-
-	showHistory: boolean = false;
+	/** The organization the drawer reads the expense's history and month in. */
+	viewScope: IRecordViewScope = null;
 
 	constructor(
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService,
@@ -194,7 +192,10 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 			return;
 		}
 
-		this.viewSections = buildOrganizationRecurringExpenseViewSections(expense, (key) => this.getTranslation(key));
+		// As the list reads: the selected organization, in the signed-in user's tenant.
+		this.viewScope = this.organization
+			? { organizationId: this.organization.id, tenantId: this.organization.tenantId ?? this.store.user?.tenantId }
+			: null;
 		this.viewedRecurringExpense = expense;
 	}
 
@@ -247,7 +248,6 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 		const { startDate, endDate } = this.selectedDateRange;
 
 		try {
-			this.fetchedHistories = {};
 			this.expenses = (
 				await this.organizationRecurringExpenseService.getAllByMonth({
 					organizationId,
@@ -263,25 +263,45 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 		}
 	}
 
-	public async fetchHistory() {
-		this.showHistory = !this.showHistory;
-		this.fetchedHistories[this.selectedRecurringExpense.index] = (
-			await this.organizationRecurringExpenseService.getAll(
-				[],
-				{
-					parentRecurringExpenseId: this.selectedRecurringExpense.data.parentRecurringExpenseId
-				},
-				{
-					startDate: 'ASC'
+	/**
+	 * Opens the history of a recurring expense's amount in a dialog: every period of it, oldest first. The expense
+	 * is the one the block's menu was opened on, else the selected one.
+	 */
+	public async fetchHistory(recurringExpense?: IOrganizationRecurringExpense) {
+		const expense: IOrganizationRecurringExpense = recurringExpense ?? this.selectedRecurringExpense.data;
+		if (!expense || !this.organization) {
+			return;
+		}
+		try {
+			// Without a parent the expense was never split into periods: it is its own history. Reading by an
+			// empty parent would list every recurring expense of the organization.
+			const records = expense.parentRecurringExpenseId
+				? (
+						await this.organizationRecurringExpenseService.getAll(
+							[],
+							{
+								parentRecurringExpenseId: expense.parentRecurringExpenseId,
+								organizationId: this.organization.id,
+								tenantId: this.store.user?.tenantId
+							},
+							{ startDate: 'ASC' }
+						)
+				  ).items
+				: [expense];
+			this.dialogService.open(RecurringExpenseHistoryDialogComponent, {
+				context: {
+					records: records?.length ? records : [expense],
+					name: this.getCategoryName(expense.categoryName)
 				}
-			)
-		).items;
+			});
+		} catch (error) {
+			this.toastrService.danger(error?.error?.message || error?.message, 'Error');
+		}
 	}
 
 	selectRecurringExpense(recurringExpense: IOrganizationRecurringExpense, i: number) {
 		// Whatever the drawer is showing no longer matches the selection.
 		this.closeView();
-		this.showHistory = false;
 		this.selectedRecurringExpense =
 			this.selectedRecurringExpense.data && recurringExpense.id === this.selectedRecurringExpense.data.id
 				? {

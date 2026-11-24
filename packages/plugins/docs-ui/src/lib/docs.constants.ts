@@ -85,8 +85,8 @@ export const DOCS_PREVIEW_DIALOG_CONFIG: Partial<NbDialogConfig> = {
 	dialogClass: 'docs-preview-dialog'
 };
 
-/** localStorage key — tree column collapsed state. */
-export const DOCS_TREE_COLLAPSED_KEY = 'gauzy_docs_tree_collapsed';
+/** localStorage key — whether the filter bar's facet/date panel is open (closed by default). */
+export const DOCS_FILTER_PANEL_OPEN_KEY = 'gauzy_docs_filter_panel_open';
 
 /** localStorage key — per-user table column visibility (`01-ux-spec.md` §4.1). */
 export const DOCS_TABLE_COLUMNS_KEY = 'gauzy_docs_columns';

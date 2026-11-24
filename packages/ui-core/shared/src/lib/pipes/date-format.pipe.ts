@@ -15,7 +15,14 @@ import { Store } from '@gauzy/ui-core/core';
 export class DateFormatPipe implements PipeTransform {
 	private readonly store = inject(Store);
 
-	dateFormat: string = 'd MMMM, y';
+	/**
+	 * Used when the organization sets no format of its own. `LL` is the locale's long date ("January 15, 2024",
+	 * "15 janvier 2024"): the day of the month in the order the language writes it. The previous fallback,
+	 * `d MMMM, y`, used moment's `d`, which is the day of the WEEK, so a 15th rendered as "1 January".
+	 */
+	private static readonly FALLBACK_FORMAT = 'LL';
+
+	dateFormat: string = DateFormatPipe.FALLBACK_FORMAT;
 	regionCode: string = RegionsEnum.EN;
 	locale: string;
 
@@ -26,7 +33,7 @@ export class DateFormatPipe implements PipeTransform {
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => {
 					this.regionCode = organization.regionCode || RegionsEnum.EN;
-					this.dateFormat = organization.dateFormat || 'd MMMM, y';
+					this.dateFormat = organization.dateFormat || DateFormatPipe.FALLBACK_FORMAT;
 				}),
 				untilDestroyed(this)
 			)

@@ -41,6 +41,17 @@
 			{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate }}
 		</p>
 		} }
+		@if (!isCodeSent) {
+			@if (emailSuggestion) {
+			<p class="email-suggestion" aria-live="polite">
+				<button type="button" class="link-button" (click)="applyEmailSuggestion()">
+					{{ 'WORKSPACES.EMAIL_SUGGESTION' | translate : { email: emailSuggestion } }}
+				</button>
+			</p>
+			} @else if (descriptionText && !(email.invalid && email.touched && !email.pristine)) {
+			<p class="form-hint">{{ descriptionText | translate }}</p>
+			}
+		}
 	</div>
 
 	<!-- Code input -->
@@ -57,21 +68,39 @@
 		</p>
 	</div>
 	<div class="form-control-group">
-		<label class="label" for="input-code">{{ 'LOGIN_PAGE.LABELS.CODE' | translate }}</label>
-		<input
-			name="input-code"
-			id="input-code"
-			nbInput
-			fullWidth
-			formControlName="code"
-			[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.CODE' | translate"
-			[status]="code.dirty ? (code.invalid ? 'danger' : 'success') : 'basic'"
-			[attr.aria-invalid]="code.invalid && code.touched ? true : null"
-			[attr.maxlength]="codeLength"
-			[attr.autofocus]="isCodeSent ? true : null"
-			autocomplete="one-time-code"
-			inputmode="numeric"
-		/>
+		<label class="label" id="input-code-label" for="input-code">{{ 'LOGIN_PAGE.LABELS.CODE' | translate }}</label>
+		<!-- One box per character; the boxes write the joined code to the `code` control. -->
+		<div
+			class="code-boxes"
+			role="group"
+			aria-labelledby="input-code-label"
+			[class.invalid]="code.invalid && code.touched"
+			[style.--code-length]="codeLength"
+		>
+			@for (char of codeChars; track $index; let i = $index) {
+			<input
+				#codeBox
+				type="text"
+				class="code-box"
+				[attr.id]="i === 0 ? 'input-code' : null"
+				[attr.name]="i === 0 ? 'input-code' : null"
+				[value]="char"
+				[class.filled]="!!char"
+				[readonly]="isLoading"
+				[attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
+				[attr.aria-label]="'WORKSPACES.CODE_CHARACTER' | translate : { index: i + 1, total: codeLength }"
+				[attr.aria-invalid]="code.invalid && code.touched ? true : null"
+				inputmode="text"
+				autocapitalize="characters"
+				spellcheck="false"
+				(input)="onCodeInput(i, $event)"
+				(keydown)="onCodeKeydown(i, $event)"
+				(paste)="onCodePaste(i, $event)"
+				(focus)="onCodeFocus($event)"
+				(blur)="onCodeBlur($event)"
+			/>
+			}
+		</div>
 		@if (code.invalid && code.touched) {
 		<div role="alert" aria-live="polite">
 			@if (code.errors?.required) {
@@ -88,8 +117,14 @@
 			}
 		</div>
 		}
-		<!-- Resend Code Button & Text -->
+		<!-- Inbox shortcut, then Resend Code Button & Text -->
 		<p class="new-code-wrapper">
+			@if (inboxUrl) {
+			<a class="open-inbox" [href]="inboxUrl" target="_blank" rel="noopener noreferrer">
+				<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+				{{ 'WORKSPACES.OPEN_INBOX' | translate }}
+			</a>
+			}
 			@if (isCodeResent) {
 			<span class="request-new-code" role="status" aria-live="polite">
 				{{ 'LOGIN_PAGE.LOGIN_MAGIC.REQUEST_NEW_CODE_TITLE' | translate : { countdown: countdown } }}
@@ -120,7 +155,9 @@
 			<button
 				type="submit"
 				nbButton
-				size="tiny"
+				size="medium"
+				status="primary"
+				fullWidth
 				class="submit-btn"
 				[disabled]="form.invalid || isLoading"
 				[attr.aria-busy]="isLoading ? true : null"
@@ -137,7 +174,9 @@
 			<button
 				type="button"
 				nbButton
-				size="tiny"
+				size="medium"
+				status="primary"
+				fullWidth
 				class="submit-btn"
 				[disabled]="email.invalid || isLoading"
 				(click)="onSendCode()"

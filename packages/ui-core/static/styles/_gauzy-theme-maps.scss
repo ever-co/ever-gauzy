@@ -160,6 +160,9 @@ $gauzy-density: (
   // overlapped avatars need a ring to stay legible, and a ring is exactly the
   // per-person border this treatment exists to get rid of.
   gauzy-people-stack-gap: 0.125rem,
+  gauzy-people-stack-overlap: 0.3125rem,
+  gauzy-people-stack-ring-width: 0.125rem,
+  gauzy-people-more-padding-x: 0.3125rem,
   // Names truncate on WIDTH, never on a character count: anything shorter
   // than this renders in full, only genuinely long names get an ellipsis.
   gauzy-people-name-max-width: 8rem,
@@ -297,6 +300,63 @@ $gauzy-action-accents-dark: (
   gauzy-action-info-tint-strong: rgba(96, 165, 250, 0.2)
 );
 
+// ── Toolbar buttons ─────────────────────────────────────────────────────────
+// The selection actions on list pages (View / Edit / Archive …), the favourite
+// star and the layout switch. They are drawn exactly like the controls in the
+// top bar (the date-range picker and the organisation / project selectors), so
+// every value below is an ALIAS of the token the top bar already uses — no
+// colour of their own:
+//   surface      gauzy-card-1                 (the selector pills' fill)
+//   edge         gauzy-overlay-border-color   (their 1px hairline ring)
+//   hover        gauzy-hover-tint over the surface, ring to gauzy-active-tint
+//   pressed      gauzy-active-tint over the surface
+//   size         gauzy-header-control-height, gauzy-radius-sm
+// Each theme resolves these to its own values. The selected state (an active
+// layout segment, an `.action.primary.soft` toggle) is the primary tint with a
+// primary label, one shade darker on light canvases and lighter on dark ones so
+// it keeps 4.5:1 on the tint.
+//
+// The label colour is the one value split by canvas (below). These labels are
+// 11px text, so they owe 4.5:1 on the surface AND under the hover tint.
+//   light  rgba(97, 97, 112): the project grey one step darker, the same step
+//          `gauzy-chart-label` uses for small text. 6.1:1 on white, 5.3:1 on
+//          the hover tint, 4.8:1 on the pressed tint. `gauzy-text-color-2`
+//          (rgb(126, 126, 143) in default / corporate / material-light) is
+//          only ~4:1 on white and ~3.6:1 on hover.
+//   dark   70 % white: 6.1:1 to 9.4:1 at rest and on hover in every dark
+//          theme. The top bar's `gauzy-text-color-2` (50 % white) is only
+//          ~4:1 to 4.4:1 there (material-dark's #353535 card, cosmic, hover).
+//          It is set here, not in `material/_material-dark.scss`: themes.scss
+//          registers material-dark again with these maps merged on top.
+// Pressed switches to `text-basic-color` in the button rules themselves.
+$gauzy-toolbar: (
+  gauzy-toolbar-button-radius: gauzy-radius-sm,
+  gauzy-toolbar-button-height: gauzy-header-control-height,
+  gauzy-toolbar-button-background: gauzy-card-1,
+  gauzy-toolbar-button-border: gauzy-overlay-border-color,
+  gauzy-toolbar-button-hover-border: gauzy-active-tint,
+  gauzy-toolbar-button-hover-tint: gauzy-hover-tint,
+  gauzy-toolbar-button-active-tint: gauzy-active-tint,
+  gauzy-toolbar-segment-selected-background: gauzy-active-tint,
+  gauzy-toolbar-button-selected-background: color-primary-transparent-default
+);
+
+$gauzy-toolbar-light: map.merge(
+  $gauzy-toolbar,
+  (
+    gauzy-toolbar-button-text: rgba(97, 97, 112, 1),
+    gauzy-toolbar-button-selected-text: color-primary-600
+  )
+);
+
+$gauzy-toolbar-dark: map.merge(
+  $gauzy-toolbar,
+  (
+    gauzy-toolbar-button-text: rgba(255, 255, 255, 0.7),
+    gauzy-toolbar-button-selected-text: color-primary-300
+  )
+);
+
 $gauzy-menu-scrollbar-light: (
   gauzy-menu-scrollbar-track: rgba(126, 126, 143, 0.08),
   gauzy-menu-scrollbar-thumb: rgba(126, 126, 143, 0.55),
@@ -367,17 +427,23 @@ $gauzy-chart-series-dark: (
 // the dark accent set depending on the canvas they paint.
 $gauzy-shared-light: map.merge(
   map.merge(
-    map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons()),
-    $gauzy-menu-scrollbar-light
+    map.merge(
+      map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons()),
+      $gauzy-menu-scrollbar-light
+    ),
+    $gauzy-chart-series-light
   ),
-  $gauzy-chart-series-light
+  $gauzy-toolbar-light
 );
 $gauzy-shared-dark: map.merge(
   map.merge(
-    map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons()),
-    $gauzy-menu-scrollbar-dark
+    map.merge(
+      map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons()),
+      $gauzy-menu-scrollbar-dark
+    ),
+    $gauzy-chart-series-dark
   ),
-  $gauzy-chart-series-dark
+  $gauzy-toolbar-dark
 );
 
 // ── Canvas token sets for themes that do not define their own ───────────────

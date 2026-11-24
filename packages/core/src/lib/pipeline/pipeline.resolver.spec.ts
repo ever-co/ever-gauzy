@@ -7,15 +7,17 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { ExecutionContext, NotFoundException, ValidationPipe } from '@nestjs/common';
+import { PIPES_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
-import { buildSchema, printSchema } from 'graphql';
+import { buildSchema, graphql, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { UpdatePipelineDTO } from './dto';
 import { PipelineController } from './pipeline.controller';
-import { PipelineResolver } from './pipeline.resolver';
+import { IUpdatePipelineInput, PipelineResolver } from './pipeline.resolver';
 
 /**
  * The sales pipeline over GraphQL.
@@ -435,6 +437,91 @@ describe('PipelineResolver — one concept, two protocols, the same operations',
 
 		expect(await resolver.recoverPipeline(FIRST)).toBe(ROWS[0]);
 		expect(pipelineService.softRecover).toHaveBeenCalledWith(FIRST);
+	});
+});
+
+/**
+ * The body `PUT /pipelines/:id` hands its handler, through the validation pipe the route declares. Its
+ * validators are stubbed: the organization ones read the database, and the body's keys are what is
+ * under test.
+ */
+async function throughUpdateRoute(body: object): Promise<UpdatePipelineDTO> {
+	const pipes: unknown[] = Reflect.getMetadata(PIPES_METADATA, PipelineController.prototype.update) ?? [];
+	const pipe = pipes.find((it) => it instanceof ValidationPipe) as ValidationPipe;
+	jest.spyOn(pipe as unknown as { validate(): Promise<unknown[]> }, 'validate').mockResolvedValue([]);
+
+	return await pipe.transform(body, { type: 'body', metatype: UpdatePipelineDTO, data: undefined });
+}
+
+/** Runs `updatePipeline` through the schema, so the input reaches the resolver as GraphQL coerces it. */
+async function throughUpdateMutation(resolver: PipelineResolver, input: object): Promise<void> {
+	const result = await graphql({
+		schema,
+		source: 'mutation Update($input: UpdatePipelineInput!) { updatePipeline(input: $input) { id } }',
+		variableValues: { input },
+		rootValue: {
+			updatePipeline: (args: { input: IUpdatePipelineInput }) => resolver.updatePipeline(args.input)
+		}
+	});
+
+	expect(result.errors).toBeUndefined();
+}
+
+/** The values the first edit handed the service, beside the pipeline's identifier. */
+function valuesOfUpdate(pipelineService: ReturnType<typeof surfaces>['pipelineService']): object {
+	const [id, values] = pipelineService.update.mock.calls[0];
+	expect(id).toBe(FIRST);
+
+	return values;
+}
+
+/**
+ * The service keeps a pipeline's stages when the edit has no `stages` key and replaces them when it
+ * has one, `stages: []` included, so neither protocol may add the key or drop it on the way.
+ */
+describe('PipelineResolver: an edit reaches the service with the stages it states, over both protocols', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it('hands the service no stages key when a REST body leaves them out', async () => {
+		const { pipelineService } = surfaces();
+		const controller = new PipelineController(pipelineService as never);
+
+		const body = await throughUpdateRoute({ organizationId: ORGANIZATION, name: 'Inbound 2026' });
+		await controller.update(FIRST, body);
+
+		const values = valuesOfUpdate(pipelineService);
+		expect(values).toEqual({ organizationId: ORGANIZATION, name: 'Inbound 2026' });
+		expect(values).not.toHaveProperty('stages');
+	});
+
+	it('hands the service the empty stage list a REST body states', async () => {
+		const { pipelineService } = surfaces();
+		const controller = new PipelineController(pipelineService as never);
+
+		const body = await throughUpdateRoute({ organizationId: ORGANIZATION, name: 'Inbound', stages: [] });
+		await controller.update(FIRST, body);
+
+		expect(valuesOfUpdate(pipelineService)).toEqual({ organizationId: ORGANIZATION, name: 'Inbound', stages: [] });
+	});
+
+	it('hands the service no stages key when a mutation leaves them out', async () => {
+		const { resolver, pipelineService } = surfaces();
+
+		await throughUpdateMutation(resolver, { id: FIRST, name: 'Inbound 2026' });
+
+		const values = valuesOfUpdate(pipelineService);
+		expect(values).toEqual({ name: 'Inbound 2026' });
+		expect(values).not.toHaveProperty('stages');
+	});
+
+	it('hands the service the empty stage list a mutation states', async () => {
+		const { resolver, pipelineService } = surfaces();
+
+		await throughUpdateMutation(resolver, { id: FIRST, name: 'Inbound', stages: [] });
+
+		expect(valuesOfUpdate(pipelineService)).toEqual({ name: 'Inbound', stages: [] });
 	});
 });
 

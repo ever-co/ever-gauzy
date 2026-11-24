@@ -1,6 +1,8 @@
-import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { IsNull, LessThan, Not } from 'typeorm';
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '@gauzy/core';
 import { LinearConfig } from '../linear-config';
 import { linearSyncUser, runInLinearContext } from '../linear-process';
 import { LinearSyncRunService } from '../linear-sync-run.service';
@@ -29,6 +31,9 @@ export interface LinearImportSweepOutcome {
  * same incremental read "import now" makes — so a connection without a public address for webhooks still follows
  * Linear; every fourth interval (`LINEAR_IMPORT_WEBHOOK_STRIDE`) when the application takes webhooks (`LINEAR_WEBHOOK_SECRET`), a reconcile against deliveries that were missed. A mapping never imported is due at once.
  *
+ * **A sweep runs in no MikroORM request context.** Under DB_ORM=mikro-orm the sync writes through MikroORM,
+ * which refuses its global EntityManager outside one: each import and each notice filed again runs in one of its own.
+ *
  * **A sweep has no caller and therefore no tenant in context.** The due mappings are read across tenants with the
  * plain repository, their connections with the tenant-less lookup, and each import opens the request context of its
  * own tenant and organization (signed in as the sync's user) before anything that reads the context runs — the
@@ -55,7 +60,9 @@ export class LinearImportSweepService {
 		private readonly tenants: LinearTenantService,
 		private readonly runs: LinearSyncRunService,
 		private readonly sync: LinearSyncService,
-		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig
+		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig,
+		/** Opens the MikroORM request context each import and each notice runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/** Imports every mapping that is due, the longest waiting first, and says what happened. */
@@ -69,7 +76,7 @@ export class LinearImportSweepService {
 		outcome.due = batch.length;
 		for (const { tenant, mapping } of batch) {
 			try {
-				if (await this.importOne(tenant, mapping)) outcome.imported += 1;
+				if (await runInMikroOrmContext(this.orm, () => this.importOne(tenant, mapping))) outcome.imported += 1;
 				else outcome.skipped += 1;
 			} catch (error) {
 				outcome.failed += 1;
@@ -107,7 +114,7 @@ export class LinearImportSweepService {
 		let filed = 0;
 		for (const tenant of await this.tenants.findRefusedUnfiled()) {
 			try {
-				await this.tenants.ensureAttentionFiled(tenant);
+				await runInMikroOrmContext(this.orm, () => this.tenants.ensureAttentionFiled(tenant));
 				filed += 1;
 			} catch (error) {
 				this.logger.warn(`The attention of connection ${tenant.id} could not be filed from the sweep: ${error instanceof Error ? error.message : String(error)}`);

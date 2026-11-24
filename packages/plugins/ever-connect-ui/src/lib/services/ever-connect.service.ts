@@ -12,6 +12,7 @@ export interface EverConnectStatus {
 	enabled: true;
 	install_source: string;
 	managed_by: 'ever_cloud' | 'operator';
+	/** The operator of this installation's connection (on Ever's cloud: a super admin the deployment lists by id). */
 	operator: boolean;
 	connected: boolean;
 	connection: {
@@ -30,10 +31,23 @@ export interface EverConnectStatus {
 		secret_short: boolean;
 		connect_key: 'none' | 'ok' | 'unreadable';
 		env_code: 'none' | 'pending' | 'used';
+		/** The installation's address: whether "Installation address" is enabled, and the address reported. */
+		instance_url?: { enabled: boolean; url: string | null };
 	} | null;
+	/** The installation's linked organizations, newest first (for the operator only). */
+	installation_links: { total: number; items: EverConnectInstallationLink[] } | null;
 	link: EverConnectLink | null;
 	pending_approvals: EverConnectIntegration[];
 	in_product_consent: boolean;
+}
+
+/** One link of the installation on the operator's Connection tab (the Ever side only). */
+export interface EverConnectInstallationLink {
+	link_id: string;
+	ever_org_id: string;
+	handle: string | null;
+	status: 'linked' | 'suspended' | 'orphaned';
+	linked_at: string;
 }
 
 export interface EverConnectLink {
@@ -139,6 +153,14 @@ export interface EverConnectAuditRow {
 	scope: 'instance' | 'organization';
 }
 
+/** `GET /api/ever-connect/probe`: answered to the operator of the installation's connection only (404 otherwise). */
+export interface EverConnectProbe {
+	loaded: true;
+	managed_by: 'ever_cloud' | 'operator';
+	status: ConnectionStatus;
+	connected: boolean;
+}
+
 /** The Ever Platform routes of the API. Every route of the organization side takes `organizationId`. */
 @Injectable({ providedIn: 'root' })
 export class EverConnectUiService {
@@ -146,6 +168,11 @@ export class EverConnectUiService {
 
 	private org(organizationId?: string | null): { params: HttpParams } {
 		return { params: organizationId ? new HttpParams().set('organizationId', organizationId) : new HttpParams() };
+	}
+
+	/** The menu probe: 404 where the module is not loaded or for anyone but the operator. */
+	probe(): Observable<EverConnectProbe> {
+		return this.http.get<EverConnectProbe>(`${BASE}/probe`);
 	}
 
 	status(organizationId?: string | null): Observable<EverConnectStatus> {
@@ -223,6 +250,16 @@ export class EverConnectUiService {
 	/** Replaces the connect key (the installation stays connected). */
 	rotateKey(): Observable<{ kid: string }> {
 		return this.http.post<{ kid: string }>(`${BASE}/connection/rotate-key`, {});
+	}
+
+	/** Reports the installation's public address the operator typed (once "Installation address" is enabled). */
+	setPublicUrl(url: string): Observable<{ enabled: boolean; url: string | null }> {
+		return this.http.put<{ enabled: boolean; url: string | null }>(`${BASE}/public-url`, { url });
+	}
+
+	/** Withdraws the reported address. */
+	clearPublicUrl(): Observable<{ enabled: boolean; url: string | null }> {
+		return this.http.delete<{ enabled: boolean; url: string | null }>(`${BASE}/public-url`);
 	}
 
 	disconnect(): Observable<{ status: ConnectionStatus }> {

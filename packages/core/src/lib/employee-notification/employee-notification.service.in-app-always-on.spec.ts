@@ -21,7 +21,7 @@ describe('EmployeeNotificationService.create — in-app is always on', () => {
 		mention: false,
 		comment: false,
 		message: false,
-		preferences: { taskUpdate: false, timerReminderHours: null }
+		preferences: { taskUpdate: false, timerReminderHours: null, taskDueReminderHours: null }
 	} as IEmployeeNotificationSetting;
 
 	function serviceWith(setting: IEmployeeNotificationSetting | 'missing') {
@@ -60,7 +60,11 @@ describe('EmployeeNotificationService.create — in-app is always on', () => {
 		EmployeeNotificationTypeEnum.MESSAGE,
 		EmployeeNotificationTypeEnum.TASK_UPDATE,
 		EmployeeNotificationTypeEnum.TIMER_REMINDER,
-		EmployeeNotificationTypeEnum.INVOICE
+		EmployeeNotificationTypeEnum.INVOICE,
+		EmployeeNotificationTypeEnum.MEETING,
+		EmployeeNotificationTypeEnum.TASK_DUE_REMINDER,
+		EmployeeNotificationTypeEnum.BOARD_SHARE,
+		EmployeeNotificationTypeEnum.BOARD_MENTION
 	])('saves a %s notification for a receiver who switched the kind off, and tells the listeners', async (type) => {
 		const { service, saved, eventBus } = serviceWith(ALL_OFF);
 
@@ -112,5 +116,48 @@ describe('EmployeeNotificationService.create — in-app is always on', () => {
 			service.create({ type: 'NotAType', receiverEmployeeId: RECEIVER, organizationId: 'org', tenantId: 'ten' } as never)
 		).rejects.toBeInstanceOf(BadRequestException);
 		expect(saved).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * A notification can carry what must not reach the application log (a Board's link holds its encryption key in its
+ * `#` part): a failed insert is logged as the statement and the driver's answer, never with the values it bound.
+ */
+describe('EmployeeNotificationService.create — a failed insert', () => {
+	it('is logged without the values it bound, and refused', async () => {
+		const service = new EmployeeNotificationService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ metadata: { tableName: 'employee_notification', hasColumnWithPropertyPath: () => true } } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ findByEmployee: jest.fn(async () => ({})) } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ publish: jest.fn() } as any
+		);
+		const link = 'https://boards.example/#room=r00m,secret-key';
+		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockRejectedValue(
+			Object.assign(new Error('value too long for type character varying(255)'), {
+				name: 'QueryFailedError',
+				query: 'INSERT INTO "employee_notification" …',
+				parameters: ['Ana shared a Board with you', JSON.stringify({ board: { roomId: 'r00m', link } })],
+				driverError: { code: '22001' }
+			})
+		);
+		const logged = jest.spyOn(service.logger, 'error').mockImplementation(() => undefined);
+
+		await expect(
+			service.create({
+				type: EmployeeNotificationTypeEnum.BOARD_SHARE,
+				receiverEmployeeId: 'employee-receiver',
+				organizationId: 'org',
+				tenantId: 'ten',
+				metadata: { board: { roomId: 'r00m', link } }
+			} as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(logged).toHaveBeenCalled();
+		expect(JSON.stringify(logged.mock.calls)).not.toContain('secret-key');
+		jest.restoreAllMocks();
 	});
 });

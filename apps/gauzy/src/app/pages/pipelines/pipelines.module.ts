@@ -16,7 +16,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SmartDataViewLayoutModule, CardGridModule, SharedModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, CardGridModule, RecordViewModule, SharedModule } from '@gauzy/ui-core/shared';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
@@ -29,6 +29,7 @@ import { PipelineDealProbabilityComponent } from './table-components/pipeline-de
 import { StageComponent } from './stage/stage.component';
 import { PipelinesRouting } from './pipelines.routing';
 import { PipelinesComponent } from './pipelines.component';
+import { PipelineViewPageComponent } from './pipeline-view/pipeline-view-page.component';
 
 @NgModule({
 	declarations: [
@@ -38,6 +39,7 @@ import { PipelinesComponent } from './pipelines.component';
 		PipelineDealsComponent,
 		PipelineFormComponent,
 		PipelinesComponent,
+		PipelineViewPageComponent,
 		StageFormComponent,
 		StageComponent
 	],
@@ -71,6 +73,8 @@ import { PipelinesComponent } from './pipelines.component';
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
 		NbTabsetModule,
+		// The shared read-only record page and renderer the pipeline's own page is built on.
+		RecordViewModule,
 		// The deals board: a standalone view of a pipeline's deals, one column per stage.
 		PipelineDealsBoardComponent
 	],

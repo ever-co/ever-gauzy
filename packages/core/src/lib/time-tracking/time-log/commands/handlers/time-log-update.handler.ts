@@ -1,8 +1,8 @@
-import { Logger, NotFoundException, Optional } from '@nestjs/common';
+import { ConflictException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
-import { Brackets, DataSource, Repository } from 'typeorm';
-import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { Brackets, DataSource, EntityManager, FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
+import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands/time-slot-bulk-delete.command';
@@ -14,9 +14,9 @@ import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
-import { postsHeartbeatSlots } from '../../tracker-source';
+import { postsHeartbeatSlots, takesRangeSlotsOnStop } from '../../tracker-source';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
-import { TimeLogUpdateCommand } from '../time-log-update.command';
+import { TimeLogUpdateCommand, TimeLogUpdateOptions } from '../time-log-update.command';
 import { FindTimeLogRatesCommand, TimeLogRatesPart } from '../find-time-log-rates.command';
 import { updatedChange } from '../../time-log-history';
 import {
@@ -25,9 +25,18 @@ import {
 	recordTimeLogHistory,
 	TimeLogHistoryOptions
 } from '../../time-log-history.writer';
+import {
+	assertTimeLogUnchangedSince,
+	ITimeLogPrecondition,
+	moveUpdatedAtPast,
+	timeLogExpectedUpdatedAtOf,
+	withoutPrecondition
+} from '../../time-log-precondition';
+import { writeTimeLogTags } from '../../time-log-tags';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
+import { factOfUpdatedLog, TimeLogFactEntryReader, TimeLogFactsService } from '../../time-log-facts.service';
 
 /**
  * Input keys that decide WHERE a time log lives. They are never taken from the input.
@@ -65,6 +74,93 @@ export function omitScopeFields<T extends object>(input: T): Partial<T> {
 	return changes;
 }
 
+/** The employee's slots at the starts of a log's range: where a write of that range reads them. */
+interface IRangeSlotsAt {
+	tenantId: ID;
+	organizationId: ID;
+	employeeId: ID;
+	/** The range's slot starts, each a whole minute. */
+	starts: Date[];
+}
+
+/**
+ * Whether a slot, as a lookup with its logs answers it, is held by the log. Under MikroORM a slot's time logs are a
+ * collection, iterable but without array methods.
+ */
+function holdsSlot(timeLog: ITimeLog, slot: ITimeSlot): boolean {
+	return Array.from(slot.timeLogs ?? []).some((log) => log.id === timeLog.id);
+}
+
+/** The whole minute a slot starts in, as the lookups of a range's slots read it (see `minuteRange`). */
+function slotMinute(slot: Pick<ITimeSlot, 'startedAt'>): number {
+	return moment(slot.startedAt).startOf('minute').valueOf();
+}
+
+/**
+ * The employee's slots at a range's starts, as read before a write of that range, in plain values: the ids of those
+ * slots, and the ids and start minutes of the ones the log held (see `giveRangeSlotsBack`).
+ */
+interface IRangeSlotsBefore {
+	ids: Set<ID>;
+	heldIds: Set<ID>;
+	heldMinutes: Set<number>;
+}
+
+/** The plain values of the slots read before a write of a range (see `IRangeSlotsBefore`). */
+function rangeSlotsBefore(timeLog: ITimeLog, slots: ITimeSlot[]): IRangeSlotsBefore {
+	const held = slots.filter((slot) => holdsSlot(timeLog, slot));
+	return {
+		ids: new Set(slots.map((slot) => slot.id)),
+		heldIds: new Set(held.map((slot) => slot.id)),
+		heldMinutes: new Set(held.map(slotMinute))
+	};
+}
+
+/** The code of the refusal of a stop whose run another start or stop stopped since it was read. */
+export const TIME_LOG_NO_LONGER_RUNNING = 'TIME_LOG_NO_LONGER_RUNNING';
+
+/**
+ * Whether a row a stop's write found no longer running was stopped by this same stop: an earlier try of it wrote the
+ * row, then a later step failed, and this is the try that completes it (`TimerService.stopReplacedRun`). Another start
+ * or stop ends the run somewhere else. The row must still hold the range this stop writes: its end, and its start when
+ * the stop names one. An edit that moved the start since leaves no try to complete, as the slots of this stop's range
+ * would no longer be the row's.
+ *
+ * @param current - The row as stored now, if any.
+ * @param changes - The stop.
+ */
+function isStoppedByThisStop(current: ITimeLog | null, changes: Partial<ITimeLog>): boolean {
+	const isStopped = Boolean(current) && !current.isRunning;
+	const namesItsEnd = changes?.stoppedAt != null;
+	const keepsItsEnd = namesItsEnd && isSameInstant(current?.stoppedAt, changes.stoppedAt);
+	const keepsItsStart = changes?.startedAt == null || isSameInstant(current?.startedAt, changes.startedAt);
+	return isStopped && keepsItsEnd && keepsItsStart;
+}
+
+/** Whether two stored instants are the same one, both missing included. */
+function isSameInstant(a: Date | string | null | undefined, b: Date | string | null | undefined): boolean {
+	if (a == null || b == null) {
+		return a == null && b == null;
+	}
+	return new Date(a).getTime() === new Date(b).getTime();
+}
+
+/**
+ * A log's time slot links alone, as a save writes them: the slots given become its join rows, and a column the object
+ * leaves out is left as stored (TypeORM's save skips an undefined property).
+ *
+ * @param id - The log.
+ * @param timeSlots - The slots it holds from now on.
+ */
+function slotLinksOf(id: ID, timeSlots: ITimeSlot[]): ITimeLog {
+	return { id, timeSlots } as ITimeLog;
+}
+
+/** The fields a write stores: one written as undefined is left as stored (TypeORM skips it), so it changes nothing. */
+function definedFieldsOf(written: Partial<ITimeLog>): Partial<ITimeLog> {
+	return Object.fromEntries(Object.entries(written).filter(([, value]) => value !== undefined)) as Partial<ITimeLog>;
+}
+
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
 	protected ormType: MultiORM = getORMType();
@@ -77,7 +173,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly timeSlotService: TimeSlotService,
 		// Records the history of a change a person makes; a handler built without it writes as before.
-		@Optional() private readonly dataSource?: DataSource
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes the entry's fact for the webhooks; a handler built without it writes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -92,7 +190,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
-		const { id, input, manualTimeSlot, forceDelete = false, history } = command;
+		const { id, input, manualTimeSlot, forceDelete = false, history, stopsRun = false, options = {} } = command;
+		// The edit's fact, for the webhooks
+		const fact = factOfUpdatedLog(stopsRun);
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
 
@@ -104,7 +204,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		// the log at another tenant (GHSA-6qvm-3wg4-26w4).
 		const { employeeId: previousEmployeeId, organizationId, tenantId, timesheetId: previousTimesheetId } = timeLog;
 		debugInDevelopment(this.logger, () => `Tenant ID: ${tenantId}`);
-		const changes = omitScopeFields(input);
+		// The precondition an edit states (`expectedUpdatedAt`, ever-co/ever-teams#5382) comes with its input: it is
+		// checked under the entry's lock, in the write's transaction (`writeWithHistory`), and never written.
+		const expectedUpdatedAt = timeLogExpectedUpdatedAtOf((input as ITimeLogPrecondition).expectedUpdatedAt);
+		const changes = withoutPrecondition(omitScopeFields(input));
 
 		// A project, task, client or team the update names is a row of the log's tenant (see time-log-references.ts)
 		await assertTimeLogReferencesOfTenant(this.typeOrmTimeLogRepository, changes, tenantId);
@@ -182,7 +285,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				timeLog,
 				history,
 				(repository) => this.saveUpdatedTimeLog(timeLog, repository),
-				true
+				true,
+				expectedUpdatedAt,
+				options,
+				fact
 			);
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
@@ -199,41 +305,88 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 			// Update the time log in the repository
 			const logId = timeLog.id;
+			// The timer's stop of a run it read as running (`stopsRun`) writes only while the row still runs, whatever
+			// the read above found: another start or stop may have stopped it since, one that took the employee's timer
+			// turn over once this one outlived it (ever-co/ever-gauzy#11826), and its end is the one that stands. A stop
+			// that names the run's start (`stopReplacedRun`, `closeRunCreatedLate`) writes only while the run still
+			// starts there, as the start move writes only from the start it checked: a move that went through since
+			// keeps its start, and the stop is refused below.
+			const where: FindOptionsWhere<TimeLog> = { id: logId, tenantId };
+			if (stopsRun) {
+				where.isRunning = true;
+				if (changes.startedAt != null) {
+					where.startedAt = changes.startedAt;
+				}
+			}
 			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
 			// no row to answer or to give slots to.
-			await this.writeWithHistory(
-				stored,
-				changes,
-				history,
-				(repository) =>
-					repository.update(
-						{ id: logId, tenantId },
-						{
+			// `slotsOfRange`: the slots of the new range, when the update gives the log those (see `writeWithRangeSlots`)
+			const writeUpdate = (slotsOfRange?: ITimeSlot[]) =>
+				this.writeWithHistory(
+					stored,
+					changes,
+					history,
+					async (repository) => {
+						const result = await repository.update(where, {
 							...changes,
 							...(timesheet ? { timesheetId: timesheet.id } : {}),
 							...rates
+						});
+						// An edit under a precondition (ever-co/ever-teams#5382) also writes its slot links here, under
+						// the entry's lock: written after the lock is released, they would replace the links of an edit
+						// saved in between with this edit's range
+						if (expectedUpdatedAt && slotsOfRange) {
+							await this.saveUpdatedTimeLog(slotLinksOf(logId, slotsOfRange), repository);
 						}
-					),
-				true
-			);
+						const isFencedOut = stopsRun && result?.affected === 0;
+						if (!isFencedOut) {
+							return result;
+						}
+						// A row this same stop wrote on an earlier try is completed: the rest of the stop goes on
+						const current = await repository.findOneBy({ id: logId, tenantId });
+						if (isStoppedByThisStop(current, changes)) {
+							return result;
+						}
+						// Stopped by another start or stop: nothing written, the slots of the range are given back
+						// (`writeWithRangeSlots`), and the stop is refused
+						throw new ConflictException({
+							message: 'This timer was already stopped by another start or stop.',
+							code: TIME_LOG_NO_LONGER_RUNNING
+						});
+					},
+					true,
+					expectedUpdatedAt,
+					options,
+					fact
+				);
+
+			// The time slots of the new range, for the web and embedded timers and a heartbeat-posting run with none
+			// (takesRangeSlots, above), are created and linked to the log BEFORE the update writes that range (see
+			// `writeWithRangeSlots`). The answer is every slot of the employee at those starts — the ones created and the
+			// ones they already had there (another of their logs may share a ten-minute slot) — and, as
+			// TimeLogCreateHandler does, it becomes the log's slots below.
+			let rangeSlots: ITimeSlot[] = [];
+			if (takesRangeSlots) {
+				rangeSlots = await this.writeWithRangeSlots(
+					updateTimeSlots,
+					timeLog,
+					employeeId,
+					organizationId,
+					tenantId,
+					writeUpdate
+				);
+			} else {
+				await writeUpdate();
+			}
 
 			// Retrieve the updated time log
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 
 			if (needToUpdateTimeSlots) {
-				// Create new time slots if needed for Web Timer, and for a heartbeat-posting run that has none
-				// (takesRangeSlots, above). The answer is every slot of the employee at those starts — the ones created
-				// and the ones they already had there (another of their logs may share a ten-minute slot) — and, as
-				// TimeLogCreateHandler does, it becomes the log's slots, so the save links the log to each of them, an
+				// The slots of its range become the log's slots, so the save keeps the log linked to each of them, an
 				// existing slot included.
 				if (takesRangeSlots) {
-					timeLog.timeSlots = await this.bulkCreateTimeSlots(
-						updateTimeSlots,
-						timeLog,
-						employeeId,
-						organizationId,
-						tenantId
-					);
+					timeLog.timeSlots = rangeSlots;
 				}
 
 				// Update the time log in the repository (a failure propagates, before any slot is released). An update
@@ -241,7 +394,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				// nothing to save that the targeted update above did not write, and saving the row read back would
 				// write every column a concurrent call changed since (a timer stop's `isRunning` and `stoppedAt`
 				// included) back to what it read.
-				if (!manualTimeSlot) {
+				// An edit under a precondition (ever-co/ever-teams#5382) saves nothing here, for the same reason: its
+				// columns and its slot links were written under the entry's lock (`writeUpdate`), and this save runs
+				// after that lock is released, so an edit saved in between would otherwise be written over although
+				// both checked theirs.
+				if (!manualTimeSlot && !expectedUpdatedAt) {
 					await this.saveUpdatedTimeLog(timeLog);
 				}
 			}
@@ -273,15 +430,21 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 		// Return the updated time log
 		const updatedTimeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
+		// Where the outbox cannot share the write's transaction, the fact comes last, once every write went through:
+		// a try that fails writes no fact, and the try that completes a stop writes its one fact.
+		if (!this.appendsFactsWithinWrites()) {
+			await this.facts?.record(fact, updatedTimeLog);
+		}
 
 		return updatedTimeLog;
 	}
 
 	/**
-	 * Whether an update gives the log the time slots of its range. The web timer posts none, so its runs always get
-	 * them. A run of a client that posts a slot on each heartbeat (`postsHeartbeatSlots`) gets them only when it has
-	 * none, one that never sent a heartbeat, which the day's worked time otherwise leaves out (#11843); one that has
-	 * slots keeps those it posted. Desktop and the other trackers post their own.
+	 * Whether an update gives the log the time slots of its range. The web timer and the embedded timers
+	 * (`takesRangeSlotsOnStop`) post none, so their runs always get them. A run of a client that posts a slot on each
+	 * heartbeat (`postsHeartbeatSlots`) gets them only when it has none, one that never sent a heartbeat, which the
+	 * day's worked time otherwise leaves out (#11843); one that has slots keeps those it posted. Desktop and the other
+	 * trackers post their own.
 	 *
 	 * @param timeLog - The log as the update will store it: the stored row with the update's changes on top.
 	 */
@@ -290,7 +453,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		if (timeLog.logType === TimeLogType.BREAK) {
 			return false;
 		}
-		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+		if (takesRangeSlotsOnStop(timeLog.source)) {
 			return true;
 		}
 		if (!postsHeartbeatSlots(timeLog.source)) {
@@ -521,19 +684,22 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param organizationId - The organization.
 	 * @param employeeId - The employee.
 	 * @param startTimes - The slot start times.
+	 * @param refresh - Whether MikroORM reads the slots and their logs again even when its context holds them: after
+	 * writes made through TypeORM in the same request, as the links a write of a range makes (#11889).
 	 * @returns The slots found.
 	 */
 	private async findTimeSlots(
 		tenantId: ID,
 		organizationId: ID,
 		employeeId: ID,
-		startTimes: Date[]
+		startTimes: Date[],
+		refresh = false
 	): Promise<ITimeSlot[]> {
 		const minutes = startTimes.map(minuteRange);
 		const slots: ITimeSlot[] = [];
 		for (let first = 0; first < minutes.length; first += MINUTES_PER_LOOKUP) {
 			const batch = minutes.slice(first, first + MINUTES_PER_LOOKUP);
-			slots.push(...(await this.findTimeSlotsInMinutes(tenantId, organizationId, employeeId, batch)));
+			slots.push(...(await this.findTimeSlotsInMinutes(tenantId, organizationId, employeeId, batch, refresh)));
 		}
 		return slots;
 	}
@@ -543,7 +709,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		tenantId: ID,
 		organizationId: ID,
 		employeeId: ID,
-		minutes: Array<{ from: Date; to: Date }>
+		minutes: Array<{ from: Date; to: Date }>,
+		refresh = false
 	): Promise<ITimeSlot[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -558,7 +725,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 						$or: inMinutes
 					} as any,
 					{
-						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
+						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes'],
+						...(refresh ? { refresh: true } : {})
 					}
 				)) as any[];
 			}
@@ -636,6 +804,171 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
+	 * Gives a log the time slots of its new range, then writes that range (`write`), in this order (#11889): the slots
+	 * are created where the employee has none, the log is linked to each one it does not hold yet, and only then is the
+	 * range written (a stop's end, and `isRunning: false`). A failure on the way gives the slots at those starts back
+	 * as they were (see `giveRangeSlotsBack`) and is raised, so the log is left as it was: a stopped run still runs,
+	 * with nothing written, and a stop sent again stops it. Once the range is written, the log holds every slot of it.
+	 *
+	 * The range used to be written first: a stop whose slot insert failed left the run stopped without slots, out of
+	 * the day's worked time, and a stop sent again was refused, as nothing ran any more.
+	 *
+	 * @param updateTimeSlots - The slots of the new range.
+	 * @param timeLog - The log as stored, before the write.
+	 * @param employeeId - The log's employee.
+	 * @param organizationId - The log's organization.
+	 * @param tenantId - The log's tenant.
+	 * @param write - The write of the new range, given the slots of that range.
+	 * @returns Every slot of the employee at the range's starts, which become the log's slots.
+	 * @throws The error of the insert, of the link or of the write.
+	 */
+	private async writeWithRangeSlots(
+		updateTimeSlots: ITimeSlot[],
+		timeLog: ITimeLog,
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		write: (rangeSlots: ITimeSlot[]) => Promise<unknown>
+	): Promise<ITimeSlot[]> {
+		const starts = updateTimeSlots.map((slot) => moment(slot.startedAt).startOf('minute').toDate());
+		// Taken as plain values before any write: under MikroORM the slots read are the request's own instances, which
+		// the merge run by the insert, and the reads after it, update in place
+		const before = rangeSlotsBefore(
+			timeLog,
+			await this.findTimeSlots(tenantId, organizationId, employeeId, starts)
+		);
+		try {
+			const rangeSlots = await this.bulkCreateTimeSlots(
+				updateTimeSlots,
+				timeLog,
+				employeeId,
+				organizationId,
+				tenantId
+			);
+			await this.linkToRangeSlots(timeLog, rangeSlots, { tenantId, organizationId, employeeId, starts });
+			await write(rangeSlots);
+			return rangeSlots;
+		} catch (error) {
+			await this.giveRangeSlotsBack(timeLog, before, { tenantId, organizationId, employeeId, starts });
+			throw error;
+		}
+	}
+
+	/**
+	 * Links a log to each slot of its range it does not hold yet: the insert links the slots it creates, not the ones
+	 * the employee already had at those starts.
+	 *
+	 * @param timeLog - The log.
+	 * @param rangeSlots - The slots of its range.
+	 * @param at - The employee's slots to read: those of the employee at the range's starts.
+	 */
+	private async linkToRangeSlots(timeLog: ITimeLog, rangeSlots: ITimeSlot[], at: IRangeSlotsAt): Promise<void> {
+		const rangeIds = new Set(rangeSlots.map((slot) => slot.id));
+		const standing = await this.findTimeSlots(at.tenantId, at.organizationId, at.employeeId, at.starts, true);
+		const notHeld = standing
+			.filter((slot) => rangeIds.has(slot.id) && !holdsSlot(timeLog, slot))
+			.map((slot) => slot.id);
+		if (notHeld.length > 0) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(notHeld)
+				.add(timeLog.id);
+		}
+	}
+
+	/**
+	 * Gives back the slots at a range's starts as they were before a failed write of that range (see
+	 * `writeWithRangeSlots`): the log lets go of each slot it did not hold then, and a slot created since that only the
+	 * log holds is deleted for good, as it holds no screenshot or activity yet (the slot delete removes it only while
+	 * the log still holds it alone). A failure here is logged; the write's own error stays the one raised.
+	 *
+	 * Two things stay as they are:
+	 * - the slots of the range a write of the log that went through since stored (another stop of the same run, as
+	 *   the stop of a tracking turned off; see `startsWrittenSince`): that write gave the log those slots. The log is
+	 *   read again just before, so only a write landing between that read and this cleanup can still lose them;
+	 * - the link of a slot at a start where the log held a slot before: the merge of the employee's slots
+	 *   (`TimeSlotMergeHandler`, run by the insert) keeps one slot per start and moves the links of the others onto
+	 *   it, so the log still holding a slot there holds its own time.
+	 *
+	 * Once slots were given back, the timesheet and the employee's worked hours are recalculated: the merge counted
+	 * the slots it was given, and those deleted here count no more.
+	 *
+	 * @param timeLog - The log, as read before the write.
+	 * @param before - The employee's slots at those starts, and those the log held, as read before the write.
+	 * @param at - The employee's slots to read: those of the employee at the range's starts.
+	 */
+	private async giveRangeSlotsBack(timeLog: ITimeLog, before: IRangeSlotsBefore, at: IRangeSlotsAt): Promise<void> {
+		try {
+			const { ids: existed, heldIds: heldBeforeIds, heldMinutes: startsHeldBefore } = before;
+			const standing = await this.findTimeSlots(at.tenantId, at.organizationId, at.employeeId, at.starts, true);
+			let taken = standing.filter((slot) => holdsSlot(timeLog, slot) && !heldBeforeIds.has(slot.id));
+			if (taken.length === 0) {
+				return;
+			}
+			const writtenSince = await this.startsWrittenSince(timeLog, at.tenantId);
+			taken = taken.filter((slot) => !writtenSince.has(slotMinute(slot)));
+
+			const heldByThisLogAlone = (slot: ITimeSlot) =>
+				Array.from(slot.timeLogs ?? []).every((log) => log.id === timeLog.id);
+			const created = taken
+				.filter((slot) => !existed.has(slot.id) && heldByThisLogAlone(slot))
+				.map((slot) => slot.id);
+			const linked = taken
+				.filter((slot) => !created.includes(slot.id) && !startsHeldBefore.has(slotMinute(slot)))
+				.map((slot) => slot.id);
+
+			if (created.length > 0) {
+				const { organizationId, employeeId, tenantId } = at;
+				await this.commandBus.execute(
+					new TimeSlotBulkDeleteCommand(
+						{ organizationId, employeeId, tenantId, timeLog, timeSlotsIds: created },
+						true,
+						false
+					)
+				);
+			}
+			if (linked.length > 0) {
+				await this.typeOrmTimeSlotRepository
+					.createQueryBuilder()
+					.relation(TimeSlot, 'timeLogs')
+					.of(linked)
+					.remove(timeLog.id);
+			}
+			if (created.length > 0 || linked.length > 0) {
+				await this.recalculateTimesheetAndEmployeeHours(timeLog.timesheetId, at.employeeId);
+			}
+		} catch (undoError) {
+			this.logger.error(
+				`Error while giving back the time slots of time log ${timeLog.id} after a failed write: ${undoError?.message ?? undoError}`,
+				undoError?.stack
+			);
+		}
+	}
+
+	/**
+	 * The slot starts of the log's range as it is now stored, when a write of the log went through since it was read
+	 * before a failed write of its range (see `giveRangeSlotsBack`): another stop of the same run, from a tracking turned
+	 * off or from another API process. That write gave the log the slots of the range it stored. None while the log is
+	 * stored as it was read (its range and whether it runs), or is no longer there.
+	 *
+	 * @param timeLog - The log, as read before the failed write.
+	 * @param tenantId - The log's tenant.
+	 */
+	private async startsWrittenSince(timeLog: ITimeLog, tenantId: ID): Promise<Set<number>> {
+		const stored = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id, tenantId });
+		const isAsRead =
+			!stored ||
+			(Boolean(stored.isRunning) === Boolean(timeLog.isRunning) &&
+				isSameInstant(stored.startedAt, timeLog.startedAt) &&
+				isSameInstant(stored.stoppedAt, timeLog.stoppedAt));
+		if (isAsRead) {
+			return new Set();
+		}
+		return new Set(this.timeSlotService.generateTimeSlots(stored.startedAt, stored.stoppedAt).map(slotMinute));
+	}
+
+	/**
 	 * Runs the write of an edit. Edited by a person (`history` given), the write and the entry's history row run in
 	 * one transaction, or neither does. The values before are those of the entry read under lock in that transaction:
 	 * an edit saved since the entry was first read is the one this edit replaces, and none can come in between.
@@ -648,19 +981,63 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param refusesDeletedEntry - Whether an entry deleted for good since it was first read stops the edit with a
 	 * NotFoundException: a save (a move's) would insert the row again, and after an update, which matches no row, the
 	 * handler would read back no entry. Otherwise nothing is written and the write answers undefined.
+	 * @param expectedUpdatedAt - The `updatedAt` the edit was read at (ever-co/ever-teams#5382): compared with the entry
+	 * read under lock, in the same transaction as the write, which is made only when the two are the same instant. Null
+	 * compares nothing.
+	 *
+	 * A write in that transaction (an edit by a person, or one under a precondition) also moves `updatedAt` a millisecond
+	 * past both what the entry held and the value checked (see `moveUpdatedAtPast`).
+	 * @param options - What the edit writes besides the entry's columns (its tags), and checks before writing, in the
+	 * same transaction (see `TimeLogUpdateOptions`). Either one runs the write in that transaction.
+	 *
+	 * @param fact - The edit's fact (for the webhooks). Where the outbox can share the write's transaction, it is
+	 * appended in it (see `recordFactOfWrite`); a write that runs alone otherwise runs in a transaction with it, and
+	 * nothing else of it changes.
+	 *
+	 * @throws ApiException 409 `CONCURRENT_MODIFICATION` (`TIME_LOG_CHANGED`) when the entry was written since
+	 * `expectedUpdatedAt`; nothing is written, nor recorded.
+	 * @throws What `options.assertBeforeWrite` throws; nothing is written, nor recorded.
 	 */
 	private async writeWithHistory<T>(
 		stored: ITimeLog,
 		written: Partial<ITimeLog>,
 		history: TimeLogHistoryOptions | undefined,
 		write: (repository: Repository<TimeLog>) => Promise<T>,
-		refusesDeletedEntry = false
+		refusesDeletedEntry = false,
+		expectedUpdatedAt: Date | null = null,
+		options: TimeLogUpdateOptions = {},
+		fact?: string
 	): Promise<T | undefined> {
 		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
-		if (!recordsHistory) {
-			return write(this.typeOrmTimeLogRepository);
+		const isConditional = expectedUpdatedAt !== null;
+		const writesTags = Array.isArray(options.tagIds);
+		const checksBeforeWrite = typeof options.assertBeforeWrite === 'function';
+		const appendsFact = Boolean(fact) && this.appendsFactsWithinWrites();
+		const locksEntry = recordsHistory || isConditional || writesTags || checksBeforeWrite;
+		if (!locksEntry) {
+			if (!appendsFact) {
+				return write(this.typeOrmTimeLogRepository);
+			}
+			return this.inTransaction(async (manager) => {
+				const result = await write(manager.getRepository(TimeLog));
+				// The entry as this write leaves it, read back in its transaction, inside the fact's savepoint so that
+				// a read that fails never fails the edit: the first read was taken under no lock, and an edit written
+				// since it would otherwise be told of as it was before
+				// (should the read fail, the entry as first read with what the write stored: a stop's fact is never
+				// lost)
+				const where = { id: stored.id, tenantId: stored.tenantId };
+				const asWritten = { ...stored, ...definedFieldsOf(written) } as ITimeLog;
+				await this.recordFactOfWrite(
+					manager,
+					fact,
+					result,
+					(savepoint) => savepoint.findOne(TimeLog, { where, withDeleted: true }),
+					asWritten
+				);
+				return result;
+			});
 		}
-		return this.dataSource.transaction(async (manager) => {
+		return this.inTransaction(async (manager) => {
 			const current = await manager.findOne(TimeLog, {
 				where: { id: stored.id, tenantId: stored.tenantId },
 				withDeleted: true,
@@ -674,12 +1051,26 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				}
 				return undefined;
 			}
+			// Compared under the lock: a write another request is making to the entry is waited for, and seen
+			assertTimeLogUnchangedSince(current, expectedUpdatedAt);
+			if (checksBeforeWrite) {
+				await options.assertBeforeWrite(manager, current);
+			}
 			const result = await write(manager.getRepository(TimeLog));
-			// A field written as undefined is left as stored (TypeORM skips it), so it is no change of the history
-			const definedWritten = Object.fromEntries(
-				Object.entries(written).filter(([, value]) => value !== undefined)
-			) as Partial<ITimeLog>;
-			const edited = { ...current, ...definedWritten } as ITimeLog;
+			// The tags in the same transaction (ever-co/ever-gauzy#12029): written after it, a change of them saved in
+			// between would be replaced by this edit's, although both were checked
+			if (writesTags) {
+				await writeTimeLogTags(manager, current.id, options.tagIds);
+			}
+			await moveUpdatedAtPast(manager, current, expectedUpdatedAt);
+			const edited = { ...current, ...definedFieldsOf(written) } as ITimeLog;
+			if (appendsFact) {
+				// Read under the entry's lock, `current` with what the write stored is the row as it leaves it
+				await this.recordFactOfWrite(manager, fact, result, edited);
+			}
+			if (!recordsHistory) {
+				return result;
+			}
 			const change = updatedChange(current, edited);
 			if (change) {
 				await recordTimeLogHistory(manager, [
@@ -688,6 +1079,43 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 			return result;
 		});
+	}
+
+	/** Whether the facts are appended in their write's transaction (see `TimeLogFactsService.appendsWithinWrites`). */
+	private appendsFactsWithinWrites(): boolean {
+		return this.facts?.appendsWithinWrites() ?? false;
+	}
+
+	/**
+	 * Appends an edit's fact in its write's transaction, unless the write changed no row: the stop an earlier try of
+	 * the same stop already wrote, with its fact.
+	 *
+	 * @param entry - The entry as the write leaves it, or how to read it back (see `TimeLogFactsService.recordWithin`).
+	 * @param fallback - With a read: the entry as the write states it, told of when the read fails.
+	 */
+	private async recordFactOfWrite(
+		manager: EntityManager,
+		fact: string,
+		result: unknown,
+		entry: ITimeLog | TimeLogFactEntryReader,
+		fallback?: ITimeLog
+	): Promise<void> {
+		const changedNoRow = (result as UpdateResult | undefined)?.affected === 0;
+		if (changedNoRow) {
+			return;
+		}
+		await this.facts.recordWithin(manager, fact, entry, fallback);
+	}
+
+	/**
+	 * Runs work in one TypeORM transaction: on the data source, or, for a handler built without one, on the manager of
+	 * its time log repository.
+	 */
+	private inTransaction<T>(work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		if (this.dataSource) {
+			return this.dataSource.transaction(work);
+		}
+		return this.typeOrmTimeLogRepository.manager.transaction(work);
 	}
 
 	/**

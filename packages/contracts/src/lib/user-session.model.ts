@@ -25,6 +25,15 @@ export interface IUserSession {
 	/** The kind of app, read from the user agent. */
 	app: UserSessionAppEnum;
 
+	/**
+	 * Which app the session was opened from ("Ever Teams", "gauzy-desktop-timer"): the name it gave itself in the
+	 * `X-Client-App` header, else the one its user agent carries. Absent when neither tells.
+	 */
+	appName?: string;
+
+	/** The web host the session was opened from ("app.example.com"), when a browser's request said it. */
+	appOrigin?: string;
+
 	/** The browser and its major version ("Chrome 131"), when the user agent names one. */
 	browser: string | null;
 

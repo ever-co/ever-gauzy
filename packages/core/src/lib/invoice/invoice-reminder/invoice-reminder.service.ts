@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { Brackets, DataSource, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EmailTemplateEnum, ID, IOrganization, LanguagesEnum } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '../../core/context/mikro-orm-context';
 import { EmailTemplate, EstimateEmail, Invoice, Organization, OrganizationContact } from '../../core/entities/internal';
 import { isUniqueViolation } from '../../core/errors/unique-violation';
 import { EmailService } from '../../email-send/email.service';
@@ -91,23 +93,38 @@ function claimTimeOf(now: Date): Date {
  *   due date or emailed again while the sweep sent the ones before it, or whose organization turned the reminders off
  *   meanwhile, gets nothing, and a payment made meanwhile shows in the amount.
  * - **Tenant by tenant.** Every read names the invoice's tenant, and each email goes through its organization's mail
- *   settings and is filed in its email history, which is where the organization sees the reminders it sent.
+ *   settings and is filed in its email history, which is where the organization sees the reminders it sent. Under
+ *   DB_ORM=mikro-orm the mail settings are read through MikroORM, which refuses its global EntityManager outside a
+ *   request: each reminder is then sent in a MikroORM request context of its own, since no request opened one.
  * - **Never an empty email.** The renderer answers an empty email for a template it cannot find, so while the
  *   `invoice-reminder` template is not seeded (its migration failed), the sweep sends nothing and says so.
  */
 @Injectable()
 export class InvoiceReminderService {
 	private readonly logger = new Logger(InvoiceReminderService.name);
+	/**
+	 * The read of the list that the last pass of this process left unfinished when its time ran out: where it stopped,
+	 * and when it started. A read covers the invoices created by then, due no later than the window's latest due date
+	 * then (see `invoicesThatMayBeDue`); the next pass goes on after where it stopped, and only a pass that reads to its
+	 * end starts the next read from the top again. Without the cursor, a page slow to send (a mail server timing out)
+	 * would take every pass's time, pass after pass, and the invoices after it would miss their reminders; without the
+	 * bounds, invoices created or coming into the window after the cursor could keep a read from ever ending, and the
+	 * ones before it would wait.
+	 */
+	private unfinished: { after: IInvoiceReminderInvoiceRow | null; startedAt: Date } | null = null;
 
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly emails: EmailService,
-		private readonly invoices: InvoiceService
+		private readonly invoices: InvoiceService,
+		/** Opens the MikroORM request context a reminder is sent in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
 	 * Sends the reminders that are due: reads the invoices that may be due one a page at a time, in the order they are
-	 * due, until the list is read or the time budget of the pass is spent.
+	 * due, until the list is read or the time budget of the pass is spent; a pass out of time leaves the rest to the
+	 * next one (see `unfinished`).
 	 *
 	 * @param now The moment the reminders are due at.
 	 * @param budgetMs How long the pass may keep reading pages.
@@ -124,15 +141,21 @@ export class InvoiceReminderService {
 			return report;
 		}
 		const startedAt = Date.now();
-		let after: IInvoiceReminderInvoiceRow | null = null;
+		const readStartedAt = this.unfinished?.startedAt ?? now;
+		let after = this.unfinished?.after ?? null;
 		for (;;) {
-			const page = await this.invoicesThatMayBeDue(after, INVOICE_REMINDER_SWEEP_PAGE_SIZE, now);
+			const page = await this.invoicesThatMayBeDue(after, INVOICE_REMINDER_SWEEP_PAGE_SIZE, now, readStartedAt);
 			report.checked += page.length;
 			if (page.length) {
 				await this.remindPage(page, now, report);
 				after = page[page.length - 1];
 			}
-			if (page.length < INVOICE_REMINDER_SWEEP_PAGE_SIZE || Date.now() - startedAt >= budgetMs) {
+			if (page.length < INVOICE_REMINDER_SWEEP_PAGE_SIZE) {
+				this.unfinished = null;
+				break;
+			}
+			if (Date.now() - startedAt >= budgetMs) {
+				this.unfinished = { after, startedAt: readStartedAt };
 				break;
 			}
 		}
@@ -159,16 +182,22 @@ export class InvoiceReminderService {
 
 	/**
 	 * A page of the invoices that may be due a reminder at `now` (see `remindedInvoices`), due between the last step's
-	 * grace and the first step's moment. Ordered by due date, then id, so the next page starts after this one.
+	 * grace and the first step's moment. Only the invoices of the read of the list it belongs to, which started at
+	 * `readStartedAt`: created by then, and due no later than the window's latest due date then, so a read ends however
+	 * many invoices are created or come into the window meanwhile. Ordered by due date, then id, so the next page starts
+	 * after this one.
 	 */
 	private async invoicesThatMayBeDue(
 		after: IInvoiceReminderInvoiceRow | null,
 		limit: number,
-		now: Date
+		now: Date,
+		readStartedAt: Date
 	): Promise<IInvoiceReminderInvoiceRow[]> {
+		const latest = Math.min(latestRemindedDueDate(now).getTime(), latestRemindedDueDate(readStartedAt).getTime());
 		const query = this.remindedInvoices()
 			.andWhere('invoice.dueDate >= :earliest', { earliest: earliestRemindedDueDate(now) })
-			.andWhere('invoice.dueDate <= :latest', { latest: latestRemindedDueDate(now) })
+			.andWhere('invoice.dueDate <= :latest', { latest: new Date(latest) })
+			.andWhere('invoice.createdAt <= :readStartedAt', { readStartedAt })
 			.orderBy('invoice.dueDate', 'ASC')
 			.addOrderBy('invoice.id', 'ASC')
 			.limit(limit);
@@ -291,7 +320,9 @@ export class InvoiceReminderService {
 			try {
 				const claim = await this.claim(invoice, due, delivery.email, now);
 				if (claim) {
-					await this.send(invoice, due, delivery, organization, contactNames, claim, now, report);
+					await runInMikroOrmContext(this.orm, () =>
+						this.send(invoice, due, delivery, organization, contactNames, claim, now, report)
+					);
 				}
 			} catch (error) {
 				report.failed += 1;
@@ -309,7 +340,8 @@ export class InvoiceReminderService {
 	 *
 	 * The page was read before the sends ahead of this one, and the PDF takes its time: the invoice is read again right
 	 * before the email goes, and a reminder that is no longer due (the invoice was paid, voided, given another due date
-	 * or emailed again, or its organization turned the reminders off) gives its claim back and goes nowhere.
+	 * or emailed again, the email the page read as its last did not go after all, or its organization turned the
+	 * reminders off) gives its claim back and goes nowhere.
 	 */
 	private async send(
 		invoice: IInvoiceReminderInvoiceRow,
@@ -325,7 +357,7 @@ export class InvoiceReminderService {
 		let sent: boolean;
 		try {
 			const pdf = await this.pdfOf(invoice, languageCode);
-			const current = await this.stillDue(invoice, due, now);
+			const current = await this.stillDue(invoice, due, delivery, now);
 			if (!current) {
 				await this.release(claim);
 				return;
@@ -358,22 +390,26 @@ export class InvoiceReminderService {
 
 	/**
 	 * The invoice as it is now, and what is left to pay on it, when the reminder claimed from the page is still due: the
-	 * invoice is still one the reminders go to, its due date did not move, the same step is due (an email of the invoice
-	 * sent since counts, as the rules have none go on its heels), and something is left to pay. Null otherwise.
+	 * invoice is still one the reminders go to, its due date did not move, it was last emailed to the address and in the
+	 * language the page read (an email row names its invoice from its creation, and forgets it when the email does not
+	 * go), the same step is due (an email of the invoice sent since counts, as the rules have none go on its heels), and
+	 * something is left to pay. Null otherwise.
 	 */
 	private async stillDue(
 		invoice: IInvoiceReminderInvoiceRow,
 		due: IDueInvoiceReminder,
+		delivery: IInvoiceDelivery,
 		now: Date
 	): Promise<{ invoice: IInvoiceReminderInvoiceRow; left: number } | null> {
 		const current = await this.currentInvoice(invoice);
 		if (!current || instantOf(current.dueDate) !== instantOf(invoice.dueDate)) {
 			return null;
 		}
-		const delivery = (await this.lastDeliveriesOf([current])).get(String(current.id));
-		const again = delivery
-			? invoiceReminderDueAt(current.dueDate, delivery.emailedAt, now, invoiceTimeZoneOf(current))
-			: null;
+		const last = (await this.lastDeliveriesOf([current])).get(String(current.id));
+		if (!last || last.email !== delivery.email || last.languageCode !== delivery.languageCode) {
+			return null;
+		}
+		const again = invoiceReminderDueAt(current.dueDate, last.emailedAt, now, invoiceTimeZoneOf(current));
 		const left = amountLeftToPay(current.totalValue, current.alreadyPaid);
 		if (!again || again.step !== due.step || left === null) {
 			return null;

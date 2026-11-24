@@ -43,6 +43,9 @@ export function buildTypeOrmAdapter(repo: Repository<Token>): ITokenRepository {
 
 		findById: (id) => repo.findOne({ where: { id } }),
 
+		findByIdWithLock: (id) =>
+			repo.createQueryBuilder('token').where('token.id = :id', { id }).setLock('pessimistic_write').getOne(),
+
 		findActiveByUserAndType: (userId, tokenType) =>
 			repo.find({ where: { userId, tokenType, status: TokenStatus.ACTIVE }, order: { createdAt: 'DESC' } }),
 
@@ -130,23 +133,27 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 		return { updatedAt: new Date(), version: raw('?? + 1', [versionColumn]), ...data };
 	};
 
+	/** Locks the row of a token that was read, and reads it again: what it states is then what no one else can change. */
+	const locked = async (token: Token | null): Promise<Token | null> => {
+		if (!token) {
+			return null;
+		}
+
+		const em = repo.getEntityManager();
+		await em.lock(token, LockMode.PESSIMISTIC_WRITE);
+		await em.refresh(token);
+
+		return token;
+	};
+
 	const adapter: ITokenRepository = {
-		findByHashWithLock: async (tokenHash) => {
-			const token = await repo.findOne({ tokenHash });
-			if (!token) {
-				return null;
-			}
-
-			const em = repo.getEntityManager();
-			await em.lock(token, LockMode.PESSIMISTIC_WRITE);
-			await em.refresh(token);
-
-			return token;
-		},
+		findByHashWithLock: async (tokenHash) => locked(await repo.findOne({ tokenHash })),
 
 		findByHash: (tokenHash) => repo.findOne({ tokenHash }),
 
 		findById: (id) => repo.findOne(id),
+
+		findByIdWithLock: async (id) => locked(await repo.findOne(id)),
 
 		findActiveByUserAndType: (userId, tokenType) => repo.find({ userId, tokenType, status: TokenStatus.ACTIVE }),
 

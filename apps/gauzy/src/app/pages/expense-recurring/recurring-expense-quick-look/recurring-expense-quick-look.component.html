@@ -1,0 +1,214 @@
+<!-- One recurring expense, read-only: one column in the list's drawer; on its page (`page`), the headline across
+     the top, the cost and the history in the wide column, the facts in the side one. -->
+@if (expense && headline) {
+	<div class="project-view-top">
+		<!-- What is paid and where it stands, then the four figures read first. -->
+		<div class="project-view-headline">
+			<div class="project-view-header">
+				<span class="project-logo recurring-logo" aria-hidden="true">
+					<nb-icon icon="repeat-outline"></nb-icon>
+				</span>
+				<div class="project-view-title">
+					<h5 class="project-view-name recurring-title" [nbTooltip]="headline.title" nbTooltipPlacement="top">
+						{{ headline.title }}
+					</h5>
+					<p class="project-view-meta">
+						<span [class]="'project-status tone-' + headline.tone">
+							{{ headline.stateKey | translate }}
+						</span>
+						<span class="project-meta-item">
+							<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+							{{ 'RECURRING_EXPENSE_VIEW.MONTHLY' | translate }}
+						</span>
+						@if (expense.splitExpense) {
+							<span class="project-meta-item">
+								<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
+								{{ 'EXPENSES_PAGE.SPLIT_EXPENSE' | translate }}
+							</span>
+						}
+					</p>
+				</div>
+			</div>
+
+			<dl class="project-facts">
+				<div class="project-fact recurring-fact-amount">
+					<dt>{{ 'RECURRING_EXPENSE_VIEW.AMOUNT_PER_MONTH' | translate }}</dt>
+					<dd>
+						<ga-income-amount class="recurring-amount" [value]="$any(expense.value)" [rowData]="expense"></ga-income-amount>
+						<span class="project-fact-hint">
+							{{ (expense.splitExpense ? 'EXPENSE_VIEW.SPLIT_HINT' : 'EXPENSE_VIEW.CURRENCY_HINT') | translate : { currency: expense.currency } }}
+						</span>
+					</dd>
+				</div>
+				<div class="project-fact">
+					<dt>{{ 'POP_UPS.STARTS_ON' | translate }}</dt>
+					<dd>
+						@if (expense.startDate) {
+							{{ expense.startDate | dateFormat }}
+							<span class="project-fact-hint">{{ headline.since }}</span>
+						} @else {
+							<span class="project-fact-muted">—</span>
+						}
+					</dd>
+				</div>
+				<div class="project-fact">
+					<dt>{{ 'SM_TABLE.END_DATE' | translate }}</dt>
+					<dd>
+						@if (expense.endDate) {
+							{{ expense.endDate | dateFormat }}
+						} @else {
+							<span class="project-fact-muted">{{ 'RECURRING_EXPENSE_VIEW.NO_END_DATE' | translate }}</span>
+						}
+					</dd>
+				</div>
+				<div class="project-fact">
+					<dt>{{ 'RECURRING_EXPENSE_VIEW.TOTAL_SO_FAR' | translate }}</dt>
+					<dd>
+						<ga-income-amount [value]="headline.totalCharged" [rowData]="expense"></ga-income-amount>
+						<span class="project-fact-hint">
+							{{ 'RECURRING_EXPENSE_VIEW.MONTHS_CHARGED' | translate : { count: headline.monthsCharged } }}
+						</span>
+					</dd>
+				</div>
+			</dl>
+		</div>
+
+		<!-- The cost month by month, then every period of this recurring expense, this one marked. -->
+		<div class="project-view-col project-view-col--main">
+			<!-- One bar per month, ending with the month the page is about; this period's months highlighted. -->
+			<section class="panel project-view-panel" [nbSpinner]="periodsLoading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+							{{ 'RECURRING_EXPENSE_VIEW.MONTHLY_COST' | translate }}
+						</h5>
+						<span class="panel-caption">
+							{{ 'RECURRING_EXPENSE_VIEW.MONTHLY_COST_CAPTION' | translate : { count: costMonths, currency: expense.currency } }}
+						</span>
+					</div>
+					<nb-select
+						class="recurring-chart-range"
+						size="small"
+						status="basic"
+						[selected]="costMonths"
+						(selectedChange)="setCostMonths($event)"
+						[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+					>
+						@for (months of costMonthOptions; track months) {
+							<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+						}
+					</nb-select>
+				</header>
+				<div class="panel-body project-chart-body">
+					@if (costBars.length) {
+						<ga-expense-bar-chart
+							[formatValue]="formatAmount"
+							[highlightLabel]="'RECURRING_EXPENSE_VIEW.THIS_PERIOD' | translate"
+							[otherLabel]="'RECURRING_EXPENSE_VIEW.OTHER_PERIODS' | translate"
+							[bars]="costBars"
+						></ga-expense-bar-chart>
+					}
+				</div>
+			</section>
+
+			<section class="panel project-view-panel" [nbSpinner]="periodsLoading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+							{{ 'RECURRING_EXPENSE_VIEW.HISTORY' | translate }}
+						</h5>
+						<span class="panel-caption">{{ 'RECURRING_EXPENSE_VIEW.HISTORY_CAPTION' | translate }}</span>
+					</div>
+				</header>
+				<div class="panel-body" [class.panel-body--flush]="periodsFailed">
+					@if (periodsFailed) {
+						<div class="state state--compact">
+							<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+							<p>{{ 'RECURRING_EXPENSE_VIEW.HISTORY_FAILED' | translate }}</p>
+						</div>
+					} @else {
+						<table class="recurring-periods">
+							<thead>
+								<tr>
+									<th scope="col">{{ 'POP_UPS.STARTS_ON' | translate }}</th>
+									<th scope="col">{{ 'SM_TABLE.END_DATE' | translate }}</th>
+									<th scope="col" class="is-amount">{{ 'POP_UPS.EXPENSE_VALUE' | translate }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								@for (period of periods; track period.expense.id) {
+									<tr [class.is-current]="period.isCurrent">
+										<td>
+											@if (period.isCurrent) {
+												{{ period.expense.startDate | dateFormat }}
+												<span class="recurring-period-note">{{ 'RECURRING_EXPENSE_VIEW.THIS_PERIOD' | translate }}</span>
+											} @else {
+												<a class="recurring-period-link" [routerLink]="periodLink(period)">
+													{{ period.expense.startDate | dateFormat }}
+												</a>
+											}
+										</td>
+										<td>
+											@if (period.expense.endDate) {
+												{{ period.expense.endDate | dateFormat }}
+											} @else {
+												<span class="project-fact-muted">{{ 'RECURRING_EXPENSE_VIEW.NO_END_DATE' | translate }}</span>
+											}
+										</td>
+										<td class="is-amount">
+											<ga-income-amount [value]="$any(period.expense.value)" [rowData]="period.expense"></ga-income-amount>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					}
+				</div>
+			</section>
+		</div>
+
+		<!-- The facts: every field of the recurring expense, its share of the month's recurring costs, then its stamps. -->
+		<div class="project-view-col project-view-col--side">
+			<ngx-record-view [record]="expense" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+
+			<!-- This expense against the organization's other recurring expenses in the same month. -->
+			@if (share.loading || share.failed || share.share) {
+				<section class="panel project-view-panel" [nbSpinner]="share.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<header class="panel-header">
+						<div class="panel-heading">
+							<h5 class="panel-title panel-title--icon">
+								<nb-icon icon="pie-chart-outline" aria-hidden="true"></nb-icon>
+								{{ 'RECURRING_EXPENSE_VIEW.SHARE' | translate }}
+							</h5>
+							@if (share.month) {
+								<span class="panel-caption">
+									{{ 'RECURRING_EXPENSE_VIEW.SHARE_CAPTION' | translate : { month: share.month, currency: expense.currency } }}
+								</span>
+							}
+						</div>
+					</header>
+					<div class="panel-body">
+						@if (share.failed) {
+							<div class="state state--compact">
+								<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+								<p>{{ 'EXPENSE_VIEW.CHART_FAILED' | translate }}</p>
+							</div>
+						} @else if (share.share) {
+							<ga-expense-share-chart
+								[formatValue]="formatAmount"
+								[amountLabel]="'EXPENSE_VIEW.THIS_EXPENSE' | translate"
+								[restLabel]="'RECURRING_EXPENSE_VIEW.OTHER_RECURRING' | translate"
+								[totalLabel]="'EXPENSE_VIEW.MONTH_TOTAL' | translate"
+								[share]="share.share"
+							></ga-expense-share-chart>
+						}
+					</div>
+				</section>
+			}
+
+			<ngx-record-view [record]="expense" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+		</div>
+	</div>
+}

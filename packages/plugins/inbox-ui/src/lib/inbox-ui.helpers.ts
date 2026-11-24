@@ -475,7 +475,11 @@ const NOTIFICATION_TYPE_ICONS: Readonly<Record<string, string>> = {
 	[EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST]: 'trending-up-outline',
 	[EmployeeNotificationTypeEnum.TASK_UPDATE]: 'edit-2-outline',
 	[EmployeeNotificationTypeEnum.TIMER_REMINDER]: 'clock-outline',
-	[EmployeeNotificationTypeEnum.INVOICE]: 'file-text-outline'
+	[EmployeeNotificationTypeEnum.INVOICE]: 'file-text-outline',
+	[EmployeeNotificationTypeEnum.MEETING]: 'calendar-outline',
+	[EmployeeNotificationTypeEnum.TASK_DUE_REMINDER]: 'calendar-outline',
+	[EmployeeNotificationTypeEnum.BOARD_SHARE]: 'share-outline',
+	[EmployeeNotificationTypeEnum.BOARD_MENTION]: 'at-outline'
 };
 
 /** The icon of a notification's type (a bell for a type the plugin does not know). */

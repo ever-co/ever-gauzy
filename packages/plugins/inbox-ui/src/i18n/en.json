@@ -22,8 +22,46 @@
 		"TITLE": "Nothing matches these filters",
 		"HINT": "Try another search, or clear the filters."
 	},
-	"SELECT": "Select an item to see it here.",
-	"SELECT_HINT": "Open a message to read it, reply, or act on it.",
+	"WELCOME": {
+		"HEAD": {
+			"all": {
+				"TITLE": "Everything addressed to you",
+				"TEXT": "Decisions, email and notices that are not snoozed, done or archived. Select one to read it, answer it or act on it."
+			},
+			"decisions": {
+				"TITLE": "Decisions addressed to you",
+				"TEXT": "Questions, approvals and escalations. Select one to answer it; your answer goes back to where it was asked."
+			},
+			"email": {
+				"TITLE": "Email from your mailboxes",
+				"TEXT": "Select a message to read it."
+			},
+			"snoozed": {
+				"TITLE": "Snoozed until later",
+				"TEXT": "Each item comes back to your inbox when its time is up. Select one to see it, or wake it now."
+			},
+			"done": {
+				"TITLE": "Items you marked done",
+				"TEXT": "Select one to see it, or mark it not done to bring it back to your inbox."
+			},
+			"archived": {
+				"TITLE": "Items you archived",
+				"TEXT": "Select one to see it, or unarchive it to bring it back to your inbox."
+			}
+		},
+		"DECISIONS_TEXT": "Answer questions, approve requests and handle escalations right here; your answer goes back to where it was asked.",
+		"OPEN_DECISIONS": "Open decisions",
+		"KINDS": "Decisions can be",
+		"EMAIL_TEXT": "Messages from your mailboxes, next to everything else. Opening one marks it read.",
+		"EMAIL_LABEL": "Your mailboxes",
+		"NOTIFICATIONS_TEXT": "Mentions, assignments, comments and other updates from Gauzy. Select one to mark it read, or mark them all read at once.",
+		"NOTIFICATIONS_LABEL": "Your Gauzy updates",
+		"LATER_TITLE": "Snoozed, done and archived",
+		"LATER_TEXT": "Snooze an item until later, mark it done when it is handled, or archive it. It leaves your inbox for its own tab, where you can bring it back, and each move can be undone.",
+		"OPEN": "Open",
+		"OPEN_TAB_LABEL": "Open the {{ tab }} tab",
+		"YOU": "You"
+	},
 	"BACK": "Back to the list",
 	"LOAD_MORE": "Load more",
 	"NEW_ITEMS": "{{ count }} new",
@@ -91,6 +129,12 @@
 		}
 	},
 	"BADGE_LABEL": "Inbox: {{ count }} unread",
+	"HEADER_MENU": {
+		"SEE_ALL": "See all in Inbox",
+		"EMPTY": "Nothing new. You're all caught up.",
+		"ERROR": "The Inbox could not be loaded.",
+		"LOADING": "Loading…"
+	},
 	"DUE": "Due {{ date }}",
 	"ANSWERED": "Answered {{ date }}",
 	"ROUTED": "Delivered: {{ routed }}",
@@ -200,7 +244,11 @@
 			"RateChangeRequest": "Rate change request",
 			"TaskUpdate": "Task update",
 			"TimerReminder": "Timer reminder",
-			"Invoice": "Invoice"
+			"Invoice": "Invoice",
+			"Meeting": "Meeting",
+			"TaskDueReminder": "Task due",
+			"BoardShare": "Board shared",
+			"BoardMention": "Board mention"
 		}
 	},
 	"SETTINGS": {

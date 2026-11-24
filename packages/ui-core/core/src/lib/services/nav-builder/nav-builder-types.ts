@@ -31,6 +31,7 @@ export interface NavMenuItemData {
 	hide?: () => boolean | boolean; // Function to determine if the item should be hidden (optional)
 	add?: string;
 	activePaths?: string[]; // Extra paths the item is highlighted on besides its link, each matched with everything below it (optional)
+	count?: number; // A number shown at the row's trailing edge, e.g. how many records a "View all" row leads to (optional)
 }
 
 /**

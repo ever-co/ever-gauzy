@@ -33,6 +33,7 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 				nbInput
 				[fieldSize]="size()"
 				class="go-to-field"
+				[class.compact]="size() === 'tiny'"
 				name="reference"
 				autocomplete="off"
 				spellcheck="false"
@@ -72,6 +73,31 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 			.go-to-field {
 				min-width: 12rem;
 				flex: 1;
+			}
+			/* The tiny box (a page header's): a narrower field, so it sits as small as the controls beside it. */
+			.go-to-field.compact {
+				min-width: 0;
+				width: 8.5rem;
+			}
+			/*
+			 * The app gives every input a tall minimum height (with !important): here the box is a compact 1.75rem
+			 * control to match the views dropdown beside it. The form class carries this past that global rule.
+			 */
+			.go-to .go-to-field.compact {
+				min-height: 1.75rem !important;
+				height: 1.75rem;
+				padding-block: 0;
+			}
+			/*
+			 * The theme sizes a tiny input from these variables, and its tiny placeholder borrows the larger paragraph
+			 * size: restated here, the text and placeholder sit at the table's 0.75rem with a slimmer vertical padding.
+			 */
+			.go-to-field.compact {
+				--input-tiny-text-font-size: 0.75rem;
+				--input-tiny-text-line-height: 1rem;
+				--input-tiny-placeholder-text-font-size: 0.75rem;
+				--input-tiny-placeholder-text-line-height: 1rem;
+				--input-tiny-padding: 0.125rem 0.5rem;
 			}
 			.go-to-message {
 				margin: 0.25rem 0 0;

@@ -1,83 +1,56 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
 :host {
   display: block;
 }
 
 .task-views {
-  display: grid;
-  grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  align-items: start;
-
-  @media (max-width: 64rem) {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
-.switcher {
-  position: sticky;
-  top: 1rem;
-  padding: 0.75rem;
-  border-radius: var(--border-radius);
-  background: var(--background-basic-color-1);
-  box-shadow: var(--card-shadow);
+// Above the view, on the page itself: the open view's title and count, then the search and "New view" at the end.
+.page-head {
+  @include ga-hub.page-header-buttons();
 
-  .switcher-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  font-size: 0.8125rem;
+
+  .switcher-end {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  h5 {
-    margin: 0;
-    font-size: 1rem;
-  }
-
-  h6 {
-    margin: 0.75rem 0 0.25rem;
-    font-size: 0.6875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-hint-color);
-  }
-
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  a {
-    display: block;
-    padding: 0.3125rem 0.5rem;
-    border-radius: var(--border-radius);
-    color: var(--text-basic-color);
-    text-decoration: none;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    &:hover,
-    &:focus-visible {
-      background: var(--background-basic-color-2);
-    }
-
-    &.active {
-      font-weight: 600;
-      color: var(--color-primary-default);
-      background: var(--color-primary-transparent-100);
-    }
+    margin-left: auto;
   }
 
   .switcher-search {
-    margin-bottom: 0.25rem;
+    width: 12rem;
   }
+}
 
-  .switcher-empty {
-    margin: 0.75rem 0 0;
-    font-size: 0.8125rem;
-    color: var(--text-hint-color);
+// The views dropdown, first in the view's header: a compact trigger, no label beside it.
+.switcher {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+
+  // A compact trigger set through the theme's own select variables, not by reaching into the select's markup:
+  // 0.75rem semi-bold text, a slimmer inset, and the header control height (the app's floor for a select is its
+  // medium line height plus the 0.4375rem field inset each side, so that line height is what brings it down).
+  .switcher-select {
+    --select-tiny-text-font-size: 0.75rem;
+    --select-tiny-text-font-weight: 600;
+    --select-tiny-text-line-height: 1rem;
+    --select-outline-tiny-padding: 0.375rem 0.625rem;
+    --select-icon-offset: 1.75rem;
+    --select-medium-text-line-height: calc(var(--gauzy-header-control-height) - 0.875rem);
+
+    min-width: 7rem;
+    max-width: 11rem;
   }
 }
 
@@ -87,11 +60,23 @@
 }
 
 .view-head {
+  @include ga-hub.page-header-buttons();
+
+  // One line: the views dropdown, the selection actions and the go-to box. The actions take the room between the
+  // two and wrap inside it only when the screen is too narrow, so the go-to box never drops to a line of its own.
+  // Its own layer above the card body, so the bulk pickers that open from it lie over the list, not under it.
+  position: relative;
+  z-index: 2;
+  overflow: visible;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+
+  @media (max-width: 64rem) {
+    flex-wrap: wrap;
+  }
 }
 
 .view-title {
@@ -102,11 +87,22 @@
 
   h4 {
     margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
   }
+}
+
+// The bulk actions beside the title, set off by a thin rule; they take the room up to the view's own actions.
+.view-bulk {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--gauzy-overlay-border-color);
 }
 
 .view-actions {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 0.25rem;
 }
@@ -118,8 +114,8 @@
 }
 
 .badge {
-  padding: 0.0625rem 0.5rem;
-  border-radius: 1rem;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--gauzy-table-badge-radius, 0.25rem);
   background: var(--background-basic-color-3);
 
   &.personal {
@@ -137,6 +133,8 @@
 }
 
 .view-body {
+  @include ga-hub.page-header-buttons();
+
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -225,33 +223,177 @@
   color: var(--color-danger-default);
 }
 
+// The Documents page's pager, value for value: 1.75rem controls on a light tint, 0.75rem muted count on the right.
 .paging {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+
+  .pager-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: var(--gauzy-header-control-height);
+    padding: 0 0.5rem;
+    border: 0;
+    border-radius: var(--gauzy-radius-sm);
+    background: var(--gauzy-hover-tint);
+    color: var(--text-basic-color);
+    font: inherit;
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+
+    nb-icon {
+      font-size: 0.875rem;
+      color: var(--color-primary-default);
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--gauzy-active-tint);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default);
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
 
   .shown {
-    font-size: 0.8125rem;
-    color: var(--text-hint-color);
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 767px) {
+    justify-content: center;
+
+    .shown {
+      margin-left: 0;
+    }
   }
 }
 
+// After a bulk change, at the bottom of the screen: the theme's surface with a hairline edge and a soft shadow, as the
+// selection bar and the Documents page's bar are, with a success icon, a ghost Undo and a muted close.
 .undo-bar {
+  --button-small-text-font-size: 0.75rem;
+  --button-small-text-font-weight: 500;
+  --button-small-icon-size: 0.875rem;
+  --button-small-icon-offset: 0;
+  --button-ghost-small-padding: 0 0.5rem;
+  --icon-button-ghost-small-padding: 0;
+
+  // Centred on the page content (`left` is set to its centre; 50% of the window until measured), and held above
+  // the page footer rather than over it.
   position: fixed;
   left: 50%;
-  bottom: 1.5rem;
+  bottom: 4rem;
   z-index: 1000;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0.75rem 0.625rem 1rem;
-  border-radius: var(--border-radius);
-  background: var(--background-alternative-color-1);
-  color: var(--text-alternate-color);
-  box-shadow: var(--card-shadow);
+  gap: 0.25rem;
   max-width: calc(100vw - 2rem);
+  padding: 0.3125rem 0.375rem 0.3125rem 0.75rem;
+  // The app's overlay surface: its radius, hairline and shadow tokens (the shadow's fallback is the app's own, as the
+  // global overlay rules write it).
+  border-radius: var(--border-radius);
+  background: var(--background-basic-color-1);
+  color: var(--text-basic-color);
+  box-shadow:
+    inset 0 0 0 1px var(--gauzy-overlay-border-color),
+    var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08));
+  font-size: 0.75rem;
+  line-height: 1rem;
+  animation: undo-enter 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  .undo-icon {
+    flex: 0 0 auto;
+    font-size: 0.9375rem;
+    color: var(--color-success-default);
+  }
+
+  .undo-text {
+    min-width: 0;
+    padding-inline: 0.25rem 0.375rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .undo-divider {
+    flex: 0 0 auto;
+    width: 1px;
+    height: 0.875rem;
+    background: var(--gauzy-overlay-border-color);
+  }
+
+  button[nbButton] {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: var(--gauzy-header-control-height);
+    min-height: var(--gauzy-header-control-height);
+    border-radius: var(--gauzy-radius-sm);
+    line-height: 1;
+    white-space: nowrap;
+
+    nb-icon {
+      margin: 0;
+    }
+  }
+
+  .undo-action.undo-action[nbButton] {
+    padding: 0 0.5rem;
+    color: var(--color-primary-default);
+
+    nb-icon {
+      color: var(--color-primary-default);
+    }
+
+    &:hover:not([disabled]) {
+      background: var(--color-primary-transparent-100);
+    }
+  }
+
+  .undo-close.undo-close[nbButton] {
+    width: var(--gauzy-header-control-height);
+    padding: 0;
+    justify-content: center;
+    color: var(--text-hint-color);
+
+    &:hover {
+      color: var(--text-basic-color);
+      background: var(--background-basic-color-2);
+    }
+  }
+}
+
+// Rises in as it opens; keeps the centring translate.
+@keyframes undo-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .undo-bar {
+    animation: none;
+  }
 }
 
 .unavailable p {

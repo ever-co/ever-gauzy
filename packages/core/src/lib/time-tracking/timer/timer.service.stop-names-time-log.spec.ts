@@ -8,6 +8,12 @@ import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-iso
 import { TimeLogUpdateCommand } from '../time-log/commands';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * A stop did not say which run it was for: Gauzy stopped the employee's running log, so a stop from a view still
  * showing an earlier run (replaced since by a start on another device or tab) ended the newer one. A stop or a toggle
@@ -147,7 +153,48 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			jest.restoreAllMocks();
 		});
 
+		describe('a stop sent again after one whose time slots could not be written (#11889)', () => {
+			it('finds the run still running and stops it, instead of answering 406', async () => {
+				const rows = [runningLog()];
+				const { service, execute } = setup(rows);
+				// The update gives the run the slots of its range before it writes the stop: when they cannot be
+				// written, it writes nothing, and the run goes on
+				const apply = execute.getMockImplementation();
+				let failsUpdate = true;
+				execute.mockImplementation(async (command: unknown) => {
+					if (command instanceof TimeLogUpdateCommand && failsUpdate) {
+						failsUpdate = false;
+						throw new Error('The slot insert failed');
+					}
+					return apply(command);
+				});
+
+				const first = await service.stopTimer({ source: TimeLogSourceEnum.TEAMS }).catch((error) => error);
+				const again = await service.stopTimer({ source: TimeLogSourceEnum.TEAMS });
+
+				expect(first).toEqual(new Error('The slot insert failed'));
+				expect(again).toMatchObject({ id: RUNNING_LOG_ID, isRunning: false });
+				expect(rows[0]).toMatchObject({ isRunning: false });
+			});
+		});
+
 		describe('stop', () => {
+			it('answers the stopped log with the tags the loader read for it (ever-co/ever-gauzy#12029)', async () => {
+				const { loadTimeLogTags } = jest.requireMock('../time-log/time-log-tags');
+				loadTimeLogTags.mockImplementationOnce(async (_manager: unknown, logs: Array<{ tags?: unknown }>) => {
+					logs[0].tags = [{ id: 'meeting', name: 'meeting', color: '#2563eb' }];
+				});
+				const { service } = setup([runningLog()]);
+
+				const stopped = await service.stopTimer({ source: TimeLogSourceEnum.TEAMS });
+
+				expect(stopped).toMatchObject({
+					id: RUNNING_LOG_ID,
+					isRunning: false,
+					tags: [{ id: 'meeting', name: 'meeting', color: '#2563eb' }]
+				});
+			});
+
 			it('answers 409 to a stop naming a finished log, and leaves the running one as it is', async () => {
 				const rows = [finishedLog(), runningLog()];
 				const { service, execute, employeeService, stopPreviousRunningTimers } = setup(rows);

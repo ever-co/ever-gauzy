@@ -47,6 +47,7 @@ import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { withArchivedLinks, withArchivedScope } from '../core/crud/archived-scope';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
+import { teamNotificationDefaultsOf } from '../employee-notification-setting/team-notification-defaults';
 import { RoleService } from '../role/role.service';
 import { UserService } from './../user/user.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
@@ -354,7 +355,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				logo,
 				imageId,
 				projects,
-				defaultProjectId
+				defaultProjectId,
+				// The notification defaults keep their known keys with a valid value each, as on an update
+				...(input.notificationDefaults !== undefined
+					? { notificationDefaults: teamNotificationDefaultsOf(input.notificationDefaults) }
+					: {})
 			});
 
 			// Subscribe creator and assignees to the team
@@ -421,6 +426,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			if (!isManager) {
 				throw new ForbiddenException();
 			}
+		}
+
+		// The notification defaults keep their known keys with a valid value each; none left saves as none
+		if (input.notificationDefaults !== undefined) {
+			input = { ...input, notificationDefaults: teamNotificationDefaultsOf(input.notificationDefaults) };
 		}
 
 		try {
@@ -1044,11 +1054,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				await this.taskService.unassignEmployeeFromTeamTasks(employee.id, organizationTeamId);
 			}
 
-			// Delete the team employee record
-			return await this.organizationTeamEmployeeService.delete({
-				employeeId: employee.id,
-				roleId: IsNull()
-			});
+			// Delete the team employee records, and stop the timer the user still runs for one of these teams
+			return await this.organizationTeamEmployeeService.deleteMemberships(memberships, () =>
+				this.organizationTeamEmployeeService.delete({
+					employeeId: employee.id,
+					roleId: IsNull()
+				})
+			);
 		} catch (error) {
 			throw new ForbiddenException('You are not able to removed account where you are only the manager!');
 		}

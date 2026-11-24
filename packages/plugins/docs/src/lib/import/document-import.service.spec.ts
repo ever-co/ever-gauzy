@@ -33,7 +33,12 @@ jest.mock('@gauzy/core', () => ({
 		currentUserId: () => context.userId,
 		hasPermission: () => context.manage
 	},
-	TenantOrganizationBaseDTO: class {}
+	TenantOrganizationBaseDTO: class {},
+	// MikroORM's own request context under DB_ORM=mikro-orm, given the instance, as the platform's helper opens it.
+	runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+		orm && process.env.DB_ORM === 'mikro-orm'
+			? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+			: work()
 }));
 jest.mock('../entities/document-import.entity', () => ({ DocumentImport: class {} }));
 jest.mock('../repositories/type-orm-document-import.repository', () => ({ TypeOrmDocumentImportRepository: class {} }));
@@ -43,6 +48,7 @@ jest.mock('../services/document-quota.service', () => ({ DocumentQuotaService: c
 jest.mock('../knowledge/queue/docs-queue.service', () => ({ DocsQueueService: class {} }));
 
 import { HttpException, NotFoundException } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DocumentImportLayoutEnum, DocumentImportStatusEnum, DocumentKindEnum, DocumentVisibilityEnum } from '@gauzy/contracts';
 import {
 	DOCS_IMPORT_DISABLED,
@@ -62,7 +68,7 @@ import { importStaleAction } from './document-import.view';
 
 const ORG = 'org-1';
 
-function build() {
+function build(orm?: unknown) {
 	const rows: any[] = [];
 	const imports: any = {
 		create: (value: any) => ({ ...value }),
@@ -103,7 +109,7 @@ function build() {
 	const queue: any = { enqueue: jest.fn(async () => true), jobIdFor: (job: string, id: string) => `docs:${job.slice(5)}:${id}` };
 	// The tenant's storage settings applied to background storage work: here, the work as it is.
 	const tenantStorage: any = { run: jest.fn(async (_tenantId: string, work: () => Promise<unknown>) => work()) };
-	const service = new DocumentImportService(imports, documents, settings, quota, queue, tenantStorage);
+	const service = new DocumentImportService(imports, documents, settings, quota, queue, tenantStorage, orm as never);
 	return { service, rows, imports, documents, settings, queue, tenantStorage };
 }
 
@@ -282,6 +288,60 @@ describe('DocumentImportService', () => {
 		queue.enqueue.mockClear();
 		await expect(service.resumeStale()).resolves.toBe(1);
 		expect(queue.enqueue).toHaveBeenCalledTimes(1);
+	});
+
+	it('under DB_ORM=mikro-orm, handles each stalled import in a MikroORM request context of its own', async () => {
+		// The tenant's storage settings, read to delete a failed import's zip, come through MikroORM there, which refuses
+		// its global EntityManager outside a request: the sweep is never one, and the zips stayed behind.
+		const previousOrm = process.env.DB_ORM;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			let forks = 0;
+			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+			const { service, rows, tenantStorage } = build(orm);
+			const readIn: unknown[] = [];
+			tenantStorage.run.mockImplementation(async (_tenantId: string, work: () => Promise<unknown>) => {
+				const em = MikroOrmRequestContext.getEntityManager();
+				if (!em)
+					throw new Error(
+						'Using global EntityManager instance methods for context specific actions is disallowed.'
+					);
+				readIn.push(em);
+				return work();
+			});
+			const stalled = (id: string) => ({
+				id,
+				tenantId: 'tenant-1',
+				organizationId: ORG,
+				status: DocumentImportStatusEnum.RUNNING,
+				lastProgressAt: new Date(0),
+				attempts: 3,
+				storageKey: `documents/tenant-1/org-1/imports/${id}.zip`,
+				storageProvider: 'LOCAL'
+			});
+			rows.push(stalled('stalled-1'), stalled('stalled-2'));
+
+			await expect(service.resumeStale()).resolves.toBe(0);
+
+			// Both given up, and their zips deleted, each in a fresh fork
+			expect(rows.map((row) => [row.status, row.storageKey])).toEqual([
+				[DocumentImportStatusEnum.FAILED, null],
+				[DocumentImportStatusEnum.FAILED, null]
+			]);
+			expect(storage.deleted).toEqual(
+				expect.arrayContaining([
+					'documents/tenant-1/org-1/imports/stalled-1.zip',
+					'documents/tenant-1/org-1/imports/stalled-2.zip'
+				])
+			);
+			expect(readIn).toEqual([
+				{ name: 'default', fork: 1 },
+				{ name: 'default', fork: 2 }
+			]);
+		} finally {
+			if (previousOrm === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = previousOrm;
+		}
 	});
 });
 

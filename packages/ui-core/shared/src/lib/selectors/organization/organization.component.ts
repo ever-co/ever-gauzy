@@ -102,7 +102,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 */
 	public async selectOrganization(organization: IOrganization | null | undefined): Promise<void> {
 		if (!organization) {
-			this._toastrService.warning('No organization provided to select.');
+			this._toastrService.warning('TOASTR.MESSAGE.ORGANIZATION_SELECT_MISSING');
 			console.warn('No organization provided to select.');
 			return;
 		}
@@ -217,7 +217,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			.subscribe({
 				error: (error) => {
 					console.error('Error loading selected organization:', error);
-					this._toastrService.error('Failed to load selected organization.', error);
+					this._toastrService.error('TOASTR.MESSAGE.ORGANIZATION_LOAD_FAILED');
 				}
 			});
 	}
@@ -285,7 +285,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			this.organizations = updatedOrganizations.filter(isNotEmpty);
 		} catch (error) {
 			console.error('Error updating organization:', error);
-			this._toastrService.error('Failed to update organization.', error);
+			this._toastrService.error('TOASTR.MESSAGE.ORGANIZATION_UPDATE_FAILED');
 		}
 	}
 
@@ -331,7 +331,11 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 		} catch (error) {
 			// Handle any errors that occur during deletion
 			console.error(`Failed to delete organization with ID ${organization.id}`, error);
-			this._toastrService.error(`Failed to delete organization "${organization.name}".`, error);
+			this._toastrService.error(
+				'TOASTR.MESSAGE.ORGANIZATION_DELETE_FAILED',
+				undefined, // default title
+				{ name: organization.name }
+			);
 		}
 	}
 

@@ -32,7 +32,8 @@ session management across multiple server instances.
 - Node.js (version 18 or higher)
 - Redis server (for session storage in HTTP/WebSocket modes)
 - Access to a running Gauzy API server
-- Valid Gauzy credentials
+- A personal API token of that server (Settings > API Tokens), or valid
+  Gauzy credentials
 
 ### Installation & Build
 
@@ -113,15 +114,47 @@ yarn start:mcp
          "args": ["/path/to/your/project/dist/apps/mcp/index.js"],
          "env": {
            "API_BASE_URL": "http://localhost:3000",
-           "GAUZY_AUTH_EMAIL": "your-email@example.com",
-           "GAUZY_AUTH_PASSWORD": "your-password"
+           "GAUZY_API_TOKEN": "<your-api-token>"
          }
        }
      }
    }
    ```
 
+   Create the token in the Gauzy web app, in **Settings > API Tokens**, and
+   copy it when it appears: it is shown once. The server exchanges it at
+   start for a session of one hour at most, and exchanges it again each
+   time that session ends, so your password never sits in your assistant
+   app's settings. The page appears once the API runs with
+   `GAUZY_USER_API_TOKENS_ENABLED=true`. An account with two-factor sign-in
+   needs the token: the server cannot answer the second factor a password
+   sign-in asks for.
+
+   To sign in with a password instead, put the email and password in place
+   of the token:
+
+   ```json
+   "env": {
+     "API_BASE_URL": "http://localhost:3000",
+     "GAUZY_AUTH_EMAIL": "your-email@example.com",
+     "GAUZY_AUTH_PASSWORD": "your-password"
+   }
+   ```
+
+   When both a token and an email and password are set, the server signs
+   in with the token.
+
 3. Restart Claude Desktop
+
+#### Revoking the Assistant's Access
+
+Revoke the token in **Settings > API Tokens**. The session it already
+opened works until it ends, within the hour. The server then cannot
+exchange the token again: its calls to the API fail with a message that
+says to create a new token in Settings > API Tokens. The session cannot
+create another token or a refresh token, so revoking the token is
+enough. To give the assistant access again, create a new token,
+put it in `GAUZY_API_TOKEN` and restart the server.
 
 #### Other AI Assistants
 
@@ -140,13 +173,19 @@ or `.env.local`:
 # Basic configuration
 MCP_TRANSPORT=stdio
 API_BASE_URL=http://localhost:3000
-GAUZY_AUTH_EMAIL=<your-email>
-GAUZY_AUTH_PASSWORD=<your-password>
+GAUZY_API_TOKEN=<your-api-token> # Settings > API Tokens; signs in at start
+
+# Or, in place of the token, an email and a password
+# GAUZY_AUTH_EMAIL=<your-email>
+# GAUZY_AUTH_PASSWORD=<your-password>
 
 # Optional
-GAUZY_AUTO_LOGIN=true # Enable automatic login
+GAUZY_AUTO_LOGIN=true # Enable automatic login with the email and password
 GAUZY_MCP_DEBUG=true # Enable debug logging
 ```
+
+A token needs no `GAUZY_AUTO_LOGIN`, and comes before an email and a
+password set as well.
 
 ### HTTP Transport Configuration
 
@@ -219,7 +258,8 @@ when it connects from the same machine: from a loopback address, with a
 `localhost` (or loopback) `Host`, not through a proxy, and, for a browser page,
 from a `localhost` origin. Every other caller (another host, a Docker port
 mapping, a reverse proxy) logs in with its own credentials through the `login`
-tool.
+tool. `GAUZY_API_TOKEN` sets that account too, without `GAUZY_AUTO_LOGIN`, and
+the same rule applies to it.
 
 #### Testing HTTP Transport
 
@@ -535,6 +575,10 @@ yarn nx test mcp
    - Ensure the API server is accessible
 
 2. **Authentication Errors**
+   - With `GAUZY_API_TOKEN`, the server log says why the token gave no
+     session: refused (create a new one in Settings > API Tokens), or
+     personal API tokens off on that server (its administrator turns them
+     on with `GAUZY_USER_API_TOKENS_ENABLED=true`)
    - Verify `GAUZY_AUTH_EMAIL` and `GAUZY_AUTH_PASSWORD`
    - Check if your account has the necessary permissions
    - Try logging in through the web interface first
@@ -961,6 +1005,8 @@ account. Suitable for:
 
 ## Security Notes
 
+- Prefer a personal API token to a password: it is revoked in one click
+  from Settings > API Tokens, which ends the server's access within the hour
 - Store credentials securely (consider using environment files that are
   not committed to version control)
 - Use HTTPS for production API URLs

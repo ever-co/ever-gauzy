@@ -40,6 +40,7 @@ import {
 import { Tenant } from './tenant.entity';
 import { StripeSubscriptionService, describeError } from '../shared/billing/stripe-subscription.service';
 import { RegistrationPolicyService } from '../auth/auth-switches/registration-policy.service';
+import { lockConnectionSlots, releaseLockConnectionSlot, takeLockConnectionSlot } from '../database/lock-connection-slots';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -51,10 +52,6 @@ export class TenantService extends CrudService<Tenant> {
 
 	/** The onboarding lock every creator shares while only the first tenant of an empty database may be created. */
 	private static readonly FIRST_TENANT_LOCK_ID = 'first-tenant';
-
-	/** Onboardings of this process holding a lock connection, and those waiting for one (see `withOnboardingLock`). */
-	private static lockConnectionsInUse = 0;
-	private static readonly lockConnectionWaiters: Array<() => void> = [];
 
 	private readonly logger = new Logger(TenantService.name);
 	private readonly billingLogger = new Logger('TenantBillingLink');
@@ -203,8 +200,9 @@ export class TenantService extends CrudService<Tenant> {
 	 * - MySQL: a named lock (`GET_LOCK`) on a connection of its own, released when `work` settles.
 	 * - SQLite and MikroORM: an in-process guard. These setups run a single API process.
 	 *
-	 * The lock's connection comes from the pool `work` draws on, so a process lets only a few onboardings hold one
-	 * at a time (see {@link lockConnectionSlots}); the others wait for a slot, holding no connection meanwhile.
+	 * The lock's connection comes from the pool `work` draws on, so a process lets only a few lock holders hold one
+	 * at a time (see `lock-connection-slots.ts`, a budget shared with every workflow of the process that holds a lock
+	 * this way); the others wait for a slot, holding no connection meanwhile.
 	 * Without that bound, enough simultaneous signups would each hold a lock connection while waiting for a
 	 * connection to work with, and none could finish. A pool of a single connection cannot spare one and uses the
 	 * in-process guard alone: such a deployment serializes every query through one connection, and across pods it keeps
@@ -223,7 +221,7 @@ export class TenantService extends CrudService<Tenant> {
 		const keys = lockIds.map((lockId) => `tenant-onboarding:${lockId}`);
 		const dataSource = this.ormType === MultiORMEnum.TypeORM ? this.typeOrmRepository?.manager?.dataSource : null;
 		const type = dataSource?.options.type;
-		const slots = TenantService.lockConnectionSlots(dataSource?.options);
+		const slots = lockConnectionSlots(dataSource?.options);
 
 		// A second onboarding of the same creator (or a second first onboarding) in this process is refused at once,
 		// before it could wait for a lock-connection slot; the database lock then keeps out the ones on other pods.
@@ -233,11 +231,11 @@ export class TenantService extends CrudService<Tenant> {
 		lockIds.forEach((lockId) => TenantService.onboardingInProgress.add(lockId));
 		try {
 			if ((type === 'postgres' || type === 'mysql') && slots > 0) {
-				await TenantService.takeLockConnectionSlot(slots);
+				await takeLockConnectionSlot(slots);
 				try {
 					return await this.withDatabaseLock(dataSource, type, keys, work);
 				} finally {
-					TenantService.releaseLockConnectionSlot();
+					releaseLockConnectionSlot();
 				}
 			}
 			return await work();
@@ -263,35 +261,6 @@ export class TenantService extends CrudService<Tenant> {
 			lockIds.push(TenantService.FIRST_TENANT_LOCK_ID);
 		}
 		return lockIds;
-	}
-
-	/**
-	 * How many onboardings of this process may hold a lock connection at once: half the pool, at most 4, so the
-	 * lock connections never take the connections their own work needs (nor most of the pool from the rest of the
-	 * API). 0 for a pool of one connection; a stated size of 0 is the driver's default.
-	 *
-	 * @param options - The data source's options (`poolSize`, or the driver's own `extra.max`).
-	 */
-	private static lockConnectionSlots(options?: { poolSize?: number; extra?: { max?: number } }): number {
-		const stated = Number(options?.poolSize ?? options?.extra?.max ?? 0);
-		// 0 (or nothing) is the drivers' default rather than "no connection": pg-pool then opens up to 10, mysql2 any
-		// number (`DB_POOL_SIZE=0` is accepted for both). 10 is the smaller of the two.
-		const poolSize = Number.isFinite(stated) && stated > 0 ? stated : 10;
-		return Math.min(4, Math.floor(poolSize / 2));
-	}
-
-	/** Waits until fewer than `slots` onboardings of this process hold a lock connection, then takes a slot. */
-	private static async takeLockConnectionSlot(slots: number): Promise<void> {
-		while (TenantService.lockConnectionsInUse >= slots) {
-			await new Promise<void>((resolve) => TenantService.lockConnectionWaiters.push(resolve));
-		}
-		TenantService.lockConnectionsInUse++;
-	}
-
-	/** Gives a slot back and wakes the next onboarding waiting for one. */
-	private static releaseLockConnectionSlot(): void {
-		TenantService.lockConnectionsInUse--;
-		TenantService.lockConnectionWaiters.shift()?.();
 	}
 
 	/**

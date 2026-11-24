@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { DataSource, In, IsNull, LessThanOrEqual, ObjectLiteral } from 'typeorm';
 import {
 	ID,
@@ -6,8 +7,10 @@ import {
 	InboxDeliveryChannelEnum,
 	InboxDeliveryModeEnum,
 	InboxItemKindEnum,
-	InboxItemSourceEnum
+	InboxItemSourceEnum,
+	ITeamNotificationDefaults
 } from '@gauzy/contracts';
+import { teamNotificationDefaultsByEmployee, withTeamNotificationDefaults } from '@gauzy/core';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
@@ -30,11 +33,16 @@ import {
 	isSentOnlyWhileUnread,
 	kindLabelOf,
 	metadataOf,
-	retryDelayMs
+	retryDelayMs,
+	storedInstantOf
 } from './inbox-delivery-rules';
 import { InboxDeliveryPusher, InboxPushGoneError, InboxPushRefusedError } from './push/inbox-delivery-pusher';
 import { InboxPushSubscriptionService } from './push/inbox-push-subscription.service';
 import { INBOX_PUSH_FOCUSED_WINDOW_MS, INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
+
+/** How long the team defaults read for an employee are reused, and how many employees are kept at most. */
+const TEAM_DEFAULTS_READ_TTL_MS = 60_000;
+const TEAM_DEFAULTS_READ_MAX = 5000;
 
 /** What one sweep did. */
 export interface IInboxDeliverySweepReport {
@@ -60,6 +68,9 @@ interface IIntakeRow {
 	metadata: unknown;
 	/** The recipient's read state when the entry is decided (a boolean, or 0 / 1 as some drivers answer it). */
 	isRead: unknown;
+	/** Where the entry comes from: a notification's entry names it here. */
+	externalSource: string | null;
+	externalId: string | null;
 }
 
 /** A read flag as the drivers answer it: a boolean, or 0 / 1. */
@@ -96,6 +107,9 @@ interface IDeliveryUser {
  */
 @Injectable()
 export class InboxDeliveryService {
+	/** The team defaults read for each employee lately (see `teamDefaultsOf`). */
+	private readonly teamDefaultsRead = new Map<string, { defaults: ITeamNotificationDefaults | null; at: number }>();
+
 	private readonly logger = new Logger(InboxDeliveryService.name);
 	/** One sweep at a time across the workers (a transaction-scoped advisory lock on PostgreSQL, `GET_LOCK` on MySQL). */
 	private readonly locks: InboxNamedLocks;
@@ -105,7 +119,9 @@ export class InboxDeliveryService {
 		private readonly mailer: InboxDeliveryMailer,
 		/** The web push sender and the devices (FR-13); absent in bare test wiring, when nothing is pushed. */
 		@Optional() private readonly pusher?: InboxDeliveryPusher,
-		@Optional() private readonly subscriptions?: InboxPushSubscriptionService
+		@Optional() private readonly subscriptions?: InboxPushSubscriptionService,
+		/** Opens the MikroORM request context an email is sent in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {
 		this.locks = new InboxNamedLocks(dataSource);
 	}
@@ -176,6 +192,8 @@ export class InboxDeliveryService {
 			.addSelect('item.organizationId', 'organizationId')
 			.addSelect('item.metadata', 'metadata')
 			.addSelect('recipient.isRead', 'isRead')
+			.addSelect('item.externalSource', 'externalSource')
+			.addSelect('item.externalId', 'externalId')
 			.where('recipient.createdAt >= :since', { since })
 			.andWhere('item.kind = :kind AND item.source = :source', { kind: InboxItemKindEnum.NOTIFICATION, source: InboxItemSourceEnum.GAUZY })
 			.andWhere((qb) => {
@@ -212,6 +230,9 @@ export class InboxDeliveryService {
 		// A timer reminder read already (an open tab showed it and marked it read) is decided as nothing, which also
 		// keeps it from being taken in again; the read state changes nothing for any other kind.
 		const alreadyRead = isReadFlag(row.isRead);
+		// A timer reminder's wait counts from its filing, as Ever Teams counts it, not from this sweep
+		let filedAt: Date | null = null;
+		if (isSentOnlyWhileUnread(type)) filedAt = await this.filedAtOf(row);
 		const decision =
 			channel === InboxDeliveryChannelEnum.PUSH
 				? decidePushDelivery({
@@ -220,9 +241,17 @@ export class InboxDeliveryService {
 						setting,
 						userTimeZone: user?.timeZone ?? null,
 						hasSubscription: !!(await this.subscriptions?.hasAny(row.tenantId, row.userId)),
-						alreadyRead
+						alreadyRead,
+						filedAt
 					})
-				: decideEmailDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null, alreadyRead });
+				: decideEmailDelivery({
+						now,
+						type,
+						setting,
+						userTimeZone: user?.timeZone ?? null,
+						alreadyRead,
+						filedAt
+					});
 		const repository = this.dataSource.getRepository(InboxDelivery);
 		try {
 			await repository.insert({
@@ -244,6 +273,20 @@ export class InboxDeliveryService {
 			if (await repository.exists({ where: { inboxItemId: row.inboxItemId, userId: row.userId, channel } })) return false;
 			throw error;
 		}
+	}
+
+	/**
+	 * When an entry's notification was filed: its `createdAt`, read in the row's tenant, which is what Ever Teams reads
+	 * through `/employee-notification`. The Inbox entry's own is the same for a live filing, but newer for one the
+	 * recovery sweep filed late. Null when the entry is no notification's, or the notification is gone.
+	 */
+	private async filedAtOf(row: IIntakeRow): Promise<Date | null> {
+		if (row.externalSource !== INBOX_NOTIFICATION_EXTERNAL_SOURCE || !row.externalId) return null;
+		const notification = (await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotification').findOne({
+			select: { id: true, createdAt: true },
+			where: { id: row.externalId, tenantId: row.tenantId }
+		} as never)) as { createdAt?: unknown } | null;
+		return storedInstantOf(notification?.createdAt);
 	}
 
 	// ---------------------------------------------------------------- sending
@@ -313,7 +356,11 @@ export class InboxDeliveryService {
 				continue;
 			}
 			try {
-				await runInDeliveryContext(deliveryUserOf(this.scopeOf(row), row.userId), () => this.mailer.sendNotification(recipient, this.lineOf(item)));
+				await runInDeliveryContext(
+					deliveryUserOf(this.scopeOf(row), row.userId),
+					() => this.mailer.sendNotification(recipient, this.lineOf(item)),
+					this.orm
+				);
 				await this.markSent([row], now);
 				sent += 1;
 			} catch (error) {
@@ -370,7 +417,11 @@ export class InboxDeliveryService {
 				.slice(0, INBOX_DELIVERY_DIGEST_MAX_ITEMS)
 				.map((item) => this.lineOf(item));
 			try {
-				await runInDeliveryContext(deliveryUserOf(this.scopeOf(first), first.userId), () => this.mailer.sendDigest(recipient, lines, present.length));
+				await runInDeliveryContext(
+					deliveryUserOf(this.scopeOf(first), first.userId),
+					() => this.mailer.sendDigest(recipient, lines, present.length),
+					this.orm
+				);
 				await this.markSent(present, now);
 				sent += 1;
 			} catch (error) {
@@ -533,8 +584,31 @@ export class InboxDeliveryService {
 		return user ?? null;
 	}
 
+	/**
+	 * The employee's notification setting, its preferences with their team's defaults under them (a key the employee left
+	 * unset takes the team's value); a team default applies to an employee who has no setting yet too.
+	 */
 	private async settingOf(employeeId: ID, tenantId: ID): Promise<ObjectLiteral | null> {
-		return (await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotificationSetting').findOne({ where: { employeeId, tenantId } } as never)) ?? null;
+		const setting =
+			(await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotificationSetting').findOne({ where: { employeeId, tenantId } } as never)) ?? null;
+		const defaults = await this.teamDefaultsOf(employeeId, tenantId);
+		if (!defaults) return setting;
+		return { ...(setting ?? {}), preferences: withTeamNotificationDefaults(setting?.['preferences'], defaults) };
+	}
+
+	/**
+	 * The team defaults of an employee, read once a minute at most: a sweep decides many entries of the same people, on
+	 * two channels, and a team's defaults change seldom. A change reaches the decisions within the minute.
+	 */
+	private async teamDefaultsOf(employeeId: ID, tenantId: ID): Promise<ITeamNotificationDefaults | null> {
+		const key = `${tenantId}:${employeeId}`;
+		const now = Date.now();
+		const kept = this.teamDefaultsRead.get(key);
+		if (kept && now - kept.at < TEAM_DEFAULTS_READ_TTL_MS) return kept.defaults;
+		const defaults = (await teamNotificationDefaultsByEmployee(this.dataSource, [{ employeeId, tenantId }])).get(key) ?? null;
+		if (this.teamDefaultsRead.size >= TEAM_DEFAULTS_READ_MAX) this.teamDefaultsRead.clear();
+		this.teamDefaultsRead.set(key, { defaults, at: now });
+		return defaults;
 	}
 
 	private async markSent(rows: InboxDelivery[], now: Date): Promise<void> {

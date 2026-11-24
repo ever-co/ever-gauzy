@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { Brackets, DataSource, In, IsNull, LessThanOrEqual } from 'typeorm';
 import { BaseEntityEnum, EmployeeNotificationTypeEnum, ID, IEmployeeNotificationCreateInput } from '@gauzy/contracts';
 import {
@@ -11,6 +12,10 @@ import {
 } from '../../core/entities/internal';
 import { isUniqueViolation } from '../../core/errors/unique-violation';
 import { EmployeeNotificationService } from '../../employee-notification/employee-notification.service';
+import {
+	teamNotificationDefaultsByEmployee,
+	withTeamNotificationDefaults
+} from '../../employee-notification-setting/team-notification-defaults';
 import { TimeLogReminder } from './time-log-reminder.entity';
 import { runInTimerReminderContext } from './timer-reminder-context';
 import {
@@ -107,7 +112,9 @@ export class TimerReminderService {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly notifications: EmployeeNotificationService
+		private readonly notifications: EmployeeNotificationService,
+		/** Opens the MikroORM request context a notification is written in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -311,8 +318,11 @@ export class TimerReminderService {
 			tenantId: log.tenantId
 		};
 		try {
-			await runInTimerReminderContext({ tenantId: log.tenantId, organizationId: log.organizationId }, () =>
-				this.notifications.create(input)
+			await runInTimerReminderContext(
+				{ tenantId: log.tenantId, organizationId: log.organizationId },
+				() => this.notifications.create(input),
+				undefined,
+				this.orm
 			);
 		} catch (error) {
 			if (!(await this.isFiled(claim.employeeNotificationId, log.tenantId))) {
@@ -439,6 +449,14 @@ export class TimerReminderService {
 		const preferences = new Map<string, unknown>();
 		for (const setting of settings) {
 			preferences.set(this.employeeKeyOf(setting), setting.preferences);
+		}
+		// A key the employee left unset takes the default of their team, when it has one
+		const teamDefaults = await teamNotificationDefaultsByEmployee(
+			this.dataSource,
+			page.map((log) => ({ employeeId: log.employeeId, tenantId: log.tenantId }))
+		);
+		for (const [key, defaults] of teamDefaults) {
+			preferences.set(key, withTeamNotificationDefaults(preferences.get(key), defaults));
 		}
 		return preferences;
 	}

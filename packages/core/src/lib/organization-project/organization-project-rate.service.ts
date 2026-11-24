@@ -27,6 +27,13 @@ export const CURRENT_MEMBERSHIP = {
 	isArchived: Or(IsNull(), Equal(false))
 };
 
+/** Whether the caller may edit every employee, and so manages the client rates of every project. */
+export function managesEveryProjectRate(): boolean {
+	const editsEmployees = RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT);
+	const changesSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+	return editsEmployees || changesSelectedEmployee;
+}
+
 /**
  * The client rates of a project and of its members on it: what the client is billed per hour of the project's time,
  * in the project's currency, else the organization's. They are not what members are paid, which stays their own rate.
@@ -194,10 +201,7 @@ export class OrganizationProjectRateService {
 	private async assertMayManageRates(projectId: ID, organizationId: ID, tenantId: ID): Promise<ID | null> {
 		await assertCurrentUserBelongsToOrganization(this.typeOrmOrganizationProjectRepository.manager, organizationId);
 
-		const editsEveryEmployee =
-			RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) ||
-			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-		if (editsEveryEmployee) {
+		if (managesEveryProjectRate()) {
 			return null;
 		}
 

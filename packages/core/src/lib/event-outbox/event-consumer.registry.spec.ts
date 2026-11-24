@@ -7,6 +7,7 @@ import {
 	IEventConsumerContext,
 	IEventEnvelope
 } from '@gauzy/contracts';
+import { mikroOrmOutsideRequest } from '../core/testing/mikro-orm-outside-request';
 import { EventDelivery } from './event-delivery.entity';
 import { EventConsumerRegistry, EventConsumerRunOutcome, EventOrderGapError } from './event-consumer.registry';
 import { EventOutboxService } from './event-outbox.service';
@@ -310,6 +311,51 @@ describe('running a consumer exactly once per event', () => {
 		expect(run.outcome).toBe(EventConsumerRunOutcome.DELIVERED);
 		expect(ledger.records[0].status).toBe(EventOutboxStatus.PUBLISHED);
 		expect(seen).toHaveLength(1);
+	});
+});
+
+/**
+ * The dispatcher runs outside any request, and MikroORM refuses its global EntityManager there: under
+ * DB_ORM=mikro-orm a consumer that writes through it (a CRUD service of the platform, as the task
+ * automations' does) failed every event and was dead-lettered. The MikroORM instance is a real one, over
+ * SQLite, that refuses as the API's does.
+ */
+describe('running a consumer under DB_ORM=mikro-orm', () => {
+	const originalOrm = process.env.DB_ORM;
+
+	afterEach(() => {
+		if (originalOrm === undefined) delete process.env.DB_ORM;
+		else process.env.DB_ORM = originalOrm;
+	});
+
+	it('runs each consumer in a MikroORM request context of its own', async () => {
+		const mikroOrm = await mikroOrmOutsideRequest();
+		try {
+			process.env.DB_ORM = 'mikro-orm';
+			const ledger = new DeliveryLedger();
+			const service = new EventConsumerRegistry(ledger as unknown as EventOutboxService, mikroOrm.orm);
+			const writtenThrough: unknown[] = [];
+			const { consumer: writer } = consumer({
+				async handle() {
+					writtenThrough.push(await mikroOrm.write());
+				}
+			});
+			service.register(writer);
+
+			const first = await service.runOnce(writer, event({ id: 'event-1' }));
+			const second = await service.runOnce(writer, event({ id: 'event-2', sequence: 2 }));
+
+			expect([first.outcome, second.outcome]).toEqual([
+				EventConsumerRunOutcome.DELIVERED,
+				EventConsumerRunOutcome.DELIVERED
+			]);
+			expect(await mikroOrm.rows()).toBe(2);
+			// A fresh context for each run, never the global EntityManager
+			expect(writtenThrough[0]).not.toBe(writtenThrough[1]);
+			expect(writtenThrough).not.toContain(mikroOrm.orm.em);
+		} finally {
+			await mikroOrm.close();
+		}
 	});
 });
 

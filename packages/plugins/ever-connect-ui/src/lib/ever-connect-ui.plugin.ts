@@ -1,9 +1,18 @@
+import { Injector } from '@angular/core';
 import { Routes } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { defineDeclarativePlugin, PageExtensionDefinition, PluginRouteInput } from '@gauzy/plugin-ui';
+import {
+	defineDeclarativePlugin,
+	PageExtensionDefinition,
+	PluginRouteInput,
+	PluginUiDefinition
+} from '@gauzy/plugin-ui';
 import { EVER_APPS_PLUGIN_OPTION } from '@gauzy/ui-core/common';
+import { NavMenuBuilderService } from '@gauzy/ui-core/core';
 import en from '../i18n/en.json';
 import { EVER_APP_CATALOG } from './ever-app-catalog';
+import { EverPlatformMenuService } from './services/ever-platform-menu.service';
 
 /** Path of the page, relative to `/pages/integrations` (the `redirectUrl` of the integration). */
 export const EVER_CONNECT_PATH = 'ever-connect';
@@ -80,14 +89,48 @@ export const CHECK_ON_EVER_PLATFORM_EXTENSION: PageExtensionDefinition = {
 	wrapper: 'none'
 };
 
+/** The core nav section the operator's entry goes under, and its id. */
+export const EVER_PLATFORM_NAV_SECTION_ID = 'settings';
+export const EVER_PLATFORM_NAV_ID = 'settings-ever-platform';
+
+/** Settings > Ever Platform: the operator's way to the Connection tab of Integrations > Ever Platform. */
+export const EVER_PLATFORM_NAV_ITEM = {
+	id: EVER_PLATFORM_NAV_ID,
+	title: 'Ever Platform',
+	icon: 'fas fa-plug',
+	link: EVER_CONNECT_LINK,
+	data: {
+		translationKey: 'EVER_CONNECT.MENU',
+		permissionKeys: [PermissionsEnum.INTEGRATION_VIEW]
+	}
+};
+
 /**
- * Ever Platform UI plugin (`@gauzy/plugin-ever-connect-ui`): Integrations > Ever Platform, the
- * confirmation page of a workspace created from Ever, and "Check on Ever Platform" on a contact.
- * The pages ask the API first; where the Ever Platform module is not loaded (the default) they only
- * say so, and the contact page shows no button. Its options carry the header app switcher's catalog
- * (`EVER_APP_CATALOG`), which the web app reads from the plugin list; without this plugin there is no switcher.
+ * Adds Settings > Ever Platform once the API's menu probe answered (`EverPlatformMenuService`): only where the
+ * Ever Platform module is loaded and only for the operator of the installation's connection; it hides it again
+ * when that changes (signed out, another user). Elsewhere (`EVER_CONNECT_ENABLED` unset, the default, or anyone
+ * but the operator) the menu looks exactly as before; Integrations > Ever Platform stays where it is.
+ *
+ * The entry is hidden (`data.hide`) while it is not available and added again (replacing itself) at each change:
+ * the menu reads `hide` only when it is built, so a new emission is what shows or hides it.
  */
-export const EverConnectUiPlugin = defineDeclarativePlugin('ever-connect', {
+export function registerEverPlatformMenu(injector: Injector): Subscription {
+	const state = { available: false, added: false };
+	return injector.get(EverPlatformMenuService).available$.subscribe((available) => {
+		const changed = available !== state.available;
+		state.available = available;
+		if ((available && !state.added) || (state.added && changed)) {
+			state.added = true;
+			const item = {
+				...EVER_PLATFORM_NAV_ITEM,
+				data: { ...EVER_PLATFORM_NAV_ITEM.data, hide: () => !state.available }
+			};
+			injector.get(NavMenuBuilderService).addNavMenuItems([item] as never, EVER_PLATFORM_NAV_SECTION_ID);
+		}
+	});
+}
+
+const declarative = defineDeclarativePlugin('ever-connect', {
 	version: '0.1.0',
 	location: 'integrations-sections',
 	options: { [EVER_APPS_PLUGIN_OPTION]: EVER_APP_CATALOG },
@@ -97,3 +140,20 @@ export const EverConnectUiPlugin = defineDeclarativePlugin('ever-connect', {
 	translationNamespace: 'EVER_CONNECT',
 	translations: { en }
 });
+
+/**
+ * Ever Platform UI plugin (`@gauzy/plugin-ever-connect-ui`): Integrations > Ever Platform, the
+ * confirmation page of a workspace created from Ever, "Check on Ever Platform" on a contact, and
+ * Settings > Ever Platform for the operator where the module is loaded. The pages ask the API first;
+ * where the Ever Platform module is not loaded (the default) they only say so, the contact page
+ * shows no button and the settings menu has no entry. Its options carry the header app switcher's
+ * catalog (`EVER_APP_CATALOG`), which the web app reads from the plugin list; without this plugin
+ * there is no switcher.
+ */
+export const EverConnectUiPlugin: PluginUiDefinition = {
+	...declarative,
+	bootstrap: (injector: Injector) => {
+		declarative.bootstrap?.(injector);
+		registerEverPlatformMenu(injector);
+	}
+};

@@ -16,7 +16,10 @@ export const OrganizationEquipmentPage = {
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	saveButtonCss: 'nb-card-footer button[status="success"]',
+	// The sharing-request and policy dialogs save with a success button; the equipment dialog, laid out as the
+	// expense dialog, with a primary one.
+	saveButtonCss:
+		'nb-card-footer button[status="success"], ngx-equipment-mutation nb-card-footer button[status="primary"]',
 	editEquipmentButtonCss: 'button.action.primary',
 	deleteEquipmentButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',

@@ -44,6 +44,7 @@ export interface GauzyConfig {
 	auth: {
 		email?: string;
 		password?: string;
+		apiToken?: string;
 		autoLogin: boolean;
 	};
 	mcp: {

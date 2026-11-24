@@ -26,6 +26,7 @@ import { RequestContext } from '../../core/context/request-context';
 import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations, resolveRequestedPage } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import { setLoadedEmployeesFullName } from '../../employee/employee-full-name';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
 import { storedDayStart, storedPlanDay } from './daily-plan-stored-day';
@@ -70,7 +71,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * and a relation the query already joins for its own conditions (`tasks`) is joined a second time: on
 	 * production `GET /daily-plan/me` answered 49 plans as 2,033 joined rows, which the API then hydrated on
 	 * the event loop (1,348 calls at 1.7 s mean, 23 s max). Loaded with one query per relation instead, the
-	 * plans come back once each and every relation is filled in exactly as before.
+	 * plans come back once each and every relation is filled in as before. TypeORM then runs an employee's load
+	 * hook before it loads the employee's user, so the employees' `fullName`, which that hook sets from the user,
+	 * is set once the list is loaded (`setLoadedEmployeesFullName`).
 	 */
 	private static readonly RELATION_LOAD_STRATEGY: 'query' = 'query';
 
@@ -308,6 +311,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
 					const loadsRelations = isNotEmpty(options) && isNotEmpty(options.relations);
+					const relations = parseFindOptionsRelations<DailyPlan>(options.relations);
 
 					// Join related entities. Not when the relations are loaded with their own queries (see
 					// RELATION_LOAD_STRATEGY): a bare join on `tasks` still answered one plan row per task, and a
@@ -324,7 +328,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 								where: options.where
 							}),
 						...(loadsRelations && {
-							relations: parseFindOptionsRelations(options.relations),
+							relations,
 							// See RELATION_LOAD_STRATEGY: the relations are not joined onto the plan rows.
 							relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
 						})
@@ -349,6 +353,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
+					if (loadsRelations) {
+						setLoadedEmployeesFullName(items, relations);
+					}
 					// Return the pagination result
 					return { items, total };
 				}
@@ -411,6 +418,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				default: {
 					// Create the initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
+					const loadedRelations = DailyPlanService.listRelations({ employee: true, tasks: true }, relations);
 
 					// Join related entities. `employee` and `tasks` are always answered: joined and selected here
 					// when the caller asks for nothing more, otherwise loaded with the caller's relations by their
@@ -424,7 +432,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					query.setFindOptions({
 						where: isNotEmpty(where) && where,
 						...(isNotEmpty(relations) && {
-							relations: DailyPlanService.listRelations({ employee: true, tasks: true }, relations),
+							relations: loadedRelations,
 							relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
 						})
 					});
@@ -443,6 +451,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 					// Retrieve results and total count
 					const [items, total] = await query.getManyAndCount();
+					if (isNotEmpty(relations)) {
+						setLoadedEmployeesFullName(items, loadedRelations);
+					}
 
 					// Return the pagination result
 					return { items, total };
@@ -1021,11 +1032,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				default: {
 					// Initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
+					const relations: FindOptionsRelations<DailyPlan> = { employee: { user: true }, tasks: true };
 
 					// The employee, their user and the tasks of every plan, loaded with one query each rather than
 					// joined (see RELATION_LOAD_STRATEGY): the task join alone answered each plan once per task.
 					query.setFindOptions({
-						relations: { employee: { user: true }, tasks: true },
+						relations,
 						relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
 					});
 
@@ -1053,6 +1065,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 					// Retrieves results and total count
 					const [items, total] = await query.getManyAndCount();
+					setLoadedEmployeesFullName(items, relations);
 
 					return { items, total };
 				}

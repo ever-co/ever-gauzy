@@ -67,6 +67,7 @@ import { InboxEmailAvailabilityService } from '../../services/inbox-email-availa
 import { InboxUiService } from '../../services/inbox-ui.service';
 import { InboxItemDetailComponent } from '../inbox-item-detail/inbox-item-detail.component';
 import { InboxNotificationsComponent } from '../inbox-notifications/inbox-notifications.component';
+import { InboxWelcomeComponent } from '../inbox-welcome/inbox-welcome.component';
 
 /** What the page shows. */
 export type InboxPageView = 'loading' | 'ready' | 'unavailable' | 'error';
@@ -143,7 +144,8 @@ export function apiMessage(error: unknown): string | null {
 		RouterLink,
 		TranslatePipe,
 		InboxItemDetailComponent,
-		InboxNotificationsComponent
+		InboxNotificationsComponent,
+		InboxWelcomeComponent
 	],
 	template: `
 		<nb-card class="inbox" data-test="inbox-page">
@@ -555,27 +557,37 @@ export function apiMessage(error: unknown): string | null {
 											</div>
 										} @empty {
 											@if (!loading()) {
-												<div class="state compact" data-test="empty">
-													@if (filtered()) {
-														<span class="state-icon"><nb-icon icon="search-outline"></nb-icon></span>
-														<strong>{{ 'INBOX.EMPTY_FILTERED.TITLE' | translate }}</strong>
-														<span class="state-hint">{{ 'INBOX.EMPTY_FILTERED.HINT' | translate }}</span>
-														<button
-															nbButton
-															size="tiny"
-															status="basic"
-															data-test="clear-filters"
-															(click)="clearFilters()"
-														>
-															{{ 'INBOX.FILTERS.CLEAR' | translate }}
-														</button>
-													} @else {
-														<span class="state-icon"><nb-icon [icon]="tabIcons[tab()]"></nb-icon></span>
-														<strong>{{ 'INBOX.EMPTY_TAB.' + tab() + '.TITLE' | translate }}</strong>
-														<span class="state-hint">{{
-															'INBOX.EMPTY_TAB.' + tab() + '.HINT' | translate
-														}}</span>
-													}
+												<div class="empty-tile" data-test="empty">
+													<div class="empty-inner">
+														<div class="empty-text">
+															@if (filtered()) {
+																<strong>{{ 'INBOX.EMPTY_FILTERED.TITLE' | translate }}</strong>
+																<span class="state-hint">{{ 'INBOX.EMPTY_FILTERED.HINT' | translate }}</span>
+																<button type="button" class="empty-button" data-test="clear-filters" (click)="clearFilters()">
+																	{{ 'INBOX.FILTERS.CLEAR' | translate }}
+																</button>
+															} @else {
+																<strong>{{ 'INBOX.EMPTY_TAB.' + tab() + '.TITLE' | translate }}</strong>
+																<span class="state-hint">{{ 'INBOX.EMPTY_TAB.' + tab() + '.HINT' | translate }}</span>
+															}
+														</div>
+														<div class="empty-art" aria-hidden="true">
+															<div class="empty-window">
+																@if (filtered()) {
+																	<div class="empty-search"><nb-icon icon="search-outline"></nb-icon><i class="empty-line"></i></div>
+																}
+																@for (width of emptyRows; track $index) {
+																	<div class="empty-row">
+																		<span class="empty-dot"></span>
+																		<span class="empty-lines">
+																			<i class="empty-line strong" [style.width.%]="width"></i>
+																			<i class="empty-line" [style.width.%]="width + 22"></i>
+																		</span>
+																	</div>
+																}
+															</div>
+														</div>
+													</div>
 												</div>
 											}
 										}
@@ -616,29 +628,13 @@ export function apiMessage(error: unknown): string | null {
 											(stateChanged)="changeState(item, $event)"
 										></ngx-inbox-item-detail>
 									} @else {
-										<div class="state" data-test="no-selection">
-											<!-- The message icon drawn here, so its parts move: the bubble pops in, its lines are written. -->
-											<span class="state-icon waiting" aria-hidden="true">
-												<svg
-													class="writing"
-													viewBox="0 0 24 24"
-													fill="none"
-													stroke="currentColor"
-													stroke-width="1.6"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-												>
-													<path
-														class="bubble"
-														d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z"
-													/>
-													<path class="line line-1" pathLength="1" d="M8 9h8" />
-													<path class="line line-2" pathLength="1" d="M8 13h5" />
-												</svg>
-											</span>
-											<strong>{{ 'INBOX.SELECT' | translate }}</strong>
-											<span class="state-hint">{{ 'INBOX.SELECT_HINT' | translate }}</span>
-										</div>
+										<ngx-inbox-welcome
+											data-test="no-selection"
+											[emailAvailable]="emailAvailable()"
+											[tab]="tab()"
+											(openTab)="selectTab($event)"
+											(openShortcuts)="openShortcuts()"
+										></ngx-inbox-welcome>
 									}
 								</section>
 							</div>
@@ -1464,10 +1460,6 @@ export function apiMessage(error: unknown): string | null {
 				text-align: center;
 				color: var(--text-basic-color, #222b45);
 			}
-			.state.compact {
-				min-height: 12rem;
-				height: auto;
-			}
 			.state p {
 				margin: 0;
 				max-width: 28rem;
@@ -1484,96 +1476,6 @@ export function apiMessage(error: unknown): string | null {
 				color: var(--text-hint-color, #8f9bb3);
 				font-size: 1.6rem;
 			}
-			/*
-			 * "Select an item": the icon's own parts move, on one 4s loop. The bubble pops in from its tail, the first
-			 * line is written, then the second; both stay a moment, fade, and the bubble breathes before the next one.
-			 */
-			.state-icon.waiting {
-				width: 4.25rem;
-				height: 4.25rem;
-			}
-			.writing {
-				width: 2rem;
-				height: 2rem;
-				overflow: visible;
-			}
-			.writing .bubble {
-				transform-box: fill-box;
-				transform-origin: 20% 100%;
-				animation: bubble-pop 4s ease-in-out infinite;
-			}
-			.writing .line {
-				stroke-dasharray: 1;
-				stroke-dashoffset: 1;
-			}
-			.writing .line-1 {
-				animation: write-line-1 4s ease-in-out infinite;
-			}
-			.writing .line-2 {
-				animation: write-line-2 4s ease-in-out infinite;
-			}
-			@keyframes bubble-pop {
-				0% {
-					transform: scale(0.86);
-				}
-				10% {
-					transform: scale(1.04);
-				}
-				16%,
-				84% {
-					transform: scale(1);
-				}
-				92% {
-					transform: scale(0.96);
-				}
-				100% {
-					transform: scale(0.86);
-				}
-			}
-			@keyframes write-line-1 {
-				0%,
-				14% {
-					stroke-dashoffset: 1;
-					opacity: 1;
-				}
-				32%,
-				76% {
-					stroke-dashoffset: 0;
-					opacity: 1;
-				}
-				88%,
-				100% {
-					stroke-dashoffset: 0;
-					opacity: 0;
-				}
-			}
-			@keyframes write-line-2 {
-				0%,
-				34% {
-					stroke-dashoffset: 1;
-					opacity: 1;
-				}
-				48%,
-				76% {
-					stroke-dashoffset: 0;
-					opacity: 1;
-				}
-				88%,
-				100% {
-					stroke-dashoffset: 0;
-					opacity: 0;
-				}
-			}
-			/* Reduced motion: the icon as it is, still and whole. */
-			@media (prefers-reduced-motion: reduce) {
-				.writing .bubble,
-				.writing .line {
-					animation: none;
-				}
-				.writing .line {
-					stroke-dashoffset: 0;
-				}
-			}
 			.state-hint {
 				max-width: 22rem;
 				font-size: 0.8125rem;
@@ -1581,6 +1483,137 @@ export function apiMessage(error: unknown): string | null {
 			}
 			.loading {
 				min-height: 16rem;
+			}
+
+			.empty-tile {
+				margin: 0.75rem;
+				padding: 0.3125rem;
+				border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+				border-radius: calc(var(--border-radius) * 2.5);
+				animation: empty-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+			}
+			.empty-inner {
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+				contain: layout paint;
+				border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+				border-radius: calc(var(--border-radius) * 2);
+				background: color-mix(in srgb, var(--text-basic-color) 3.5%, var(--background-basic-color-1));
+			}
+			.empty-text {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 0.375rem;
+				padding: 1.25rem 1.25rem 0;
+			}
+			.empty-text strong {
+				color: var(--text-basic-color);
+				font-size: 1rem;
+				font-weight: 600;
+			}
+			.empty-button {
+				margin-top: 0.5rem;
+				height: 2rem;
+				padding: 0 0.875rem;
+				border: 0;
+				border-radius: var(--border-radius);
+				background: var(--gauzy-hover-tint, var(--background-basic-color-3));
+				color: var(--text-basic-color);
+				font: inherit;
+				font-size: 0.8125rem;
+				font-weight: 500;
+				cursor: pointer;
+			}
+			.empty-button:hover {
+				background: var(--gauzy-active-tint, var(--background-basic-color-4));
+			}
+			.empty-button:focus-visible {
+				outline: 2px solid var(--color-primary-default);
+				outline-offset: 2px;
+			}
+			.empty-art {
+				display: flex;
+				justify-content: center;
+				margin-top: 1.25rem;
+				padding: 1.25rem 1.25rem 0;
+				background-image: radial-gradient(var(--border-basic-color-4) 1px, transparent 1.5px);
+				background-size: 1rem 1rem;
+				background-position: center;
+			}
+			.empty-window {
+				display: flex;
+				flex-direction: column;
+				gap: 0.125rem;
+				width: 100%;
+				max-width: 16rem;
+				margin-bottom: -1px;
+				padding: 0.5rem;
+				border: 1px solid var(--border-basic-color-4);
+				border-bottom: 0;
+				border-radius: calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5) 0 0;
+				background: var(--background-basic-color-1);
+				box-shadow: var(--gauzy-shadow);
+				opacity: 0.85;
+			}
+			.empty-search {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				margin-bottom: 0.25rem;
+				padding: 0.375rem 0.5rem;
+				border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+				border-radius: var(--border-radius);
+				color: var(--text-hint-color);
+			}
+			.empty-search nb-icon {
+				font-size: 0.875rem;
+			}
+			.empty-search .empty-line {
+				width: 45%;
+			}
+			.empty-row {
+				display: flex;
+				align-items: center;
+				gap: 0.625rem;
+				padding: 0.5rem;
+			}
+			.empty-dot {
+				width: 1.25rem;
+				height: 1.25rem;
+				flex: 0 0 auto;
+				border-radius: calc(var(--border-radius) * 0.75);
+				background: var(--gauzy-active-tint, var(--background-basic-color-4));
+			}
+			.empty-lines {
+				display: flex;
+				flex-direction: column;
+				gap: 0.375rem;
+				flex: 1 1 auto;
+				min-width: 0;
+			}
+			.empty-line {
+				display: block;
+				max-width: 100%;
+				height: 0.4375rem;
+				border-radius: 999px;
+				background: var(--gauzy-active-tint, var(--background-basic-color-4));
+			}
+			.empty-line.strong {
+				height: 0.5rem;
+				background: var(--border-basic-color-4);
+			}
+			@keyframes empty-rise {
+				from {
+					opacity: 0;
+					transform: translateY(0.5rem);
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.empty-tile {
+					animation: none;
+				}
 			}
 
 			/* "2 archived · Undo", at the bottom of the screen */
@@ -1768,6 +1801,7 @@ export class InboxPageComponent implements OnInit {
 	private readonly destroyRef = inject(DestroyRef);
 
 	protected readonly tabs = INBOX_UI_TABS;
+	protected readonly emptyRows = [46, 34, 52];
 	protected readonly tabIcons = INBOX_UI_TAB_ICONS;
 	protected readonly myMailboxLink = INBOX_MY_MAILBOX_LINK;
 	/** "My mailbox" is linked only where the API serves the Inbox email features. */
@@ -1878,6 +1912,7 @@ export class InboxPageComponent implements OnInit {
 		this.setUpListStream();
 		this.setUpSearch();
 		this.followItemLinks();
+		this.followHeaderItems();
 		this.followCounts();
 		this.lookForNewItems();
 		this.checkAvailability();
@@ -1976,15 +2011,31 @@ export class InboxPageComponent implements OnInit {
 				skip(1),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe((id) => {
-				// Every change of the link ends the read of the one before; a link removed (another tab chosen) opens nothing.
-				this.linkRead?.unsubscribe();
-				this.linkRead = null;
-				this.requestedItemId = id;
-				this.selectedAtLink = this.selectedId();
-				// Before the Inbox is served, or while its list is being read, the list's answer opens it.
-				if (id && this.view() === 'ready' && !this.loading()) this.openRequestedItem();
-			});
+			.subscribe((id) => this.followLink(id));
+	}
+
+	/**
+	 * An item chosen in the header's dropdown while this page is shown. Its `?item=` link alone would not open it when
+	 * that link is already the URL (the same item chosen again after another was opened from the list), nor while the
+	 * Notifications tab is chosen (it shows no item, and `?tab=` is read only when the page starts): the page moves to
+	 * the All tab, and the item opens as a link does.
+	 */
+	private followHeaderItems(): void {
+		this.api.itemRequested$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
+			// The header's own navigation sets the URL to the item's link: the tab is changed here without one.
+			if (this.tab() === 'notifications') this.showTab('all');
+			this.followLink(id);
+		});
+	}
+
+	private followLink(id: string | null): void {
+		// Every change of the link ends the read of the one before; a link removed (another tab chosen) opens nothing.
+		this.linkRead?.unsubscribe();
+		this.linkRead = null;
+		this.requestedItemId = id;
+		this.selectedAtLink = this.selectedId();
+		// Before the Inbox is served, or while its list is being read, the list's answer opens it.
+		if (id && this.view() === 'ready' && !this.loading()) this.openRequestedItem();
 	}
 
 	/** `?tab=` of the URL, when it names one of the tabs. */
@@ -2131,12 +2182,17 @@ export class InboxPageComponent implements OnInit {
 
 	selectTab(tab: InboxUiTab): void {
 		if (tab === this.tab()) return;
+		this.showTab(tab);
+		void this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });
+	}
+
+	/** Shows a tab's first page, without touching the URL. */
+	private showTab(tab: InboxUiTab): void {
 		this.listChanged();
 		this.tab.set(tab);
 		this.items.set([]);
 		this.nextCursor.set(null);
 		this.selectedId.set(null);
-		void this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });
 		this.reload();
 	}
 

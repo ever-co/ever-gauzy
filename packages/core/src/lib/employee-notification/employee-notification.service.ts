@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import {
@@ -11,15 +12,22 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Between, DeleteResult, FindOptionsWhere, In, UpdateResult } from 'typeorm';
+import { Between, DataSource, DeleteResult, FindOptionsWhere, In, QueryRunner, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { runOutsideOrganizationBoundary } from '../core/crud/organization-boundary';
 import { Employee } from '../core/entities/internal';
 import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { redactDatabaseError } from '../core/errors/database-error';
+import {
+	lockConnectionSlots,
+	releaseLockConnectionSlot,
+	takeLockConnectionSlot
+} from '../database/lock-connection-slots';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
 import { timerReminderHoursOf } from '../time-tracking/timer-reminder/timer-reminder.rules';
+import { taskDueReminderHoursOf } from '../tasks/due-reminder/task-due-reminder.rules';
 import { EmployeeCreateNotificationEvent } from './events/employee-notification.event';
 import { EmployeeNotificationCreatedEvent } from './events/employee-notification-created.event';
 import { EmployeeNotificationUpdatedEvent } from './events/employee-notification-updated.event';
@@ -27,6 +35,9 @@ import { EmployeeNotification } from './employee-notification.entity';
 import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-employee-notification.repository';
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
 import { generateNotificationTitle } from './employee-notification.helper';
+import { BoardInvitationDTO, boardInvitationsOf } from './board-invitation';
+import { BoardNotificationDTO, BoardNotificationType, boardNotificationsOf, isSameBoard } from './board-notification';
+import { oauthAppScopesAllowWrites, oauthAppScopesOf } from '../auth/oauth-app-scope';
 
 /**
  * How long an unread notification absorbs an identical one (see `findRedeliveredNotification`).
@@ -36,9 +47,15 @@ import { generateNotificationTitle } from './employee-notification.helper';
  */
 export const EMPLOYEE_NOTIFICATION_REDELIVERY_WINDOW_MS = 60 * 1000;
 
+/** How long a Board notification request waits for another one about the same Board before it files anyway. */
+const BOARD_NOTIFICATION_LOCK_WAIT_SECONDS = 5;
+
 @Injectable()
 export class EmployeeNotificationService extends TenantAwareCrudService<EmployeeNotification> {
 	readonly logger = new Logger(EmployeeNotificationService.name);
+
+	/** The Board notification requests of this process, one after the other (see `inBoardNotificationTurn`). */
+	private static boardNotificationQueue: Promise<unknown> = Promise.resolve();
 
 	constructor(
 		readonly typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
@@ -150,7 +167,8 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			this.publishCreated(notification);
 			return notification;
 		} catch (error) {
-			this.logger.error('Error while creating employee notification:', error);
+			// Redacted: a driver error carries the bound values (titles, a Board's link with its key) in its parameters.
+			this.logger.error('Error while creating employee notification:', redactDatabaseError(error));
 			throw new BadRequestException('Error while creating notification', error);
 		}
 	}
@@ -221,6 +239,283 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			receiverEmployeeId,
 			sentByEmployeeId: senderEmployeeId
 		});
+	}
+
+	/**
+	 * Invites the teammates a member picked to the Board they open from Ever Teams (ever-co/ever-teams#5022): each
+	 * active member of the team among them gets an `Invitation` about the team, filed as the caller. The caller must be
+	 * an employee and an active member of that team; teammates who are not are left out, and nobody is told twice: a
+	 * teammate who still has the same invitation unread in their Inbox is not given another one (see
+	 * {@link pendingBoardInvitationReceiversOf}), so opening Boards with the same teammates again and again, or retrying
+	 * a request that failed half-way, leaves each of them one entry.
+	 *
+	 * @returns How many teammates were invited (those whose earlier invitation is still unread included).
+	 * @throws ForbiddenException when the caller has no employee record or is no active member of the team.
+	 */
+	async inviteToBoard(input: BoardInvitationDTO): Promise<{ invited: number }> {
+		const user = RequestContext.currentUser();
+		const employeeId = RequestContext.currentEmployeeId() ?? user?.employeeId;
+		const tenantId = RequestContext.currentTenantId();
+		if (!employeeId || !tenantId) {
+			throw new ForbiddenException('Only an employee can invite teammates to a Board.');
+		}
+		const name = [user?.firstName, user?.lastName].filter((part) => part && part.trim()).join(' ') || user?.name || user?.email || '';
+		const invitations = await boardInvitationsOf(this.typeOrmRepository.manager.connection, input, { employeeId, name, tenantId });
+		const pending = await this.pendingBoardInvitationReceiversOf(invitations);
+		for (const invitation of invitations) {
+			if (pending.has(String(invitation.receiverEmployeeId))) {
+				continue;
+			}
+			await this.create(invitation);
+		}
+		return { invited: invitations.length };
+	}
+
+	/**
+	 * The receivers of these Board invitations (all about one team, from one sender) who still have the same invitation
+	 * unread and not archived: same type, team, sender and title. Best effort: when the check fails, every invitation is
+	 * filed, as before it existed.
+	 */
+	private async pendingBoardInvitationReceiversOf(invitations: IEmployeeNotificationCreateInput[]): Promise<Set<string>> {
+		const [first] = invitations;
+		if (!first) {
+			return new Set();
+		}
+		try {
+			const unread = await this.find({
+				where: {
+					type: first.type,
+					entity: first.entity,
+					entityId: first.entityId,
+					sentByEmployeeId: first.sentByEmployeeId,
+					receiverEmployeeId: In(invitations.map((invitation) => invitation.receiverEmployeeId)),
+					tenantId: first.tenantId,
+					organizationId: first.organizationId,
+					isRead: false,
+					isArchived: false
+				}
+			});
+			// The title is compared here: an invitation to join the same team from the same sender is another notification
+			return new Set(
+				unread
+					.filter((notification) => notification.title === first.title)
+					.map((notification) => String(notification.receiverEmployeeId))
+			);
+		} catch (error) {
+			// Redacted: a driver error carries the bound values (ids, the notification title) in its text.
+			this.logger.warn('Board invitation check failed, filing every invitation:', redactDatabaseError(error));
+			return new Set();
+		}
+	}
+
+	/**
+	 * Tells the colleagues a member picked about a Board, from the Boards app (ever-co/ever-teams#5022): a `BoardShare`
+	 * when the member shares it with them, a `BoardMention` when the member mentions them in it. Each employee named
+	 * who works in the organization gets one, filed as the caller (see {@link boardNotificationsOf}); nobody is told
+	 * twice: a colleague who still has the same notification unread, about the same Board at the same link, is not
+	 * given another one, so a mention made again and again, or a request retried, leaves one entry.
+	 *
+	 * The Boards app sends nothing but the caller's sign-in: the tenant is the one of the sign-in, and the organization
+	 * the one the body names, else the caller's last one, else the one of their employee. The link is kept as sent and
+	 * never logged: its `#` part may hold the Board's encryption key.
+	 *
+	 * @returns How many colleagues were told (those whose earlier notification is still unread included).
+	 * @throws ForbiddenException when no user is signed in, the sign-in is a third-party app's that may not write, or
+	 * the caller works in no organization the request may use.
+	 */
+	async notifyAboutBoard(type: BoardNotificationType, input: BoardNotificationDTO): Promise<{ notified: number }> {
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		if (!user?.id || !tenantId) {
+			throw new ForbiddenException('Only an employee can tell their colleagues about a Board.');
+		}
+		// The route takes no tenant header, so TenantPermissionGuard, which refuses a third-party app's token without a
+		// write scope on every write, is not on it: the same rule is applied here.
+		const scopes = oauthAppScopesOf(user);
+		if (scopes !== null && !oauthAppScopesAllowWrites(scopes)) {
+			throw new ForbiddenException('This app may not send notifications.');
+		}
+		const name = [user.firstName, user.lastName].filter((part) => part && part.trim()).join(' ') || user.name || user.email || '';
+		const notifications = await boardNotificationsOf(this.typeOrmRepository.manager.connection, type, input, {
+			userId: user.id,
+			tenantId,
+			name,
+			lastOrganizationId: RequestContext.currentOrganizationId(),
+			employeeId: RequestContext.currentEmployeeId() ?? user.employeeId
+		});
+		if (notifications.length === 0) {
+			return { notified: 0 };
+		}
+		// One request at a time per sender, kind and Board, so that two overlapping identical requests (a retry) cannot
+		// both find no unread notification and both file one. `boardNotificationsOf` checked that the caller works in
+		// the organization it picked and kept only colleagues who work there: the unread check and the inserts are about
+		// that organization, which need not be the one of the caller's token, so its boundary is lifted for them.
+		await this.inBoardNotificationTurn(notifications[0], () =>
+			runOutsideOrganizationBoundary(async () => {
+				const pending = await this.pendingBoardNotificationReceiversOf(notifications);
+				for (const notification of notifications) {
+					if (pending.has(String(notification.receiverEmployeeId))) {
+						continue;
+					}
+					await this.create(notification);
+				}
+			})
+		);
+		return { notified: notifications.length };
+	}
+
+	/**
+	 * Runs `work` alone among the Board notification requests of the same sender, kind and Board at the same link:
+	 *
+	 * - in this process, the Board notification requests run one after the other, whatever their Board;
+	 * - PostgreSQL: a transaction-scoped advisory lock, which the other API processes wait for too, held on a
+	 *   connection of its own while `work` runs on the service's own;
+	 * - MySQL: a named lock (`GET_LOCK`) on a connection of its own, released after `work`;
+	 * - SQLite, or a pool of a single connection (which `work` needs): the process's own order only.
+	 *
+	 * The lock's connection comes from the pool `work` draws on, so it takes a slot of the budget every lock holder of
+	 * the process shares (`database/lock-connection-slots.ts`, as tenant onboarding does): `work` always finds the rest
+	 * of the pool, and the request waits for a slot holding no connection meanwhile.
+	 *
+	 * The lock is named after a digest, never the link itself (its `#` part may hold the Board's encryption key). Best
+	 * effort: when the lock cannot be had within {@link BOARD_NOTIFICATION_LOCK_WAIT_SECONDS} or the database refuses
+	 * it, `work` runs anyway, as a request did before the lock: a colleague may then be told twice, which is better
+	 * than not at all.
+	 */
+	private async inBoardNotificationTurn(
+		first: IEmployeeNotificationCreateInput,
+		work: () => Promise<void>
+	): Promise<void> {
+		const board = first.metadata?.board;
+		const reference = board?.roomId ? `room:${board.roomId}` : `snapshot:${board?.snapshotId ?? ''}`;
+		const digest = createHash('sha256')
+			.update([first.tenantId, first.type, first.sentByEmployeeId, reference, board?.link ?? ''].join('\u0000'))
+			.digest('hex')
+			.slice(0, 32);
+		const lockName = `board-notification:${digest}`;
+
+		const run = EmployeeNotificationService.boardNotificationQueue.then(() =>
+			this.withBoardNotificationLock(lockName, work)
+		);
+		EmployeeNotificationService.boardNotificationQueue = run.catch(() => undefined);
+		await run;
+	}
+
+	/** `work` under a lock-connection slot and the database lock `lockName`, where the database has one. */
+	private async withBoardNotificationLock(lockName: string, work: () => Promise<void>): Promise<void> {
+		const dataSource = this.typeOrmRepository.manager.connection;
+		const type = dataSource?.options?.type;
+		const slots = lockConnectionSlots(dataSource?.options as { poolSize?: number; extra?: { max?: number } });
+		if ((type !== 'postgres' && type !== 'mysql') || slots < 1) {
+			return await work();
+		}
+		await takeLockConnectionSlot(slots);
+		try {
+			await this.inBoardNotificationLock(dataSource, type, lockName, work);
+		} finally {
+			releaseLockConnectionSlot();
+		}
+	}
+
+	/** `work` while holding the database lock `lockName`, on a connection of its own (see `inBoardNotificationTurn`). */
+	private async inBoardNotificationLock(
+		dataSource: DataSource,
+		type: 'postgres' | 'mysql',
+		lockName: string,
+		work: () => Promise<void>
+	): Promise<void> {
+		let runner: QueryRunner | undefined;
+		let locked = false;
+		try {
+			runner = dataSource.createQueryRunner();
+			await runner.connect();
+			if (type === 'postgres') {
+				await runner.startTransaction();
+				await runner.query(`SET LOCAL lock_timeout = '${BOARD_NOTIFICATION_LOCK_WAIT_SECONDS}s'`);
+				await runner.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [lockName]);
+				locked = true;
+			} else {
+				const [row] = await runner.query(
+					`SELECT GET_LOCK(?, ${BOARD_NOTIFICATION_LOCK_WAIT_SECONDS}) AS \`acquired\``,
+					[`gauzy:${lockName}`]
+				);
+				locked = Number(row?.acquired) === 1;
+			}
+		} catch (error) {
+			this.logger.warn(`Board notification lock not taken, filing without it: ${(error as Error)?.message}`);
+		}
+		try {
+			await work();
+		} finally {
+			await this.releaseBoardNotificationLock(runner, type, lockName, locked);
+		}
+	}
+
+	/** Gives the lock of `withBoardNotificationLock` back and its connection to the pool. Never throws. */
+	private async releaseBoardNotificationLock(
+		runner: QueryRunner | undefined,
+		type: string,
+		lockName: string,
+		locked: boolean
+	): Promise<void> {
+		if (!runner) {
+			return;
+		}
+		try {
+			if (type === 'postgres') {
+				// The advisory lock is the transaction's: it ends with it. A failed statement left nothing to keep.
+				if (locked) {
+					await runner.commitTransaction();
+				} else if (runner.isTransactionActive) {
+					await runner.rollbackTransaction();
+				}
+			} else if (locked) {
+				await runner.query('SELECT RELEASE_LOCK(?)', [`gauzy:${lockName}`]);
+			}
+		} catch (error) {
+			this.logger.warn(`Board notification lock not released cleanly: ${(error as Error)?.message}`);
+		} finally {
+			try {
+				await runner.release();
+			} catch {
+				// The pool takes a broken connection back by itself
+			}
+		}
+	}
+
+	/**
+	 * The receivers of these Board notifications (all of one kind, about one Board, from one sender) who still have one
+	 * about the same Board at the same link unread and not archived. Best effort: when the check fails, every
+	 * notification is filed, as for the Board invitations.
+	 */
+	private async pendingBoardNotificationReceiversOf(notifications: IEmployeeNotificationCreateInput[]): Promise<Set<string>> {
+		const [first] = notifications;
+		const board = first?.metadata?.board;
+		if (!first || !board) {
+			return new Set();
+		}
+		try {
+			const unread = await this.find({
+				where: {
+					type: first.type,
+					sentByEmployeeId: first.sentByEmployeeId,
+					receiverEmployeeId: In(notifications.map((notification) => notification.receiverEmployeeId)),
+					tenantId: first.tenantId,
+					organizationId: first.organizationId,
+					isRead: false,
+					isArchived: false
+				}
+			});
+			return new Set(
+				unread
+					.filter((notification) => isSameBoard(notification.metadata?.board, board))
+					.map((notification) => String(notification.receiverEmployeeId))
+			);
+		} catch (error) {
+			// Redacted: a driver error carries the bound values in its text and parameters.
+			this.logger.warn('Board notification check failed, filing every notification:', redactDatabaseError(error));
+			return new Set();
+		}
 	}
 
 	/**
@@ -602,6 +897,19 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// A client's answer to an estimate, for whoever handles invoices: no switch of its own, as for a rate
 			// change request; its email follows the per-kind email mode (`preferences.emailByType.Invoice`)
 			case EmployeeNotificationTypeEnum.INVOICE:
+				return true;
+			// A meeting the employee hosts or is invited to: no switch of its own, as for an invoice; its email and push follow
+			// the per-kind modes (`preferences.emailByType.Meeting`, `pushByType.Meeting`), and its reminder before the start
+			// follows `preferences.meetingReminderMinutes`
+			case EmployeeNotificationTypeEnum.MEETING:
+				return true;
+			// A task due soon: switched off through the `preferences` JSON (`taskDueReminderHours` null or 0).
+			case EmployeeNotificationTypeEnum.TASK_DUE_REMINDER:
+				return taskDueReminderHoursOf(employeeNotificationSetting.preferences) !== null;
+			// A Board shared with the employee, or a mention of them in one: no switch of their own, as for a meeting; their
+			// email and push follow the per-kind modes (`preferences.emailByType.BoardShare`, `pushByType.BoardMention`, …)
+			case EmployeeNotificationTypeEnum.BOARD_SHARE:
+			case EmployeeNotificationTypeEnum.BOARD_MENTION:
 				return true;
 			default:
 				throw new Error(`Unsupported notification type: ${type}`);

@@ -1,4 +1,5 @@
 import { ConflictException, Logger } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { FindOperator, IsNull, LessThan, Not } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { ASANA_IMPORT_SWEEP_BATCH, ASANA_IMPORT_SWEEP_SLACK_MS, ASANA_IMPORT_WEBHOOK_STRIDE } from '../asana.constants';
@@ -17,7 +18,7 @@ function mappingOf(id: string, tenantId = 'tenant-1', organizationId = 'org-1'):
 }
 
 /** The sweep over doubles: a scripted repository, connection lookup, claim and import. */
-function sweep(config: Partial<AsanaConfig> = {}) {
+function sweep(config: Partial<AsanaConfig> = {}, orm?: unknown) {
 	const find = jest.fn().mockResolvedValue([]);
 	let lastListed: AsanaProjectMapping[] = [];
 	const tenantsSeen: Array<string | null | undefined> = [];
@@ -44,7 +45,8 @@ function sweep(config: Partial<AsanaConfig> = {}) {
 		{ findAnyById, summaryOf, ensureAttentionFiled, findRefusedUnfiled } as unknown as AsanaTenantService,
 		{ claimImport } as unknown as AsanaSyncRunService,
 		{ importMapping } as unknown as AsanaSyncService,
-		{ importIntervalMinutes: 15, ...config } as AsanaConfig
+		{ importIntervalMinutes: 15, ...config } as AsanaConfig,
+		orm as never
 	);
 	const list = (mappings: AsanaProjectMapping[]) => {
 		lastListed = mappings;
@@ -164,5 +166,44 @@ describe('AsanaImportSweepService', () => {
 		expect(await service.run(now)).toEqual({ attention: 0, due: 2, imported: 1, skipped: 0, failed: 1 });
 		expect(importMapping).toHaveBeenCalledTimes(1);
 		expect(importMapping.mock.calls[0][1].id).toBe('fine');
+	});
+
+	it('under DB_ORM=mikro-orm, runs each notice and each import in a MikroORM request context of its own', async () => {
+		// The sync writes through MikroORM there (the connection's settings, the task maps), which refuses its global
+		// EntityManager outside a request context: a sweep is never one.
+		const previousOrm = process.env['DB_ORM'];
+		process.env['DB_ORM'] = 'mikro-orm';
+		try {
+			let forks = 0;
+			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+			const { service, list, findRefusedUnfiled, ensureAttentionFiled, importMapping } = sweep({}, orm);
+			const ranIn: unknown[] = [];
+			const throughMikroOrm = async (): Promise<undefined> => {
+				const em = MikroOrmRequestContext.getEntityManager();
+				if (!em)
+					throw new Error(
+						'Using global EntityManager instance methods for context specific actions is disallowed.'
+					);
+				ranIn.push(em);
+				return undefined;
+			};
+			ensureAttentionFiled.mockImplementation(throughMikroOrm);
+			importMapping.mockImplementation(throughMikroOrm);
+			findRefusedUnfiled.mockResolvedValue([{ id: 'int-tenant-9' }]);
+			list([mappingOf('first'), mappingOf('second', 'tenant-2')]);
+
+			expect(await service.run(now)).toEqual({ attention: 1, due: 2, imported: 2, skipped: 0, failed: 0 });
+
+			// A fresh fork for each
+			expect(ranIn).toEqual([
+				{ name: 'default', fork: 1 },
+				{ name: 'default', fork: 2 },
+				{ name: 'default', fork: 3 }
+			]);
+			expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
+		} finally {
+			if (previousOrm === undefined) delete process.env['DB_ORM'];
+			else process.env['DB_ORM'] = previousOrm;
+		}
 	});
 });

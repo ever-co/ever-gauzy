@@ -1,11 +1,12 @@
 import { EventBus } from '@nestjs/cqrs';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, Equal, FindOptionsWhere, IsNull, Or, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
 	ID,
 	IEmployee,
+	IOrganizationTeamEmployee,
 	IOrganizationTeamEmployeeActiveTaskUpdateInput,
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
@@ -26,6 +27,7 @@ import { IWorkingEmployeeLookup } from '../employee/former-employees';
 import { mayFlagTeamManagers, teamRoleAfterEdit } from './team-manager-membership';
 import { TrackingTurnedOffEvent } from '../time-tracking/timer/events/tracking-turned-off.event';
 import {
+	assertTrackingSwitchAsSeen,
 	callerRoleRank,
 	keepsTrackingSwitch,
 	mayActAsTeamManager,
@@ -33,6 +35,13 @@ import {
 	rankOfRole,
 	TrackingSwitchRank
 } from '../time-tracking/timer/tracking-switch-rule';
+import { writeUnderTrackingSwitchAsSeen } from '../time-tracking/timer/tracking-switch-as-seen';
+
+/** What names a membership: the employee, the team, its organization and tenant. */
+type ITeamMembershipRef = Pick<
+	IOrganizationTeamEmployee,
+	'employeeId' | 'organizationTeamId' | 'organizationId' | 'tenantId'
+>;
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -118,6 +127,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			// Same bypass as the lookup above: with the employee filter on, a team manager without
 			// CHANGE_SELECTED_EMPLOYEE only matched their own row, so other members were never removed
 			await this.withoutEmployeeFilter(() => this.deleteMany(removedMembers.map((member) => member.id)));
+
+			// A member out of the team no longer sees the timer they run for it, and it would keep counting
+			this.stopRunningTimersInTeam(removedMembers);
 
 			// Unsubscribe members who were unassigned from team. Not `delete()`: for a manager without
 			// CHANGE_SELECTED_EMPLOYEE that would target the manager's own subscription, not the member's.
@@ -484,7 +496,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
-				return await this.delete(member.id);
+				return await this.deleteMemberships([member], () => this.delete(member.id));
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
 
@@ -506,7 +518,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 					// Remove the team member (still bypassed: the filter would only match the manager's own row)
-					return await this.withoutEmployeeFilter(() => this.delete(member.id));
+					return await this.deleteMemberships([member], () =>
+						this.withoutEmployeeFilter(() => this.delete(member.id))
+					);
 				}
 
 				// Non-manager can only remove themselves from the team
@@ -517,11 +531,32 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
-				return await this.delete(member.id);
+				return await this.deleteMemberships([member], () => this.delete(member.id));
 			}
 		} catch (error) {
 			throw new ForbiddenException('An error occurred while deleting the team member.');
 		}
+	}
+
+	/**
+	 * Deletes memberships with `remove`, then stops the timer each employee still runs for the team they left: out of
+	 * the team, they no longer see it, and it would keep counting (see {@link stopRunningTimersInTeam}). A delete that
+	 * removed no row stops nothing.
+	 *
+	 * @param memberships The memberships `remove` deletes.
+	 * @param remove Deletes them.
+	 * @returns The result of the delete.
+	 */
+	public async deleteMemberships(
+		memberships: ReadonlyArray<ITeamMembershipRef>,
+		remove: () => Promise<DeleteResult>
+	): Promise<DeleteResult> {
+		const result = await remove();
+		const removedNothing = result?.affected === 0;
+		if (!removedNothing) {
+			this.stopRunningTimersInTeam(memberships);
+		}
+		return result;
 	}
 
 	/**
@@ -538,16 +573,108 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		memberId: ID,
 		entity: IOrganizationTeamEmployeeUpdateInput
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
-		const changes = await this.withTrackingSwitchAllowed(memberId, entity);
+		const asSeen = await this.withTrackingSwitchAsSeen(memberId, entity);
+		const changes = await this.withTrackingSwitchAllowed(memberId, asSeen);
 		const membershipTurnedOff = await this.membershipTrackingTurnsOff(memberId, changes);
-		const result = await this.update(memberId, changes);
+		const result = await this.updateUnderTrackingSwitchAsSeen(memberId, entity, changes);
 		if (membershipTurnedOff) {
-			const { employeeId, organizationId, tenantId, organizationTeamId } = membershipTurnedOff;
+			this.stopRunningTimersInTeam([membershipTurnedOff]);
+		}
+		return result;
+	}
+
+	/**
+	 * Stops the timer each employee still has running for the team of their membership, at this moment, as a stop of
+	 * their own would (see TrackingTurnedOffEvent). A run they have for another team keeps running.
+	 *
+	 * @param memberships The employee, the team, its organization and tenant, of each membership concerned.
+	 */
+	public stopRunningTimersInTeam(memberships: ReadonlyArray<ITeamMembershipRef>): void {
+		for (const { employeeId, organizationId, tenantId, organizationTeamId } of memberships) {
 			this._eventBus.publish(
 				new TrackingTurnedOffEvent({ employeeId, organizationId, tenantId, organizationTeamId })
 			);
 		}
-		return result;
+	}
+
+	/**
+	 * The update without `expectedIsTrackingEnabled`, the switch the caller's screen showed: a request flag, never
+	 * written. When it is sent and the stored switch differs (no value reads as on, as the timer reads it), someone
+	 * changed it since that screen was read, and the update is refused before anything is written: it would act on a
+	 * state that is gone, for example stop a timer started since (ever-co/ever-gauzy#11830). A switch saved after this
+	 * check is caught by the write itself, which compares it again under lock (see
+	 * {@link updateUnderTrackingSwitchAsSeen}).
+	 *
+	 * Read past the employee filter: a team manager changes another member's row. An update that names no membership
+	 * of the team is left to `update`, which changes no row then.
+	 *
+	 * @param memberId The membership to update.
+	 * @param entity The changes, scoped by organization and team as for {@link update}.
+	 * @returns The changes without the flag.
+	 * @throws ConflictException With the code TRACKING_SWITCH_CHANGED when the stored switch differs.
+	 */
+	private async withTrackingSwitchAsSeen(
+		memberId: ID,
+		entity: IOrganizationTeamEmployeeUpdateInput
+	): Promise<IOrganizationTeamEmployeeUpdateInput> {
+		const { expectedIsTrackingEnabled, ...changes } = entity;
+		const saysWhatItSaw = expectedIsTrackingEnabled !== undefined && expectedIsTrackingEnabled !== null;
+		if (!saysWhatItSaw) {
+			return changes;
+		}
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const { organizationId, organizationTeamId } = entity;
+		let membership: OrganizationTeamEmployee;
+		try {
+			membership = await this.withoutEmployeeFilter(() =>
+				this.findOneByWhereOptions({ id: memberId, tenantId, organizationId, organizationTeamId })
+			);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return changes;
+			}
+			throw error;
+		}
+		assertTrackingSwitchAsSeen(membership.isTrackingEnabled !== false, expectedIsTrackingEnabled);
+		return changes;
+	}
+
+	/**
+	 * Makes the update, as {@link update} does. When the caller says which switch its screen showed
+	 * (`expectedIsTrackingEnabled`), the switch is compared again with the write, as one: the membership is read under
+	 * lock in the update's transaction, and the update is made there only when its switch is still the one the screen
+	 * showed (see `writeUnderTrackingSwitchAsSeen`). The check before ({@link withTrackingSwitchAsSeen}) answers a
+	 * screen that was stale already; this one, a switch another admin saved after that check.
+	 *
+	 * @param memberId The membership to update.
+	 * @param entity The update as the caller sent it, with the switch its screen showed.
+	 * @param changes The changes to write.
+	 * @returns The update result.
+	 * @throws ConflictException With the code TRACKING_SWITCH_CHANGED when the stored switch differs; nothing is written.
+	 */
+	private async updateUnderTrackingSwitchAsSeen(
+		memberId: ID,
+		entity: IOrganizationTeamEmployeeUpdateInput,
+		changes: IOrganizationTeamEmployeeUpdateInput
+	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		const { expectedIsTrackingEnabled, organizationId, organizationTeamId } = entity;
+		const saysWhatItSaw = expectedIsTrackingEnabled !== undefined && expectedIsTrackingEnabled !== null;
+		if (!saysWhatItSaw) {
+			return await this.update(memberId, changes);
+		}
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		return await writeUnderTrackingSwitchAsSeen(
+			this,
+			{
+				typeOrm: this.typeOrmOrganizationTeamEmployeeRepository,
+				mikroOrm: this.mikroOrmOrganizationTeamEmployeeRepository
+			},
+			{ id: memberId, tenantId, organizationId, organizationTeamId },
+			// No value reads as on, as the timer reads it
+			(isTrackingEnabled) => isTrackingEnabled !== false,
+			expectedIsTrackingEnabled,
+			(service) => service.update(memberId, changes)
+		);
 	}
 
 	/**

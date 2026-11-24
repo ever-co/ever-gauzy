@@ -162,6 +162,12 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	 * This method is shared but allows for different handling logic via the abstract method.
 	 */
 	async confirmSignInCode(): Promise<void> {
+		// A code already being checked: the code boxes submit as soon as they are full, and an Enter in the same
+		// frame would otherwise send it a second time.
+		if (this.isLoading) {
+			return;
+		}
+
 		// Check if the form is invalid
 		if (this.form.invalid) {
 			return;

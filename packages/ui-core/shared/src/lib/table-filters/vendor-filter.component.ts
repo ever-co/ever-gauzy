@@ -1,11 +1,12 @@
 import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { DefaultFilter } from 'angular2-smart-table';
+import { RestorableFilterComponent } from './restorable-filter.component';
 import { IOrganizationVendor } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ga-vendor-select-filter',
-    template: `
+	selector: 'ga-vendor-select-filter',
+	template: `
 		<ga-vendor-select
+			[ngModel]="restored"
 			[clearable]="true"
 			[searchable]="false"
 			[addTag]="false"
@@ -13,10 +14,10 @@ import { IOrganizationVendor } from '@gauzy/contracts';
 			(onChanged)="selectedVendorEvent($event)"
 		></ga-vendor-select>
 	`,
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class VendorFilterComponent extends DefaultFilter implements OnChanges {
+export class VendorFilterComponent extends RestorableFilterComponent<IOrganizationVendor> implements OnChanges {
 	constructor() {
 		super();
 	}
@@ -32,6 +33,6 @@ export class VendorFilterComponent extends DefaultFilter implements OnChanges {
 	 * @param value
 	 */
 	selectedVendorEvent(value: IOrganizationVendor) {
-		this.column.filterFunction(value, this.column.id);
+		this.applyFilter(value);
 	}
 }

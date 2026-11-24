@@ -17,5 +17,6 @@ export interface IMenuItem extends NbMenuItem {
 		hide?: () => boolean; //Hide the menu item if this returns true,
 		add?: string;
 		activePaths?: string[]; // Extra paths the item is highlighted on besides its link, each matched with everything below it
+		count?: number; // A number shown at the row's trailing edge
 	};
 }

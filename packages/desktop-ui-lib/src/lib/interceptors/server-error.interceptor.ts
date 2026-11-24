@@ -12,6 +12,7 @@ import { ErrorHandlerService } from '../services/error-handler.service';
 import { Store } from '../services';
 import { ElectronService } from '../electron/services';
 import { SKIP_ERROR_NOTIFICATION } from './skip-error-notification.token';
+import { isApiNotFound, SKIP_NOT_FOUND_NOTIFICATION } from './skip-not-found-notification.token';
 
 @Injectable()
 export class ServerErrorInterceptor implements HttpInterceptor {
@@ -34,7 +35,9 @@ export class ServerErrorInterceptor implements HttpInterceptor {
 							this._store.serverConnection = 0;
 							this._electronService.ipcRenderer.send('server-down');
 						}
-						if (!request.context.get(SKIP_ERROR_NOTIFICATION)) {
+						const isExpectedNotFound =
+							request.context.get(SKIP_NOT_FOUND_NOTIFICATION) && isApiNotFound(error);
+						if (!request.context.get(SKIP_ERROR_NOTIFICATION) && !isExpectedNotFound) {
 							this._errorHandlerService.handleError(error);
 						}
 					}

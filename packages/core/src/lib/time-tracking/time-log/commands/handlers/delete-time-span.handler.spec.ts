@@ -2,7 +2,7 @@
 import '../../../../core/entities/internal';
 
 import { BadRequestException } from '@nestjs/common';
-import { ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { ActionTypeEnum, ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { moment } from '../../../../core/moment-extend';
 import { MultiORMEnum } from '../../../../core/utils';
@@ -13,7 +13,8 @@ import { generateTimeSlots } from '../../../time-slot/utils';
 import { addQueryParameters, slotStartRanges } from '../../../testing/recording-query-builder';
 import { TimeLog } from '../../time-log.entity';
 import { TimeLogService } from '../../time-log.service';
-import { DeleteTimeSpanCommand } from '../delete-time-span.command';
+import { DeleteTimeSpanCommand, TimeLogSplitOptions } from '../delete-time-span.command';
+import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
@@ -213,6 +214,9 @@ const slotStarts = (start: string, stop: string) =>
 /** What an operation ended with: the message of the error it raised, or nothing when it raised none. */
 const raised = (outcome: unknown) => (outcome instanceof Error ? outcome.message : undefined);
 
+/** The client rate each project prices its time at, as `FindTimeLogRatesCommand` reads it (CORE-26). */
+const PROJECT_RATES: Record<string, number> = { 'checkout-project': 120 };
+
 /** The timesheet of a date's week, as `TimesheetFirstOrCreateCommand` finds it (no date: the current week's). */
 const timesheetOf = (date?: Date) => `timesheet-${moment.utc(date).startOf('week').format('YYYY-MM-DD')}`;
 
@@ -230,6 +234,10 @@ interface IStoredLog {
 	projectId?: string;
 	taskId?: string;
 	description?: string;
+	/** The log a split cut this one from, when it is the part after the new range. */
+	splitFromTimeLogId?: string;
+	/** When the log was last written; the logs that leave it out are compared without it. */
+	updatedAt?: Date;
 	deletedAt?: Date;
 }
 
@@ -251,10 +259,16 @@ interface IStoredSlot {
 	deletedAt?: Date;
 }
 
-function createStore() {
+/**
+ * @param slotDeleteOrm - The ORM the slot delete (`TimeSlotBulkDeleteHandler`) runs on: TypeORM removes the slots
+ * through the repository, MikroORM through the entity manager, in one flush. The rest of the store is TypeORM's.
+ */
+function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?: MultiORMEnum } = {}) {
 	const logs: IStoredLog[] = [];
 	const slots: IStoredSlot[] = [];
 	const executed: unknown[] = [];
+	/** The slots deleted for good, which leave the store. */
+	const hardDeleted: string[] = [];
 	/** The timesheets and the employees whose totals were recalculated, in turn (a recalculation that failed is not). */
 	const recalculated = { timesheets: [] as string[], employees: [] as string[] };
 	let created = 0;
@@ -300,6 +314,23 @@ function createStore() {
 
 	/** For each kind of write made to fail: how many of its calls succeed first, then how many fail. */
 	const failing: Partial<Record<StoreWrite, { succeeding: number; times: number }>> = {};
+	/**
+	 * What another request writes just before a read of slots by id for a delete, and how many of those reads go by
+	 * before it (see `linkBeforeSlotDelete`).
+	 */
+	let beforeSlotDeleteRead: { readsToSkip: number; write: () => void } | undefined;
+	const runBeforeSlotDeleteRead = () => {
+		if (!beforeSlotDeleteRead) {
+			return;
+		}
+		if (beforeSlotDeleteRead.readsToSkip > 0) {
+			beforeSlotDeleteRead.readsToSkip--;
+			return;
+		}
+		const { write } = beforeSlotDeleteRead;
+		beforeSlotDeleteRead = undefined;
+		write();
+	};
 	/** Fails this write when its turn has come, as a lost connection or a lock timeout would. */
 	const failIfDue = (write: StoreWrite) => {
 		const failure = failing[write];
@@ -427,6 +458,10 @@ function createStore() {
 					}
 				}),
 				getMany: async () => {
+					// The slot delete's read names the slots by id
+					if (params.timeSlotsIds) {
+						runBeforeSlotDeleteRead();
+					}
 					const ranges = slotStartRanges(params);
 					const isAtStart = (start: Date) =>
 						!ranges || ranges.some(({ from, to }) => start.getTime() >= from && start.getTime() < to);
@@ -452,10 +487,58 @@ function createStore() {
 		),
 		softRemove: jest.fn(async (removed: ITimeSlot[]) => {
 			failIfDue('slotRemoval');
-			for (const slot of slots.filter(({ id }) => removed.some((entity) => entity.id === id))) {
-				slot.deletedAt = new Date();
-			}
+			softDeleteSlots(removed.map(({ id }) => id));
 			return removed;
+		}),
+		remove: jest.fn(async (removed: ITimeSlot[]) => {
+			failIfDue('slotRemoval');
+			hardDeleteSlots(removed.map(({ id }) => id));
+			return removed;
+		})
+	};
+
+	/** A soft delete stamps the slots; their join rows stay, as the soft-deleted rows keep them. */
+	function softDeleteSlots(ids: string[]) {
+		for (const slot of slots.filter(({ id }) => ids.includes(id))) {
+			slot.deletedAt = new Date();
+		}
+	}
+
+	/** A hard delete removes the slots with their join rows. */
+	function hardDeleteSlots(ids: string[]) {
+		for (const id of ids) {
+			const index = slots.findIndex((slot) => slot.id === id);
+			if (index >= 0) {
+				slots.splice(index, 1);
+				hardDeleted.push(id);
+			}
+		}
+	}
+
+	/**
+	 * The entity manager `TimeSlotBulkDeleteHandler` deletes through on MikroORM: its read of the slots by id with
+	 * their logs, its soft delete (each slot stamped, then one flush) and its hard delete (one remove and flush).
+	 */
+	const timeSlotEntityManager = {
+		find: jest.fn(async (_entity: string, where: Record<string, any>) => {
+			runBeforeSlotDeleteRead();
+			return liveSlots()
+				.filter(
+					(slot) =>
+						slot.tenantId === where.tenantId &&
+						slot.organizationId === where.organizationId &&
+						slot.employeeId === where.employeeId &&
+						(!where.id || (where.id.$in as string[]).includes(slot.id))
+				)
+				.map((slot) => slotEntity(slot, true));
+		}),
+		persistAndFlush: jest.fn(async (persisted: ITimeSlot[]) => {
+			failIfDue('slotRemoval');
+			softDeleteSlots(persisted.filter((slot) => slot.deletedAt).map(({ id }) => id));
+		}),
+		removeAndFlush: jest.fn(async (removed: ITimeSlot[]) => {
+			failIfDue('slotRemoval');
+			hardDeleteSlots(removed.map(({ id }) => id));
 		})
 	};
 
@@ -467,10 +550,14 @@ function createStore() {
 		{} as any,
 		{ generateTimeSlots } as any
 	);
-	const slotDeleteHandler = new TimeSlotBulkDeleteHandler(timeSlotRepository as any, {} as any);
-	for (const typeOrmOnly of [updateHandler, slotDeleteHandler]) {
-		Object.defineProperty(typeOrmOnly, 'ormType', { value: MultiORMEnum.TypeORM });
-	}
+	const slotDeleteHandler = new TimeSlotBulkDeleteHandler(
+		timeSlotRepository as any,
+		{
+			getEntityManager: () => timeSlotEntityManager
+		} as any
+	);
+	Object.defineProperty(updateHandler, 'ormType', { value: MultiORMEnum.TypeORM });
+	Object.defineProperty(slotDeleteHandler, 'ormType', { value: slotDeleteOrm });
 	const logDeleteHandler = new TimeLogDeleteHandler(timeLogRepository as any, {} as any, commandBus as any);
 	commandBus.execute.mockImplementation(async (command: unknown) => {
 		executed.push(command);
@@ -485,9 +572,16 @@ function createStore() {
 		if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) {
 			return void recalculated.employees.push(String(command.employeeId));
 		}
+		// The client rates of a project a split's second part moves to (CORE-26)
+		if (command instanceof FindTimeLogRatesCommand) {
+			return { projectBillRateValue: PROJECT_RATES[String(command.scope.projectId)] ?? null };
+		}
 		throw new Error(`Unexpected command ${(command as object)?.constructor?.name}`);
 	});
 	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
+	/** The same handler on another API process, or after a restart: a new instance over the same data. */
+	const handlerOnAnotherProcess = () =>
+		new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
 
 	/** The logs the conflict lookup reads for a range: those it overlaps, with their slots (the TypeORM lookup joins them). */
 	const conflictsOver = (range: { start: Date; end: Date }) =>
@@ -554,12 +648,27 @@ function createStore() {
 
 	return {
 		executed,
+		/** The time log repository the handlers write through. */
+		timeLogRepository,
 		/** The totals recalculated so far. */
 		recalculated: () => ({ timesheets: [...recalculated.timesheets], employees: [...recalculated.employees] }),
 		/** Makes a write fail `times` times in a row, after `succeeding` calls of it have gone through. */
 		fail(write: StoreWrite, succeeding = 0, times = 1) {
 			failing[write] = { succeeding, times };
 		},
+		/**
+		 * Another request links a log to a slot just before a slot delete reads the slots it deletes, once `readsToSkip`
+		 * such reads have gone by: after the cleanup decided which slots are its log's alone.
+		 */
+		linkBeforeSlotDelete(slotId: string, logId: string, readsToSkip = 0) {
+			const write = () => {
+				const slot = slots.find((stored) => stored.id === slotId);
+				slot.timeLogIds = [...slot.timeLogIds, logId];
+			};
+			beforeSlotDeleteRead = { readsToSkip, write };
+		},
+		/** The starts of the slots a log id holds, whether a log of that id is stored or not. */
+		slotsHeldBy: (logId: string) => slotsOf(logId).map((slot) => hhmm(slot.startedAt)),
 		/** Records manual time over `start`–`stop` for the employee, as `POST /timesheet/time-log` does. */
 		addManualTime: (start: string, stop: string) =>
 			manualTimeService().addManualTime({
@@ -568,8 +677,8 @@ function createStore() {
 				startedAt: at(start),
 				stoppedAt: at(stop)
 			}),
-		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it. */
-		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}) {
+		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it unless `withSlots` is false. */
+		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}, withSlots = true) {
 			logs.push({
 				id,
 				tenantId: TENANT_ID,
@@ -583,6 +692,9 @@ function createStore() {
 				logType: TimeLogType.TRACKED,
 				...columns
 			});
+			if (!withSlots) {
+				return;
+			}
 			for (const slot of generateTimeSlots(at(start), at(stop))) {
 				const startedAt = new Date(slot.startedAt);
 				slots.push({
@@ -632,15 +744,41 @@ function createStore() {
 		 */
 		send: (start: string, stop: string, timeLog: TimeLog, timeSlot?: ITimeSlot) =>
 			handler.execute(new DeleteTimeSpanCommand({ start: at(start), end: at(stop) }, timeLog, timeSlot)),
+		/** The split route's command: the log as its caller read it, split at `time` (CORE-26). */
+		split: (time: string, timeLog: TimeLog, split: TimeLogSplitOptions, splitter = handler) =>
+			splitter.execute(
+				new DeleteTimeSpanCommand({ start: at(time), end: at(time) }, timeLog, undefined, false, split)
+			),
+		/**
+		 * A handler over this store given the API's data source, as the API module builds it: it records the history and
+		 * takes the split's lock through it.
+		 */
+		handlerWith: (dataSource: unknown) =>
+			new DeleteTimeSpanHandler(
+				timeLogRepository as any,
+				timeSlotRepository as any,
+				commandBus as any,
+				dataSource as any
+			),
 		/**
 		 * The cleanup for a new `start`–`stop` range, as its callers run it: the logs the conflict lookup reads (those the
 		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per log, naming no slot.
 		 */
-		async cleanUp(start: string, stop: string) {
+		async cleanUp(start: string, stop: string, forceDelete = false) {
 			const range = { start: at(start), end: at(stop) };
 			const results: boolean[] = [];
 			for (const timeLog of conflictsOver(range)) {
-				results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog)));
+				results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog, undefined, forceDelete)));
+			}
+			return results;
+		},
+		/** The same cleanup, run by the handler of another API process (or of this one after a restart). */
+		async cleanUpOnAnotherProcess(start: string, stop: string) {
+			const range = { start: at(start), end: at(stop) };
+			const other = handlerOnAnotherProcess();
+			const results: boolean[] = [];
+			for (const timeLog of conflictsOver(range)) {
+				results.push(await other.execute(new DeleteTimeSpanCommand(range, timeLog)));
 			}
 			return results;
 		},
@@ -662,7 +800,12 @@ function createStore() {
 				.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime())
 				.map((log) => ({ ...log })),
 		/** How many slots the employee still has. */
-		slotCount: () => liveSlots().length
+		slotCount: () => liveSlots().length,
+		/** The ids of the slots deleted so far: soft (stamped, still stored) and hard (gone). */
+		deletedSlots: () => ({
+			soft: slots.filter((slot) => slot.deletedAt).map((slot) => slot.id),
+			hard: [...hardDeleted]
+		})
 	};
 }
 
@@ -974,44 +1117,84 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		expect(outcome).toBe('The unlink failed');
 	});
 
-	it('raises instead of splitting again a log whose failed recovery left its second part', async () => {
+	/** The retry of a cleanup: on the API process where the split failed, or on another one (or after a restart, #11887). */
+	const RETRIES = [
+		['on the same API process', 'cleanUp'],
+		['on another API process, or after a restart (#11887)', 'cleanUpOnAnotherProcess']
+	] as const;
+
+	it.each(RETRIES)(
+		'raises instead of splitting again a log whose failed recovery left its second part, %s',
+		async (_where, retry) => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '11:00');
+			// The cut fails, then so does the delete of the second part that would have undone the split.
+			store.fail('update');
+			store.fail('delete');
+
+			const first = await store.cleanUp('09:00', '10:00').then(raised, raised);
+			const leftBehind = store.timeline();
+			const retried = await store[retry]('09:00', '10:00').then(raised, raised);
+
+			// The log, whole, and the second part beside it, as the failed recovery left them...
+			expect(leftBehind).toEqual([
+				{ range: '08:00-11:00', isRunning: false, slots: slotStarts('08:00', '11:00') },
+				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+			]);
+			expect(first).toBe('The update failed');
+			// ...and no further copy: the next cleanup of that log refuses to split it.
+			expect(store.timeline()).toEqual(leftBehind);
+			expect(retried).toContain('second part');
+		}
+	);
+
+	it.each(RETRIES)(
+		'splits the log again once the second part a failed recovery left has been deleted, %s',
+		async (_where, retry) => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '11:00');
+			store.fail('update');
+			store.fail('delete');
+			await store.cleanUp('09:00', '10:00').then(raised, raised);
+			const [, leftBehind] = store.rows();
+			store.discard(leftBehind.id);
+
+			const retried = await store[retry]('09:00', '10:00').then(raised, raised);
+
+			expect(store.timeline()).toEqual([
+				{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+			]);
+			expect(retried).toBeUndefined();
+		}
+	);
+
+	it('saves the second part with the id of the log it was cut from, and the log with none (#11887)', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
-		// The cut fails, then so does the delete of the second part that would have undone the split.
-		store.fail('update');
-		store.fail('delete');
 
-		const first = await store.cleanUp('09:00', '10:00').then(raised, raised);
-		const leftBehind = store.timeline();
-		const retried = await store.cleanUp('09:00', '10:00').then(raised, raised);
+		await store.cleanUp('09:00', '10:00');
 
-		// The log, whole, and the second part beside it, as the failed recovery left them...
-		expect(leftBehind).toEqual([
-			{ range: '08:00-11:00', isRunning: false, slots: slotStarts('08:00', '11:00') },
-			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		expect(store.rows().map(({ id, splitFromTimeLogId }) => ({ id, splitFromTimeLogId }))).toEqual([
+			{ id: 'tracked', splitFromTimeLogId: undefined },
+			{ id: expect.not.stringMatching(/^tracked$/), splitFromTimeLogId: 'tracked' }
 		]);
-		expect(first).toBe('The update failed');
-		// ...and no further copy: the next cleanup of that log refuses to split it.
-		expect(store.timeline()).toEqual(leftBehind);
-		expect(retried).toContain('second part');
 	});
 
-	it('splits the log again once the second part a failed recovery left has been deleted', async () => {
+	it('splits a log again, on another API process, when the part of its earlier split went through (#11887)', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
-		store.fail('update');
-		store.fail('delete');
-		await store.cleanUp('09:00', '10:00').then(raised, raised);
-		const [, leftBehind] = store.rows();
-		store.discard(leftBehind.id);
+		await store.cleanUp('09:00', '10:00');
 
-		const retried = await store.cleanUp('09:00', '10:00').then(raised, raised);
+		// That part starts after the log's new end: it does not duplicate the log's time.
+		const outcome = await store.cleanUpOnAnotherProcess('08:20', '08:40').then(raised, raised);
 
 		expect(store.timeline()).toEqual([
-			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '08:00-08:20', isRunning: false, slots: slotStarts('08:00', '08:20') },
+			{ range: '08:40-09:00', isRunning: false, slots: slotStarts('08:40', '09:00') },
 			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
 		]);
-		expect(retried).toBeUndefined();
+		expect(outcome).toBeUndefined();
 	});
 
 	it('splits a log that a separate log overlaps up to the same end, as older data can have them', async () => {
@@ -1152,8 +1335,544 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 
 		const outcome = await store.cleanUp('2026-10-10T22:00', '2026-10-11T00:00').then(raised, raised);
 
+		expect(store.timeline()).toEqual([
+			{
+				range: '00:00-01:00',
+				isRunning: false,
+				slots: slotStarts('2026-10-11T00:00', '2026-10-11T01:00')
+			}
+		]);
 		expect(store.rows().map((row) => row.timesheetId)).toEqual([after]);
 		expect(store.recalculated()).toEqual({ timesheets: [before, after], employees: [EMPLOYEE_ID] });
 		expect(outcome).toBe('The slotRemoval failed');
 	});
+
+	/**
+	 * #11888: the cut writes the log's new start or end, then deletes in one go the slots only the log held outside it.
+	 * When that delete fails, nothing of it went through, and the log used to keep those slots outside its new range.
+	 */
+	describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
+		'when the cut fails to delete the slots it drops, the slot delete running on %s (#11888)',
+		(slotDeleteOrm) => {
+			it.each([
+				['takes its start', '07:00', '09:00', '09:00', '10:00'],
+				['takes its end', '09:00', '11:00', '08:00', '09:00']
+			] as const)(
+				'deletes the slots outside the new range, and raises the error, when the range %s',
+				async (_shape, start, stop, keptFrom, keptTo) => {
+					const store = createStore({ slotDeleteOrm });
+					store.addLog('tracked', '08:00', '10:00');
+					store.fail('slotRemoval');
+
+					const outcome = await store.cleanUp(start, stop).then(raised, raised);
+
+					expect(store.timeline()).toEqual([
+						{ range: `${keptFrom}-${keptTo}`, isRunning: false, slots: slotStarts(keptFrom, keptTo) }
+					]);
+					// Soft deleted, as the cut was asked
+					expect(store.deletedSlots().soft).toHaveLength(6);
+					expect(store.deletedSlots().hard).toEqual([]);
+					// The cut stopped before its totals: the recovery recalculates them.
+					expect(store.recalculated()).toEqual({
+						timesheets: [timesheetOf(at('08:00'))],
+						employees: [EMPLOYEE_ID]
+					});
+					expect(outcome).toBe('The slotRemoval failed');
+				}
+			);
+
+			it('keeps a slot another log took after the slots were read, and only lets go of it', async () => {
+				const store = createStore({ slotDeleteOrm });
+				store.addLog('tracked', '08:00', '10:00');
+				store.fail('slotRemoval');
+				// A timer started in the 08:30 slot takes it once the recovery has read which slots the log holds alone,
+				// before the slot delete reads them (the cut's own failed delete read them first)
+				store.linkBeforeSlotDelete('tracked@08:30', 'timer-run', 1);
+
+				const outcome = await store.cleanUp('07:00', '09:00', true).then(raised, raised);
+
+				expect(store.timeline()).toEqual([
+					{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
+				]);
+				expect(store.slotsHeldBy('timer-run')).toEqual(['08:30']);
+				expect(store.deletedSlots().hard).not.toContain('tracked@08:30');
+				expect(outcome).toBe('The slotRemoval failed');
+			});
+
+			it('deletes them for good when the cut was a force delete', async () => {
+				const store = createStore({ slotDeleteOrm });
+				store.addLog('tracked', '08:00', '10:00');
+				store.fail('slotRemoval');
+
+				const outcome = await store.cleanUp('07:00', '09:00', true).then(raised, raised);
+
+				expect(store.timeline()).toEqual([
+					{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
+				]);
+				expect(store.deletedSlots().hard).toEqual(
+					slotStarts('08:00', '09:00').map((hhmm) => `tracked@${hhmm}`)
+				);
+				expect(store.deletedSlots().soft).toEqual([]);
+				expect(outcome).toBe('The slotRemoval failed');
+			});
+
+			it.each([
+				['takes its start', '07:00', '09:00'],
+				['takes its end', '09:00', '11:00']
+			] as const)(
+				'gives the log its range back, with every slot, when the range %s and the slots cannot be deleted at all',
+				async (_shape, start, stop) => {
+					const store = createStore({ slotDeleteOrm });
+					store.addLog('tracked', '08:00', '10:00');
+					store.fail('slotRemoval', 0, Infinity);
+
+					const outcome = await store.cleanUp(start, stop).then(raised, raised);
+
+					expect(store.timeline()).toEqual(AS_IT_WAS);
+					expect(store.rows().map((row) => row.timesheetId)).toEqual([timesheetOf(at('08:00'))]);
+					expect(store.slotCount()).toBe(12);
+					expect(outcome).toBe('The slotRemoval failed');
+				}
+			);
+		}
+	);
+
+	it('gives the log its range and its timesheet back when it had been moved to the week of its new start (#11888)', async () => {
+		const store = createStore();
+		store.addLog('tracked', '2026-10-10T23:00', '2026-10-11T01:00');
+		const before = timesheetOf(at('2026-10-10T23:00'));
+		store.fail('slotRemoval', 0, Infinity);
+
+		const outcome = await store.cleanUp('2026-10-10T22:00', '2026-10-11T00:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{
+				range: '23:00-01:00',
+				isRunning: false,
+				slots: slotStarts('2026-10-10T23:00', '2026-10-11T01:00')
+			}
+		]);
+		expect(store.rows().map((row) => row.timesheetId)).toEqual([before]);
+		expect(outcome).toBe('The slotRemoval failed');
+	});
+
+	it('deletes the slots only the log held before its new start and lets go of the shared one, when the cut fails to delete them (#11888)', async () => {
+		const store = createStore();
+		// The previous log ends at 08:05, inside the 08:00 slot, which both logs hold.
+		store.addLog('previous', '07:30', '08:05');
+		store.addLog('tracked', '08:05', '10:00');
+		store.share('tracked@08:00', 'previous');
+		store.fail('slotRemoval');
+
+		const outcome = await store.cleanUp('08:05', '09:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '07:30-08:05', isRunning: false, slots: slotStarts('07:30', '08:05') },
+			{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
+		]);
+		expect(outcome).toBe('The slotRemoval failed');
+	});
 });
+
+/**
+ * CORE-26 — the split route's command (`POST /timesheet/time-log/:id/split`): one moment, where the log ends and its
+ * second part starts, through the same split as time saved inside a log, over the scripted store above.
+ */
+describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it("splits Marie's tracked 09:00 to 13:00 at 11:00 into 12 slots each, the second on the other task", async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { taskId: 'homepage-redesign' });
+
+		const split = await store.split('11:00', store.read('tracked'), { secondPart: { taskId: 'checkout-bug' } });
+
+		expect(split).toBe(true);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:00', isRunning: false, slots: slotStarts('09:00', '11:00') },
+			{ range: '11:00-13:00', isRunning: false, slots: slotStarts('11:00', '13:00') }
+		]);
+		// Every slot, with what it carries, is still there: none deleted, none shared
+		expect(store.slotCount()).toBe(24);
+		expect(store.deletedSlots()).toEqual({ soft: [], hard: [] });
+		const [first, second] = store.rows();
+		expect(first).toMatchObject({ id: 'tracked', taskId: 'homepage-redesign' });
+		expect(first.splitFromTimeLogId).toBeUndefined();
+		expect(second).toMatchObject({ taskId: 'checkout-bug', splitFromTimeLogId: 'tracked' });
+	});
+
+	it('copies every field the second part does not change, a field left undefined included', async () => {
+		const store = createStore();
+		const fields = { projectId: 'homepage-project', taskId: 'homepage-redesign', description: 'Hero section' };
+		store.addLog('tracked', '09:00', '13:00', fields);
+
+		await store.split('11:00', store.read('tracked'), {
+			secondPart: { taskId: undefined, description: 'Checkout bug' }
+		});
+
+		const [, second] = store.rows();
+		expect(second).toMatchObject({
+			tenantId: TENANT_ID,
+			organizationId: ORGANIZATION_ID,
+			employeeId: EMPLOYEE_ID,
+			timesheetId: timesheetOf(at('09:00')),
+			source: TimeLogSourceEnum.DESKTOP,
+			logType: TimeLogType.TRACKED,
+			projectId: 'homepage-project',
+			taskId: 'homepage-redesign',
+			description: 'Checkout bug'
+		});
+	});
+
+	it("gives a second part on another project that project's client rate, as an edit of the project does", async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { projectId: 'homepage-project' });
+
+		await store.split('11:00', store.read('tracked'), { secondPart: { projectId: 'checkout-project' } });
+
+		const [first, second] = store.rows() as Array<Record<string, unknown>>;
+		expect(second).toMatchObject({ projectId: 'checkout-project', projectBillRateValue: 120 });
+		expect(first.projectBillRateValue).toBeUndefined();
+	});
+
+	it('splits a manual log holding no slot at any minute', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+
+		const split = await store.split('11:05', store.read('manual'), { secondPart: {} });
+
+		expect(split).toBe(true);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:05', isRunning: false, slots: [] },
+			{ range: '11:05-13:00', isRunning: false, slots: [] }
+		]);
+	});
+
+	it('leaves a running log whole', async () => {
+		const store = createStore();
+		store.addLog('running', '09:00', '13:00', { isRunning: true });
+
+		const split = await store.split('11:00', store.read('running'), { secondPart: {} });
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: true, slots: slotStarts('09:00', '13:00') }
+		]);
+	});
+
+	it('leaves the log whole when the moment is no longer inside it, as another split came first', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const asRead = store.read('tracked');
+		await store.split('11:00', asRead, { secondPart: {} });
+		const afterFirst = store.timeline();
+
+		// The same request sent again, with the log as it was read before the first went through
+		const again = await store.split('11:00', asRead, { secondPart: {} });
+
+		expect(again).toBe(false);
+		expect(store.timeline()).toEqual(afterFirst);
+	});
+
+	it('leaves the log as it was and raises the error when the cut fails', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		store.fail('update');
+
+		const outcome = await store
+			.split('11:00', store.read('tracked'), { secondPart: { taskId: 'checkout-bug' } })
+			.then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		expect(outcome).toBe('The update failed');
+	});
+
+	it('records the split in the history of both parts, with the reason given', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { taskId: 'homepage-redesign' });
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE_ID);
+		const { dataSource, rows: historyRows } = historyRecorder(store);
+
+		await store.split(
+			'11:00',
+			store.read('tracked'),
+			{ secondPart: { taskId: 'checkout-bug' }, history: { reason: 'Switched to the checkout bug' } },
+			store.handlerWith(dataSource)
+		);
+
+		// The second part: its creation, in the transaction that saved it
+		expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+		expect(historyRows).toEqual([
+			expect.objectContaining({ action: ActionTypeEnum.Created, entityId: store.rows()[1].id })
+		]);
+		// SQLite, the database these specs run with, stores the row's data as text
+		const [row] = historyRows;
+		let data = row.data;
+		if (typeof data === 'string') {
+			data = JSON.parse(data);
+		}
+		expect(data).toEqual({ employeeId: EMPLOYEE_ID, reason: 'Switched to the checkout bug' });
+		// The log: its new end, through the edit's own history
+		const cut = store.executed.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
+		expect(cut.input).toEqual({ startedAt: at('09:00'), stoppedAt: at('11:00') });
+		expect(cut.history).toEqual({ reason: 'Switched to the checkout bug' });
+	});
+
+	it('records no history for time saved inside a log, which splits it as before', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+
+		await store.cleanUp('09:00', '10:00');
+
+		const cut = store.executed.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
+		expect(cut.history).toBeUndefined();
+	});
+
+	it('leaves the log whole when another split shortened it, at a moment still inside it', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+		const asRead = store.read('manual');
+		await store.split('11:00', asRead, { secondPart: {} });
+		const afterFirst = store.timeline();
+
+		// Checked against 09:00 to 13:00 too: run on 09:00 to 11:00, it would give the 10:00 to 11:00 the first split
+		// left the changes of this one, and leave the 11:00 to 13:00 with the others
+		const queued = await store.split('10:00', asRead, { secondPart: { taskId: 'checkout-bug' } });
+
+		expect(queued).toBe(false);
+		expect(store.timeline()).toEqual(afterFirst);
+	});
+
+	it.each([
+		['member', { employeeId: '12030000-0000-4000-8000-0000000000ee' }],
+		['organization', { organizationId: '12030000-0000-4000-8000-0000000000ff' }]
+	])(
+		'leaves the log whole when it is no longer the time of the %s the route checked the caller against',
+		async (_owner, checkedOwner) => {
+			const store = createStore();
+			store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+			// The route authorized the caller for the log as it then was; another write gave it to someone else since
+			const checked = { ...store.read('manual'), ...checkedOwner } as TimeLog;
+
+			const split = await store.split('11:00', checked, { secondPart: {} });
+
+			expect(split).toBe(false);
+			expect(store.timeline()).toEqual([{ range: '09:00-13:00', isRunning: false, slots: [] }]);
+		}
+	);
+
+	it('leaves the log whole when it was written since the route read it, as by an invoice line that bills it', async () => {
+		const store = createStore();
+		const billedAt = new Date('2026-11-02T08:00:00.124Z');
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL, updatedAt: billedAt }, false);
+		// The route checked the log a millisecond before the billing moved its updatedAt (ever-co/ever-teams#5382)
+		const checked = { ...store.read('manual'), updatedAt: new Date(billedAt.getTime() - 1) } as TimeLog;
+
+		const split = await store.split('11:00', checked, { secondPart: { isBillable: false } });
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([{ range: '09:00-13:00', isRunning: false, slots: [] }]);
+		expect(store.rows().map((row) => row.id)).toEqual(['manual']);
+	});
+
+	it('records in the history the undo of a split whose cut failed before writing', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const { dataSource, rows } = historyRecorder(store);
+		store.fail('update');
+
+		const outcome = await store
+			.split(
+				'11:00',
+				store.read('tracked'),
+				{ secondPart: {}, history: { reason: null } },
+				store.handlerWith(dataSource)
+			)
+			.then(raised, raised);
+
+		expect(outcome).toBe('The update failed');
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		// The second part: saved with its creation, then deleted. The log: never cut, so nothing to take back.
+		const partId = rows[0].entityId;
+		expect(rows.map(({ action, entityId }) => ({ action, entityId }))).toEqual([
+			{ action: ActionTypeEnum.Created, entityId: partId },
+			{ action: ActionTypeEnum.Deleted, entityId: partId }
+		]);
+	});
+
+	it('records in the history the range the log takes back when its cut wrote, then failed', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const { dataSource, rows } = historyRecorder(store);
+		// The cut writes the log's new end, then fails to take the log off the slots the second part now holds
+		store.fail('unlink');
+
+		const outcome = await store
+			.split(
+				'11:00',
+				store.read('tracked'),
+				{ secondPart: {}, history: { reason: null } },
+				store.handlerWith(dataSource)
+			)
+			.then(raised, raised);
+
+		expect(outcome).toBe('The unlink failed');
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		const partId = rows[0].entityId;
+		expect(rows.map(({ action, entityId }) => ({ action, entityId }))).toEqual([
+			{ action: ActionTypeEnum.Created, entityId: partId },
+			{ action: ActionTypeEnum.Deleted, entityId: partId },
+			{ action: ActionTypeEnum.Updated, entityId: 'tracked' }
+		]);
+		// SQLite, the database these specs run with, stores the values as text
+		const valuesOf = (value: unknown) => (typeof value === 'string' ? JSON.parse(value) : value);
+		const rangeBack = rows[2];
+		expect({
+			updatedFields: valuesOf(rangeBack.updatedFields),
+			previousValues: valuesOf(rangeBack.previousValues),
+			updatedValues: valuesOf(rangeBack.updatedValues)
+		}).toEqual({
+			updatedFields: ['stoppedAt', 'duration'],
+			previousValues: [{ stoppedAt: at('11:00').toISOString() }, { duration: 2 * 3600 }],
+			updatedValues: [{ stoppedAt: at('13:00').toISOString() }, { duration: 4 * 3600 }]
+		});
+	});
+
+	it('splits a log once when two API processes split it at once, and leaves it whole for the later one', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+		const asRead = store.read('manual');
+		// One database, two processes: each has its own handler, so its own queue, and the database's locks in common
+		const locks = sharedDatabaseLocks();
+
+		const outcomes = await Promise.all([
+			store.split('11:00', asRead, { secondPart: {} }, store.handlerWith(locks.dataSource)),
+			store.split('10:00', asRead, { secondPart: {} }, store.handlerWith(locks.dataSource))
+		]);
+
+		expect(outcomes).toEqual([true, false]);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:00', isRunning: false, slots: [] },
+			{ range: '11:00-13:00', isRunning: false, slots: [] }
+		]);
+		expect(locks.taken).toEqual(['gauzy:time-log-split:manual', 'gauzy:time-log-split:manual']);
+	});
+
+	it('leaves the log whole when the split of another API process holds it for the whole wait', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const locks = sharedDatabaseLocks({ busy: true });
+
+		const split = await store.split(
+			'11:00',
+			store.read('tracked'),
+			{ secondPart: {} },
+			store.handlerWith(locks.dataSource)
+		);
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		expect(locks.released).toBe(1);
+	});
+
+	it('takes no lock for time saved inside a log, which does not come from the split route', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		const locks = sharedDatabaseLocks();
+		const handler = store.handlerWith(locks.dataSource);
+
+		await handler.execute(
+			new DeleteTimeSpanCommand({ start: at('09:00'), end: at('10:00') }, store.read('tracked'))
+		);
+
+		expect(store.timeline().map(({ range }) => range)).toEqual(['08:00-09:00', '10:00-11:00']);
+		expect(locks.taken).toEqual([]);
+	});
+});
+
+/**
+ * A data source whose transactions record the history rows they write, as the API module gives it to the handler:
+ * the second part goes through the store's repository, the rows into `rows`.
+ */
+function historyRecorder(store: ReturnType<typeof createStore>) {
+	const rows: Array<Record<string, unknown>> = [];
+	const repository = store.timeLogRepository;
+	const manager = {
+		// The part as the repository saves it; the history rows as an entity list
+		save: jest.fn(async (entity: unknown, saved?: unknown) => {
+			if (Array.isArray(saved)) {
+				rows.push(...(saved as Array<Record<string, unknown>>));
+				return saved;
+			}
+			return repository.save(entity as TimeLog);
+		}),
+		find: jest.fn(async () => []),
+		create: jest.fn((_entity: unknown, row: Record<string, unknown>) => row)
+	};
+	const dataSource = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(manager)) };
+	return { dataSource, rows };
+}
+
+/**
+ * The PostgreSQL advisory locks of one database, shared by every API process over it: a lock is held until the
+ * transaction that took it ends, and the next one taking it waits until then. With `busy`, another process holds
+ * every lock past the wait, and taking one fails as PostgreSQL's `lock_timeout` does.
+ */
+function sharedDatabaseLocks({ busy = false }: { busy?: boolean } = {}) {
+	const held = new Map<string, Promise<void>>();
+	const taken: string[] = [];
+	let released = 0;
+	const createQueryRunner = () => {
+		let release = () => undefined as void;
+		return {
+			connect: async () => undefined,
+			startTransaction: async () => undefined,
+			query: async (sql: string, parameters: string[] = []) => {
+				if (!sql.includes('pg_advisory_xact_lock')) {
+					return [];
+				}
+				if (busy) {
+					throw Object.assign(new Error('canceling statement due to lock timeout'), { code: '55P03' });
+				}
+				const [name] = parameters;
+				const before = held.get(name) ?? Promise.resolve();
+				const mine = new Promise<void>((resolve) => {
+					release = resolve;
+				});
+				held.set(
+					name,
+					before.then(() => mine)
+				);
+				await before;
+				taken.push(name);
+				return [];
+			},
+			rollbackTransaction: async () => {
+				released++;
+				release();
+			},
+			release: async () => undefined
+		};
+	};
+	return {
+		dataSource: { options: { type: 'postgres' }, createQueryRunner },
+		/** The locks taken, in order. */
+		taken,
+		/** How many lock transactions ended. */
+		get released() {
+			return released;
+		}
+	};
+}

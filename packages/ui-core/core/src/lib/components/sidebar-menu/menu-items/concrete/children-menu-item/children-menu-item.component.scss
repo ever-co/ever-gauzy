@@ -59,11 +59,12 @@
 // 0.625rem of plus against 1rem of chevron.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// `$plus-inset` is measured against the RENDERED chevron (see above), not
-// computed from the stylesheets — the two disagree. Re-measure if Nebular's
-// accordion indicator changes size or inset.
+// `$plus-inset` no longer centres the button under the chevron (that took
+// 1.125rem, see above): it sits near the row's trailing edge, leaving its label
+// more room, with a small inset so its hover tint clears the row's radius.
+// The trailing count shares the same box and inset.
 $plus-size: 1.5rem;
-$plus-inset: 1.125rem;
+$plus-inset: 0.5rem;
 $plus-glyph-size: 0.625rem;
 
 [nbButton].plus.appearance-outline.size-tiny {
@@ -93,10 +94,38 @@ $plus-glyph-size: 0.625rem;
   // colour while the row around it brightens on hover/selection. Inheriting from
   // `.sub-item` tracks the row in every theme and every state.
   color: inherit;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out,
+    transform 0.1s ease-out;
 
+  // It is an action of its own, not part of the row, so hovering it says so:
+  // its square shows as a soft tint (the row's active strength, one step past
+  // the row's own hover tint so it stands out of it) and the plus turns a
+  // quarter turn. Pressing it sinks it a little.
   &:hover {
-    background-color: transparent;
+    background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
     color: nb-theme(text-basic-color);
+
+    i.fa-plus {
+      transform: rotate(90deg);
+    }
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: background-color 0.15s ease-out, color 0.15s ease-out;
+
+    &:hover i.fa-plus {
+      transform: none;
+    }
+
+    &:active {
+      transform: none;
+    }
   }
 
   // Nebular paints focus on an outline-appearance button as
@@ -106,6 +135,10 @@ $plus-glyph-size: 0.625rem;
   // below is a real outline.
   &:focus {
     box-shadow: none;
+  }
+
+  // ...and keep the hover tint while the pointer is still over a clicked button.
+  &:focus:not(:hover) {
     background-color: transparent;
   }
 
@@ -124,6 +157,11 @@ $plus-glyph-size: 0.625rem;
     // on the row, not the primary one.
     font-size: $plus-glyph-size;
     line-height: 1;
+    transition: transform 0.2s ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
   }
 }
 
@@ -139,4 +177,94 @@ $plus-glyph-size: 0.625rem;
 // in the app, and `.sub-item` is already scoped to this component.
 :host .sub-item:has(.plus) .info {
   padding-inline-end: 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-rows in the expanded sidebar hang off the section's guide line (drawn in
+// menu-item.component.scss): the row's tint starts just past the line, and its
+// icon starts where the section header's label does. Every row keeps its icon.
+//
+// The icon rail (`.custom`) and the rail flyout are left as they were: there a
+// row is a glyph, or a panel row with no line beside it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// KEEP IN SYNC with `$menu-guide-x` in ../menu-item/menu-item.component.scss.
+$guide-x: 1.125rem;
+// The row's tint starts this far in: the line plus a 0.5rem gap.
+$sub-row-start: 1.625rem;
+// ...and its icon this far into the row, which lands it at 2.125rem, the
+// header label's x (0.625rem padding + 1rem icon column + 0.5rem gap).
+$sub-label-start: 0.5rem;
+// The current page's mark on the guide line.
+$guide-mark-width: 2px;
+
+:host .sub-item:not(.custom) {
+  margin-inline-start: $sub-row-start;
+
+  .info {
+    padding-inline-start: $sub-label-start;
+  }
+
+  &.selected::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(#{$guide-x} - #{$guide-mark-width} / 2);
+    top: 0.25rem;
+    bottom: 0.25rem;
+    width: $guide-mark-width;
+    border-radius: $guide-mark-width;
+    background-color: var(--color-primary-default);
+    pointer-events: none;
+  }
+}
+
+// The flyout is a panel of its own: no guide line, so no indent and no mark.
+:host(.rail-flyout-row) .sub-item:not(.custom) {
+  margin-inline-start: 0;
+
+  .info {
+    // The row's own inline padding (`$menu-row-inline-padding` in the parent file).
+    padding-inline-start: 0.625rem;
+  }
+
+  &.selected::before {
+    content: none;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Trailing count. Plain muted figures in the same 1.5rem box and inset as the
+// add control above, so a number lines up with the chevrons and "+" buttons of
+// the rows around it. No chip, no fill.
+// ─────────────────────────────────────────────────────────────────────────────
+:host .sub-item .count {
+  flex: 0 0 auto;
+  min-width: $plus-size;
+  margin-inline-end: $plus-inset;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  opacity: 0.7;
+}
+
+:host .sub-item:has(.count) .info {
+  padding-inline-end: 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "View all" row at the foot of a list. It leads somewhere else rather than to
+// a record, so it reads as a quiet link: its "…" glyph in the icon column like
+// any row, a step smaller, one step more muted at rest. Hover and the
+// current-page state are the ordinary row's.
+// ─────────────────────────────────────────────────────────────────────────────
+:host .sub-item.view-all:not(.custom) {
+  font-size: 0.75rem;
+  color: var(--text-hint-color);
+
+  // The CSS variable of the colour every other row brightens to.
+  &:hover,
+  &.selected {
+    color: var(--text-basic-color);
+  }
 }

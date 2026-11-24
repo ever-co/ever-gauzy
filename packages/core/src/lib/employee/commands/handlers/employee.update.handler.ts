@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import {
 	BaseEntityEnum,
 	checkAgentExitLogoutRestrictionChange,
@@ -18,7 +18,15 @@ import {
 } from './../../agent-exit-logout-restriction';
 import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
-import { callerRoleRank, keepsTrackingSwitch, rankOfRole } from './../../../time-tracking/timer/tracking-switch-rule';
+import {
+	assertTrackingSwitchAsSeen,
+	callerRoleRank,
+	keepsTrackingSwitch,
+	mayTurnTrackingOf,
+	rankOfRole
+} from './../../../time-tracking/timer/tracking-switch-rule';
+import { keepingTrackingAtWrite } from './../../tracking-kept-at-write';
+import type { JoinTrackingSwitchWrite } from './../../../time-tracking/timer/tracking-switch-as-seen';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
 function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
@@ -140,6 +148,19 @@ function withWorkDatesAllowed(employee: IEmployee, input: EmployeeUpdateWithTrac
 	return changes;
 }
 
+/**
+ * Whether the caller may turn the employee's time tracking on or off: anyone who may edit the employee, unless their
+ * organization restricts the switch to higher roles (`restrictTrackingSwitchToHigherRoles`).
+ *
+ * @param employee The employee as stored, with their organization and their user's role.
+ */
+function mayTurnTrackingOfEmployee(employee: IEmployee): boolean {
+	if (employee?.organization?.restrictTrackingSwitchToHigherRoles !== true) {
+		return true;
+	}
+	return mayTurnTrackingOf(callerRoleRank(), rankOfRole(employee?.user?.role?.name));
+}
+
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
 	constructor(
@@ -179,6 +200,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			relations: { organization: { contact: true }, user: { role: true }, contact: true }
 		});
 
+		// A save from a screen whose tracking switch is no longer the stored one would act on a state that is gone,
+		// for example stop a timer started since: refused before anything is written (ever-co/ever-gauzy#11830)
+		assertTrackingSwitchAsSeen(employee?.isTrackingEnabled === true, input.expectedIsTrackingEnabled);
+
 		// Decided before anything is written: a refused switch stops the whole save
 		const allowedInput = withWorkDatesAllowed(employee, withTrackingSwitchAllowed(employee, input));
 
@@ -198,9 +223,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			throw new BadRequestException(restrictionError);
 		}
 
-		// The acknowledgement is a request flag, not an employee column.
+		// The acknowledgement and the switch the screen showed are request flags, not employee columns.
 		const changes: IEmployeeUpdateInput = { ...allowedInput };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
+		delete changes.expectedIsTrackingEnabled;
 
 		const keepsStoredRates = editsOwnRecord && !changesOwnRates;
 		if (keepsStoredRates) {
@@ -232,8 +258,9 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		}
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
-		if (newRestrictions.length > 0) {
-			await recordAgentRestrictionAcknowledgement(this._activityLogService, {
+		const recordsAcknowledgement = newRestrictions.length > 0;
+		const recordAcknowledgement = async (activityLogService: ActivityLogService) => {
+			await recordAgentRestrictionAcknowledgement(activityLogService, {
 				entity: BaseEntityEnum.Employee,
 				entityId: id,
 				entityName: employee?.user?.name || employee?.fullName || id,
@@ -241,18 +268,50 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 				tenantId: employee?.tenantId,
 				restricted: newRestrictions
 			});
+		};
+
+		// The check above answers a screen that was stale already. A switch another admin saves after it is caught by the
+		// write: under the switch the screen showed, the employee is compared again under lock in the save's
+		// transaction, and the save is made only when the switch is still that one.
+		const expected = input.expectedIsTrackingEnabled;
+		const saysWhatItSaw = expected !== undefined && expected !== null;
+
+		// Where it is written differs on purpose. A save that says what its screen showed runs in a transaction, and writes
+		// the acknowledgement there (below): a 409 from the comparison then records none, and a failed save rolls it back.
+		// Any other save runs in no transaction, as before: it writes the acknowledgement first, on its own, so a failed
+		// save leaves it. Moving it into the save's write here would change that path, which this guard leaves alone.
+		if (recordsAcknowledgement && !saysWhatItSaw) {
+			await recordAcknowledgement(this._activityLogService);
 		}
+
+		// The check above allowed this caller only dates that leave the tracking as it was read. The subscriber derives
+		// the switch when the row is written, later: for this caller it leaves the switch as the row holds it then, so a
+		// switch an admin made in between stays. This save then never turns the tracking on or off itself.
+		const keepsTracking = !mayTurnTrackingOfEmployee(employee);
 
 		let saved: IEmployee;
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
-			saved = await this._employeeService.create({
-				...changes,
-				id
-			});
+			const save = (service: EmployeeService) => service.create({ ...changes, id });
+			// The acknowledgement goes after the comparison, in the save's transaction: a save refused there records none,
+			// and it is still written before the save.
+			const saveAsSeen = async (service: EmployeeService, join: JoinTrackingSwitchWrite) => {
+				if (recordsAcknowledgement) {
+					await recordAcknowledgement(join(this._activityLogService));
+				}
+				return await save(service);
+			};
+			const write = saysWhatItSaw
+				? () => this._employeeService.writeUnderTrackingSwitchAsSeen(id, expected, saveAsSeen)
+				: () => save(this._employeeService);
+			saved = keepsTracking ? await keepingTrackingAtWrite(id, write) : await write();
 		} catch (error) {
 			// Handle any errors during the update process
-			if (error instanceof BadRequestException || error instanceof ForbiddenException) {
+			if (
+				error instanceof BadRequestException ||
+				error instanceof ForbiddenException ||
+				error instanceof ConflictException
+			) {
 				throw error;
 			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');
@@ -263,7 +322,8 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			saved = withStoredOwnRates(saved, persisted);
 		}
 
-		if (turnsTrackingOff(employee, saved)) {
+		// A saved "off" this save did not write is someone else's switch, whose own save published its stop
+		if (!keepsTracking && turnsTrackingOff(employee, saved)) {
 			// The read above loads the organization, whose id MikroORM leaves off the column
 			const organizationId = employee.organizationId ?? employee.organization?.id;
 			const tenantId = employee.tenantId ?? RequestContext.currentTenantId();

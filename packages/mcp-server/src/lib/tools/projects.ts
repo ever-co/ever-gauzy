@@ -4,9 +4,11 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
+import { sanitizeForLogging } from '../common/error-utils';
 import { CurrenciesEnum } from '../input-schemas';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 import { applyInTurn, buildListQuery, countByGroup, getCurrentEmployeeId, isWithinDates, readAllPages } from './utils';
 const logger = new Logger('ProjectTools');
 
@@ -88,10 +90,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching projects:', error);
+				logger.error('Error fetching projects:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch projects');
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get project count tool
@@ -132,10 +135,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching project count:', error);
+				logger.error('Error fetching project count:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch project count');
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get projects by employee tool
@@ -179,10 +183,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching projects by employee:', error);
+				logger.error('Error fetching projects by employee:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch projects by employee');
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my projects tool
@@ -226,10 +231,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my projects:', error);
+				logger.error('Error fetching my projects:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch my projects');
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get project by ID tool
@@ -271,10 +277,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching project:', error);
+				logger.error('Error fetching project:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch project');
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create project tool
@@ -318,10 +325,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating project:', error);
+				logger.error('Error creating project:', sanitizeForLogging(error));
 				throw new Error('Failed to create project');
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update project tool
@@ -363,10 +371,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating project:', error);
+				logger.error('Error updating project:', sanitizeForLogging(error));
 				throw new Error('Failed to update project');
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete project tool
@@ -399,10 +408,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting project:', error);
+				logger.error('Error deleting project:', sanitizeForLogging(error));
 				throw new Error('Failed to delete project');
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Bulk create projects tool
@@ -455,10 +465,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk creating projects:', error);
+				logger.error('Error bulk creating projects:', sanitizeForLogging(error));
 				throw new Error('Failed to bulk create projects');
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Bulk update projects tool
@@ -507,10 +518,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk updating projects:', error);
+				logger.error('Error bulk updating projects:', sanitizeForLogging(error));
 				throw new Error('Failed to bulk update projects');
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Bulk delete projects tool
@@ -544,10 +556,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk deleting projects:', error);
+				logger.error('Error bulk deleting projects:', sanitizeForLogging(error));
 				throw new Error('Failed to bulk delete projects');
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get project statistics tool
@@ -598,10 +611,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching project statistics:', error);
+				logger.error('Error fetching project statistics:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch project statistics');
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Assign project to employee tool
@@ -640,10 +654,11 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error assigning project to employee:', error);
+				logger.error('Error assigning project to employee:', sanitizeForLogging(error));
 				throw new Error('Failed to assign project to employee');
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Unassign project from employee tool
@@ -682,9 +697,10 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error unassigning project from employee:', error);
+				logger.error('Error unassigning project from employee:', sanitizeForLogging(error));
 				throw new Error('Failed to unassign project from employee');
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

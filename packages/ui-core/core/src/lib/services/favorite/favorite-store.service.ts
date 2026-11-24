@@ -6,15 +6,48 @@ import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteService } from './favorite.service';
 import { Store } from '../store/store.service';
 import { NavMenuSectionItem } from '../nav-builder/nav-builder-types';
-import { ENTITY_LINKS, ENTITY_TITLES, favoriteIcon, IFavoriteRecord } from './entities-mapping';
+import { ENTITY_LINKS, ENTITY_TITLES, favoriteDescription, favoriteIcon, IFavoriteRecord } from './entities-mapping';
+
+/** One favorited record, as the Favorites page lists it. */
+export interface IFavoriteEntry {
+	/** The favorite's own id, which removing it deletes. */
+	favoriteId: string;
+	/** That favorite is the user's own, not an organization-level pin. */
+	own: boolean;
+	/**
+	 * The record is also pinned for the organization (a favorite saved without an employee, which every
+	 * admin sees). Removing the user's own favorite of it leaves it listed.
+	 */
+	pinnedForOrganization: boolean;
+	entity: BaseEntityEnum;
+	entityId: string;
+	/** The record's full name; the sidebar shortens it. */
+	title: string;
+	icon: string;
+	link: string;
+	addedAt?: Date;
+	description?: string;
+}
 
 @UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
 export class FavoriteStoreService {
+	/** Every favorite of the signed-in user, newest first. */
+	private readonly _favorites$ = new BehaviorSubject<IFavoriteEntry[]>([]);
+	public readonly favorites$ = this._favorites$.asObservable();
+	/** The same favorites as sidebar links. */
 	private readonly _favoriteItems$ = new BehaviorSubject<NavMenuSectionItem[]>([]);
 	public readonly favoriteItems$ = this._favoriteItems$.asObservable();
+	private readonly _loading$ = new BehaviorSubject<boolean>(true);
+	public readonly loading$ = this._loading$.asObservable();
+	/**
+	 * Whether the last read failed, in full or for some kinds of record, so a short or empty list is not
+	 * mistaken for the user having no favorites. The sidebar still shows whatever did load.
+	 */
+	private readonly _loadFailed$ = new BehaviorSubject<boolean>(false);
+	public readonly loadFailed$ = this._loadFailed$.asObservable();
 	private readonly _refresh$ = new Subject<void>();
 	protected _favoriteSubscription?: Subscription;
 
@@ -32,23 +65,55 @@ export class FavoriteStoreService {
 			this._refresh$.pipe(startWith(null))
 		])
 			.pipe(
-				switchMap(() => from(this._loadFavorites())),
-				catchError((error) => {
-					console.error('Error loading favorites in store', error);
-					this._favoriteItems$.next([]);
-					return of([]);
+				switchMap(() => {
+					this._loading$.next(true);
+					return from(this._loadFavorites()).pipe(
+						catchError((error) => {
+							console.error('Error loading favorites in store', error);
+							return of({ entries: [] as IFavoriteEntry[], failed: true });
+						})
+					);
 				}),
 				untilDestroyed(this)
 			)
-			.subscribe((items) => {
-				this._favoriteItems$.next(items);
+			.subscribe(({ entries, failed }) => {
+				this._favorites$.next(entries);
+				this._favoriteItems$.next(entries.map((entry) => this._toMenuItem(entry)));
+				this._loadFailed$.next(failed);
+				this._loading$.next(false);
 			});
 	}
 
-	private async _loadFavorites(): Promise<NavMenuSectionItem[]> {
+	private _validDate(value: Date | string | undefined): Date | undefined {
+		if (!value) {
+			return undefined;
+		}
+		const date = new Date(value);
+		return isNaN(date.getTime()) ? undefined : date;
+	}
+
+	private _toMenuItem(entry: IFavoriteEntry): NavMenuSectionItem {
+		const title = this._truncateTitle(entry.title);
+		return {
+			id: `favorite-${entry.entity}-${entry.entityId}`,
+			title,
+			icon: entry.icon,
+			link: entry.link,
+			data: {
+				translationKey: title
+			}
+		};
+	}
+
+	/**
+	 * Reads the user's favorites. `failed` is set when the details of some kind of record could not be read:
+	 * those favorites are left out and the rest returned.
+	 */
+	private async _loadFavorites(): Promise<{ entries: IFavoriteEntry[]; failed: boolean }> {
+		const none = { entries: [] as IFavoriteEntry[], failed: false };
 		const { id: organizationId, tenantId } = this._store.selectedOrganization || {};
 		if (!organizationId) {
-			return [];
+			return none;
 		}
 
 		// Favorites belong to the signed-in user (that's who the favorite toggle saves them for), so key the
@@ -71,19 +136,35 @@ export class FavoriteStoreService {
 			});
 			favoriteStubs = items;
 		} else {
-			return [];
+			return none;
 		}
 
 		if (!favoriteStubs.length) {
-			return [];
+			return none;
 		}
+
+		let failed = false;
 
 		const groupedFavorites = favoriteStubs.reduce((acc, fav) => {
 			(acc[fav.entity] = acc[fav.entity] || []).push(fav);
 			return acc;
 		}, {} as Record<BaseEntityEnum, IFavorite[]>);
 
-		const favoritePromises = [];
+		// The favorite behind each record, the user's own ahead of an organization-level pin of the same record,
+		// and which records carry such a pin (only admins read those).
+		const stubByRecord = new Map<string, IFavorite>();
+		const pinnedRecords = new Set<string>();
+		for (const fav of favoriteStubs) {
+			const key = `${fav.entity}:${fav.entityId}`;
+			if (!fav.employeeId) {
+				pinnedRecords.add(key);
+			}
+			if (!stubByRecord.has(key) || fav.employeeId === employeeId) {
+				stubByRecord.set(key, fav);
+			}
+		}
+
+		const favoritePromises: Promise<IFavoriteEntry[]>[] = [];
 
 		for (const entityType of Object.keys(groupedFavorites)) {
 			// The details endpoint returns every favorited record of this type it can see (for an admin,
@@ -112,34 +193,46 @@ export class FavoriteStoreService {
 					}
 
 					return details
-						.map((item) => {
-							if (!item) {
+						.map((item): IFavoriteEntry | null => {
+							const key = `${entityType}:${item?.id}`;
+							const stub = item && stubByRecord.get(key);
+							if (!stub) {
 								return null;
 							}
 
-							const rawTitle = this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled';
-							const title = this._truncateTitle(rawTitle);
+							const title = this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled';
 							return {
-								id: `favorite-${entityType}-${item.id}`,
+								favoriteId: stub.id,
+								own: !!stub.employeeId && stub.employeeId === employeeId,
+								pinnedForOrganization: pinnedRecords.has(key),
+								entity: entityType as BaseEntityEnum,
+								entityId: item.id,
 								title,
+								description: favoriteDescription(
+									entityType as BaseEntityEnum,
+									item as unknown as IFavoriteRecord,
+									title
+								),
 								icon: this._getFavoriteIcon(entityType as BaseEntityEnum, item),
 								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item),
-								data: {
-									translationKey: title
-								}
+								addedAt: this._validDate(stub.createdAt)
 							};
 						})
-						.filter(Boolean);
+						.filter((entry): entry is IFavoriteEntry => !!entry);
 				})
 				.catch((error) => {
 					console.error(`Error loading favorites for ${entityType}:`, error);
-					return [];
+					failed = true;
+					return [] as IFavoriteEntry[];
 				});
 			favoritePromises.push(promise);
 		}
 
+		const addedAt = (entry: IFavoriteEntry): number => entry.addedAt?.getTime() || 0;
+
+		// Newest first: the sidebar shows only the first few, so a record just starred is always among them.
 		const allFavoriteItems = await Promise.all(favoritePromises);
-		return allFavoriteItems.flat();
+		return { entries: allFavoriteItems.flat().sort((a, b) => addedAt(b) - addedAt(a)), failed };
 	}
 
 	/**

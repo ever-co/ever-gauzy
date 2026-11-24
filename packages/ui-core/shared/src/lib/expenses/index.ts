@@ -9,6 +9,7 @@ export * from './recurring-expense-block/recurring-expense-block.module';
 export * from './recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 export * from './recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 export * from './recurring-expense-history/recurring-expense-history.component';
+export * from './recurring-expense-history/recurring-expense-history-dialog.component';
 export * from './recurring-expense-history/recurring-expense-history.module';
 export * from './recurring-expense-mutation/recurring-expense-mutation.component';
 export * from './recurring-expense-mutation/recurring-expense-mutation.module';

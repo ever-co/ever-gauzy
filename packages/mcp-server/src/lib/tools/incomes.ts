@@ -8,6 +8,8 @@ import { CurrenciesEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
+import { buildListQuery, validateOrganizationContext } from './utils';
 const logger = new Logger('IncomeTools');
 
 /**
@@ -67,7 +69,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching my incomes:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my incomes: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get income count tool
@@ -108,7 +111,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching income count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch income count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get paginated incomes tool
@@ -124,12 +128,12 @@ export const registerIncomeTools = (server: McpServer) => {
 		},
 		async ({ page = 1, limit = 10, relations, where }) => {
 			try {
-				const params = {
-					page,
-					limit,
-					...(relations && { relations }),
-					...(where && { where })
-				};
+				const defaultParams = validateOrganizationContext();
+				const params = buildListQuery(
+					defaultParams,
+					{ ...where },
+					{ page, limit, relations, skipIsPage: true }
+				);
 
 				const response = await apiClient.get('/api/income/pagination', { params });
 
@@ -145,7 +149,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching paginated incomes:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch paginated incomes: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get all incomes tool
@@ -185,7 +190,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching incomes:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch incomes: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get income by ID tool
@@ -212,7 +218,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching income:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create income tool
@@ -260,7 +267,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error creating income:', sanitizeForLogging(error));
 				throw new Error(`Failed to create income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update income tool
@@ -303,7 +311,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error updating income:', sanitizeForLogging(error));
 				throw new Error(`Failed to update income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete income tool
@@ -332,6 +341,7 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error deleting income:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

@@ -312,14 +312,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	}
 
 	/**
-	 * Asserts that the requester may MUTATE the given row (§1.6 ownership + the `EDIT` share
-	 * level). The route guard only proves the verb permission — this adds the row-level half,
-	 * so a `VIEW`/`COMMENT` grantee can read a shared document but never write it.
+	 * Whether the requester may MUTATE the given row, by the rule `assertCanWrite` enforces, for a caller that
+	 * tells it instead of refusing: the single-document read answers it so a client can open a page read-only.
 	 *
-	 * @param document The document about to be mutated.
+	 * @param document The document row.
+	 * @returns True when the requester may change it.
 	 */
-	public async assertCanWrite(document: Document): Promise<void> {
-		const permitted = await this.documentAccessService.canWrite(
+	public canWrite(document: Document): Promise<boolean> {
+		return this.documentAccessService.canWrite(
 			{
 				createdByUserId: document.createdByUserId,
 				visibility: document.visibility,
@@ -328,6 +328,17 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			},
 			document.id
 		);
+	}
+
+	/**
+	 * Asserts that the requester may MUTATE the given row (§1.6 ownership + the `EDIT` share
+	 * level). The route guard only proves the verb permission — this adds the row-level half,
+	 * so a `VIEW`/`COMMENT` grantee can read a shared document but never write it.
+	 *
+	 * @param document The document about to be mutated.
+	 */
+	public async assertCanWrite(document: Document): Promise<void> {
+		const permitted = await this.canWrite(document);
 		if (!permitted) {
 			throw new ForbiddenException({
 				message: 'You do not have write access to this document',

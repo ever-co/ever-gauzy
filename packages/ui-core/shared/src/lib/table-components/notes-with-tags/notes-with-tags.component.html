@@ -29,11 +29,10 @@
 	<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2">
 		@for (tag of (data | async)?.tags; track tag) {
 		<nb-badge
-			class="color"
+			class="color ga-tag-chip"
 			position="centered"
 			[text]="tag.name"
-			[style.background]="background(tag.color)"
-			[style.color]="backgroundContrast(tag.color)"
+			[style.--chip-color]="background(tag.color)"
 		></nb-badge>
 		}
 	</div>

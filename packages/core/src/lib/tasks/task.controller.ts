@@ -11,8 +11,10 @@ import {
 	Post,
 	Delete,
 	NotFoundException,
+	UseInterceptors,
 	UsePipes
 } from '@nestjs/common';
+import { HiddenProjectsInterceptor } from '../organization-project/hidden-projects.interceptor';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
@@ -70,6 +72,7 @@ import { isBuiltInView } from './built-in-views';
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/tasks')
 export class TaskController extends CrudController<Task> {
 	constructor(
@@ -472,11 +475,20 @@ export class TaskController extends CrudController<Task> {
 	/**
 	 * PUT update an existing task
 	 *
+	 * Who may: anyone holding `ALL_ORG_EDIT` or `ORG_TASK_EDIT` in the task's organization, whatever team the task
+	 * belongs to, or none. Editing is organization-wide on purpose: the Angular task pages, the sprint and key result
+	 * pages, the desktop timer's task table, the agent and Ever Teams' project archiving all update tasks outside the
+	 * caller's own teams. A delete is narrower (see {@link TaskService.deleteTask}).
+	 *
 	 * @param id The ID of the task to update.
 	 * @param entity The data for updating the task.
 	 * @returns The updated task.
 	 */
-	@ApiOperation({ summary: 'Update an existing task.' })
+	@ApiOperation({
+		summary: 'Update an existing task.',
+		description:
+			"Organization-wide: `ALL_ORG_EDIT` or `ORG_TASK_EDIT` may edit any task of the caller's organization, in any team or none. Deleting is narrower: see `DELETE /tasks/{id}`."
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'The task has been successfully updated.'
@@ -534,7 +546,11 @@ export class TaskController extends CrudController<Task> {
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
 	@Delete('/:id')
-	@ApiOperation({ summary: 'Delete a task by ID.' })
+	@ApiOperation({
+		summary: 'Delete a task by ID.',
+		description:
+			"`ALL_ORG_EDIT` or `ORG_TASK_DELETE` may delete any task of the caller's organization; with `ORG_TASK_EDIT` alone, only a manager of one of the task's teams may. Editing stays organization-wide: see `PUT /tasks/{id}`."
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'The task has been successfully deleted.'

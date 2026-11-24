@@ -1,95 +1,96 @@
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
-.featured-image {
-  width: 100%;
+.page-title {
+  margin: 0;
 }
 
-// Label column for the Name/Description/Type/Category/Enabled/Options rows.
-// This was a hard `width: 6rem` on an inline-block with visible overflow, so
-// any label wider than 96px — "Description:" is already ~90px at 14px/600, and
-// every non-English translation of it is longer — spilled out of its box and
-// ran underneath the value that follows it on the same line. `min-width` keeps
-// the values aligned in the common case and lets the long ones push instead of
-// collide.
-.key-description {
-  font-weight: 600;
-  min-width: 6rem;
-  // Logical, so it mirrors in RTL without pulling the nb-ltr/nb-rtl mixins
-  // (and their `themes` dependency) into a sheet that has no other use for them.
-  padding-inline-end: 0.5rem;
-  display: inline-block;
+.item-view {
+  display: grid;
+  grid-template-columns: minmax(12rem, 17rem) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
 }
 
-img.gallery-sm-preview-item {
-  width: 100%;
-  height: 70px;
+.item-media {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
 
-  &:hover {
-    box-shadow: var(--color-primary-active-border) 0px 1px 2px 0px,
-      var(--color-primary-hover-border) 0px 1px 3px 1px;
+.item-picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  border-radius: var(--border-radius, 0.5rem);
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  ga-no-image {
+    width: 100%;
+    height: 100%;
   }
 }
 
-// The option chips were `#3366ff` — Nebular's stock blue, not the app's primary
-// (`#6e49e8`), and hard-coded either way, so they were the only blue thing on a
-// purple page and identical in all eight themes. `7px` was also off the radius
-// scale; `--gauzy-radius-sm` is the step every other chip/control uses.
-.option-item {
-  padding: 5px 10px;
-  font-size: 12px;
-  background: var(--color-primary-default);
-  border-radius: var(--gauzy-radius-sm, 6px);
-  color: var(--text-control-color);
-  margin-right: 10px;
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-// Tag colour is user-chosen and painted inline by the template, so a fixed
-// white label was unreadable on every light tag. The text colour is picked per
-// tag now (see `backgroundContrast()` in the component, the same
-// `getContrastColor` helper the inventory table cells already use).
-.tag-item {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  line-height: 13px;
-  letter-spacing: 0em;
-
-  display: flex;
-  align-items: center;
-  text-align: center;
-  font-weight: bold;
-  width: fit-content;
-}
-
-.d-flex {
-  display: flex;
-}
-
-.options {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-img {
-  object-fit: cover;
-  border-radius: 4px;
-  box-shadow: var(--gauzy-shadow);
-}
-
-img.featured-image {
-  height: 300px;
-}
-
-.product-container-inner{
-  height: 300px;
-}
-
-.inventory-item-tags {
-  display: flex;
+.item-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
+}
+
+.item-gallery-thumb {
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  border-radius: calc(var(--border-radius, 0.5rem) / 2);
+  background: transparent;
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &:hover {
+    border-color: var(--color-primary-default);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 1px;
+  }
+}
+
+.item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+:host ::ng-deep ngx-record-view .record-panel .record-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+  column-gap: 1rem;
+  row-gap: 0.125rem;
+}
+
+:host ::ng-deep ngx-record-view .record-panel .record-row {
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+
+  &.wide {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 :host {
@@ -101,6 +102,16 @@ img.featured-image {
 
   nb-card-body {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+}
+
+@media screen and (max-width: 48rem) {
+  .item-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .item-media {
+    max-width: 17rem;
   }
 }
 

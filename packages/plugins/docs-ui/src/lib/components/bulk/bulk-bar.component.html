@@ -87,7 +87,7 @@
 							[nbTooltip]="'DOCS.BULK.SET_CATEGORIES_HINT' | translate"
 							(click)="setCategories()"
 						>
-							<nb-icon icon="grid-outline"></nb-icon>
+							<nb-icon icon="layers-outline"></nb-icon>
 							{{ 'DOCS.BULK.CATEGORIES' | translate }}
 						</button>
 						<div class="docs-bulk-anchor">
@@ -150,7 +150,7 @@
 									nbButton
 									ghost
 									size="small"
-									class="docs-bulk-action"
+									class="docs-bulk-action docs-bulk-action--icon"
 									[class.docs-bulk-action--open]="openPanel === 'more'"
 									[disabled]="busy"
 									aria-haspopup="dialog"

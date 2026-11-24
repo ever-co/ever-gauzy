@@ -1,5 +1,5 @@
 import { isBetterSqlite3 } from '@gauzy/config';
-import { BadRequestException, Inject, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Logger, UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'node:crypto';
 import { TokenStatus } from '../../interfaces';
@@ -7,12 +7,15 @@ import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IGeneratedToken } from '../../interfaces/token.interface';
 import { TokenWriteRepositoryToken } from '../../shared';
+import { findTokenToRotateAgain } from '../../shared/rotation-reuse';
 import { TokenHasher } from '../../shared/token-hasher';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { RotateTokenCommand } from '../rotate-token.command';
 
 @CommandHandler(RotateTokenCommand)
 export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, IGeneratedToken> {
+	private readonly logger = new Logger(RotateTokenHandler.name);
+
 	constructor(
 		@Inject(TokenWriteRepositoryToken)
 		private readonly tokenRepository: ITokenWriteRepository,
@@ -40,16 +43,35 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 		const oldTokenDigest = this.tokenHasher.hashToken(rawOldToken);
 
 		return this.tokenRepository.transaction(async (repository: ITokenReadRepository & ITokenWriteRepository) => {
-			const oldToken = await (isBetterSqlite3()
+			const presentedToken = await (isBetterSqlite3()
 				? repository.findByHash(oldTokenDigest)
 				: repository.findByHashWithLock(oldTokenDigest));
 
-			if (!oldToken) {
+			if (!presentedToken) {
 				throw new UnauthorizedException('Token not found');
 			}
 
-			if (!oldToken.isActivated()) {
+			// A token rotated moments ago is answered again, by rotating the token its line of rotations ends with
+			// (see `findTokenToRotateAgain`). Any other token that is not active is refused. That token is locked as
+			// the presented one is, where the database locks rows: a request that presents it at the same moment
+			// waits for this one, or is waited for, and the two never rotate the same token.
+			const oldToken = presentedToken.isActivated()
+				? presentedToken
+				: await findTokenToRotateAgain(
+						presentedToken,
+						config,
+						(id) => repository.findById(id),
+						isBetterSqlite3() ? undefined : (id) => repository.findByIdWithLock(id)
+					);
+
+			if (!oldToken) {
 				throw new UnauthorizedException('Token is not active');
+			}
+
+			if (oldToken.id !== presentedToken.id) {
+				this.logger.log(
+					`Rotated token presented again within the reuse window: id=${presentedToken.id} rotates id=${oldToken.id}`
+				);
 			}
 
 			if (!oldToken.canRotate()) {

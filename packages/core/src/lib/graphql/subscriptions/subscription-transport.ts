@@ -1,3 +1,4 @@
+import type { MikroORM } from '@mikro-orm/core';
 import { ApolloDriverConfig } from '@nestjs/apollo';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import type { Request } from 'express';
@@ -12,6 +13,7 @@ import {
 	validate
 } from 'graphql';
 import * as passport from 'passport';
+import { runInMikroOrmContext } from '../../core/context/mikro-orm-context';
 import { RequestContext } from '../../core/context/request-context';
 import type { CreateGraphqlRequestContextOptions } from '../graphql-context';
 import type { SubscriptionClock } from './subscription-delivery';
@@ -103,6 +105,13 @@ export interface SubscriptionTransportOptions {
 	readonly reauthenticationIntervalMs?: number;
 	/** The clock the sessions' timers run on, for specs. */
 	readonly clock?: SubscriptionClock;
+	/**
+	 * The MikroORM instance of this process, when it has one. Under DB_ORM=mikro-orm each operation on the socket runs
+	 * on a fork of its own, as an HTTP request on the endpoint does, each pull of a stream on a fresh fork, and each
+	 * judgement of a connection's credential on a fork of its own: MikroORM refuses its global EntityManager outside a
+	 * context, and nothing else opens one for a WebSocket message. Under TypeORM it is not used.
+	 */
+	readonly orm?: MikroORM | null;
 }
 
 /**
@@ -188,6 +197,13 @@ export function supportsSubscriptionTransport(): boolean {
  * authenticates anybody, `4403` when the role, permissions or scope it resolves to changed. See
  * `subscription-session.ts`.
  *
+ * 🛑 **Under DB_ORM=mikro-orm no operation on the socket could read through MikroORM.** MikroORM refuses its global
+ * EntityManager outside a request context, and the fork the bootstrap opens for the endpoint is Express middleware,
+ * which a WebSocket message never passes through: the JWT strategy's user lookup failed, so every socket operation was
+ * answered as unauthenticated, and a judgement of the credential while a stream ran failed the same way. Given the
+ * instance (`options.orm`), each operation and each judgement now runs on a fork of its own, and each pull of a stream
+ * on a fresh one (see `subscription-request-context.ts`). Under TypeORM nothing is opened.
+ *
  * `validate` is not in the subset of `graphql-ws` options `@nestjs/graphql` types, but it is passed
  * through: `GqlSubscriptionService` spreads the `graphql-ws` options into `useServer` verbatim, which is
  * what the cast below relies on and what the transport's spec exercises against `graphql-ws` itself.
@@ -227,8 +243,9 @@ export function createSubscriptionServerOptions(options: SubscriptionTransportOp
 	subscribe: (args: ExecutionArgs) => ReturnType<typeof subscribeInRequestContext>;
 } {
 	const rules = [...specifiedRules, ...(options.validationRules ?? [])];
+	const orm = options.orm;
 	const session: SubscriptionSessionSettings = {
-		authenticate: options.authenticate ?? authenticateSubscriptionCredential,
+		authenticate: options.authenticate ?? ((headers) => authenticateSubscriptionCredential(headers, orm)),
 		reauthenticationIntervalMs: options.reauthenticationIntervalMs,
 		clock: options.clock
 	};
@@ -244,9 +261,10 @@ export function createSubscriptionServerOptions(options: SubscriptionTransportOp
 			refuseOversizedDocument(payload?.query, options.maxTokens),
 		validate: (schema: GraphQLSchema, document: DocumentNode) => validate(schema, document, rules),
 		// Each operation runs inside a request context of its own, built from the request the context
-		// factory gave it — the one the guards authenticate.
-		execute: (args: ExecutionArgs) => executeInRequestContext(args),
-		subscribe: (args: ExecutionArgs) => subscribeInRequestContext(args)
+		// factory gave it — the one the guards authenticate — and, under DB_ORM=mikro-orm, on a MikroORM fork
+		// of its own, each pull of its stream on a fresh one.
+		execute: (args: ExecutionArgs) => executeInRequestContext(args, orm),
+		subscribe: (args: ExecutionArgs) => subscribeInRequestContext(args, orm)
 	};
 }
 
@@ -348,46 +366,54 @@ export function subscriptionSessionOfConnection(context: unknown): SubscriptionS
  * A database that could not be reached (`503`) and a strategy that could not run at all are answered
  * `unavailable`, never as a refusal: they say nothing about the user.
  *
+ * Under DB_ORM=mikro-orm, with the instance at hand, the judgement also runs in a MikroORM context of its own — the fork
+ * the bootstrap opens for an HTTP request — so the lookups read the rows as they are now. Without one MikroORM refuses
+ * them, and the strategy answers that as a refusal (`401`): every socket would be closed at its first judgement.
+ *
  * @param headers The connection's normalised headers.
+ * @param orm The MikroORM instance of this process, when it has one.
  * @returns The verdict.
  */
 export function authenticateSubscriptionCredential(
-	headers: Readonly<Record<string, string>>
+	headers: Readonly<Record<string, string>>,
+	orm?: MikroORM | null
 ): Promise<SubscriptionCredentialVerdict> {
 	const req = subscriptionRequest({ ...headers });
 
-	return RequestContext.runWithRequest(
-		req as unknown as Request,
-		() =>
-			new Promise<SubscriptionCredentialVerdict>((resolve) => {
-				const answer = (error: unknown, user: unknown, info: unknown): void => {
-					if (error) {
-						resolve(
-							error instanceof HttpException && error.getStatus() !== HttpStatus.SERVICE_UNAVAILABLE
-								? { status: 'refused' }
-								: { status: 'unavailable' }
-						);
-					} else if (user && typeof user === 'object') {
-						resolve({ status: 'authenticated', user: user as SubscriptionSessionUser });
-					} else {
-						resolve(
-							(info as { name?: unknown } | undefined)?.name === 'TokenExpiredError'
-								? { status: 'expired' }
-								: { status: 'refused' }
-						);
-					}
-				};
+	return RequestContext.runWithRequest(req as unknown as Request, () =>
+		runInMikroOrmContext(
+			orm,
+			() =>
+				new Promise<SubscriptionCredentialVerdict>((resolve) => {
+					const answer = (error: unknown, user: unknown, info: unknown): void => {
+						if (error) {
+							resolve(
+								error instanceof HttpException && error.getStatus() !== HttpStatus.SERVICE_UNAVAILABLE
+									? { status: 'refused' }
+									: { status: 'unavailable' }
+							);
+						} else if (user && typeof user === 'object') {
+							resolve({ status: 'authenticated', user: user as SubscriptionSessionUser });
+						} else {
+							resolve(
+								(info as { name?: unknown } | undefined)?.name === 'TokenExpiredError'
+									? { status: 'expired' }
+									: { status: 'refused' }
+							);
+						}
+					};
 
-				try {
-					// `next` is reached only when passport could not run the strategy at all — none is registered
-					// under the name in this process.
-					passport.authenticate(SUBSCRIPTION_AUTH_STRATEGY, { session: false }, answer)(req, {}, () =>
-						resolve({ status: 'unavailable' })
-					);
-				} catch {
-					resolve({ status: 'unavailable' });
-				}
-			})
+					try {
+						// `next` is reached only when passport could not run the strategy at all — none is registered
+						// under the name in this process.
+						passport.authenticate(SUBSCRIPTION_AUTH_STRATEGY, { session: false }, answer)(req, {}, () =>
+							resolve({ status: 'unavailable' })
+						);
+					} catch {
+						resolve({ status: 'unavailable' });
+					}
+				})
+		)
 	);
 }
 

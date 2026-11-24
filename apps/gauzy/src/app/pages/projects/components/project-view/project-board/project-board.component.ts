@@ -319,7 +319,6 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		// Where the column's order puts it, as a reload will: the parent's card stays first.
 		this.sortCards(target);
 		card.saving = true;
-		const sequence = this._sequence;
 		try {
 			// The status alone: a title or anything else read when the board loaded would undo a newer edit.
 			await firstValueFrom(
@@ -332,8 +331,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			);
 			this.taskMoved.emit(card.id);
 		} catch (error) {
-			// A reload since the drop replaced the board: there is no card left to put back.
-			if (sequence !== this._sequence) return;
+			// A reload since the drop replaced the board: there is no card left to put back. A reload of the same
+			// board still on its way keeps the card on screen: it goes back, and the failure is told (#12009).
+			if (!this.board.value.includes(target)) return;
 			const current = target.cards.indexOf(card);
 			if (current > -1) {
 				transferArrayItem(target.cards, from.cards, current, Math.min(index, from.cards.length));
@@ -351,7 +351,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			(this.projectId || this.parentId) &&
 			(changes['projectId'] || changes['parentId'] || changes['organizationId'] || changes['reloadKey'])
 		) {
-			void this.load();
+			// The host's reload after a change it made (a status move): the same board, read again (#12009)
+			const isReload = !changes['projectId'] && !changes['parentId'] && !changes['organizationId'];
+			void this.load(isReload);
 		}
 	}
 
@@ -361,7 +363,8 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 
 	/** Reads the next page onto the board. */
 	async loadMore(): Promise<void> {
-		if (this.loadingMore || !this.hasMore) return;
+		// While the board is read again, the pages it shows are being replaced: the next one waits for the answer.
+		if (this.loadingMore || this.board.loading || !this.hasMore) return;
 		const sequence = this._sequence;
 		this.loadingMore = true;
 		this.loadMoreFailed = false;
@@ -445,18 +448,20 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		this._endObserver?.observe(this._end);
 	}
 
-	private async load(): Promise<void> {
+	/**
+	 * @param keepsShown The same board read again: its columns stay on screen until the new ones replace them,
+	 * instead of every column going and coming back. Another project or task starts from an empty board.
+	 */
+	private async load(keepsShown = false): Promise<void> {
 		const sequence = ++this._sequence;
 		// The board is replaced, and a dragged card with it: no end of that drag will be reported.
 		this.endDrag();
 		const { parentId } = this;
-		this.board = loading([]);
-		this.total = 0;
+		this.board = loading(keepsShown ? this.board.value : []);
+		// The same board read again keeps its counts beside the cards it keeps, until the answer replaces both.
+		if (!keepsShown) this.resetPages();
 		this.loadingMore = false;
 		this.loadMoreFailed = false;
-		this._offset = 0;
-		this._placed = new Set();
-		this.hasParent = false;
 		this._worked = null;
 		this._projectWorked = undefined;
 		try {
@@ -473,6 +478,7 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 					: Promise.resolve<ITask | null>(null)
 			]);
 			if (sequence !== this._sequence) return;
+			this.resetPages();
 			const columns = this.toColumns(statuses);
 			// The parent goes on before the pages, which read its subtasks only.
 			if (parent?.id) {
@@ -483,11 +489,24 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			this.addPage(columns, page);
 			this.board = loaded(columns);
 			void this.loadProgress(sequence);
+			// A board read again kept its end in place: watched afresh, it reports whether the next page is in reach.
+			if (keepsShown) this.watchEnd();
 		} catch {
-			if (sequence === this._sequence) this.board = failed([]);
+			if (sequence === this._sequence) {
+				this.resetPages();
+				this.board = failed([]);
+			}
 		} finally {
 			this._changeDetectorRef.markForCheck();
 		}
+	}
+
+	/** The board's paging from its start: no page read, no card placed, no parent. */
+	private resetPages(): void {
+		this.total = 0;
+		this._offset = 0;
+		this._placed = new Set();
+		this.hasParent = false;
 	}
 
 	private get relations(): string[] {

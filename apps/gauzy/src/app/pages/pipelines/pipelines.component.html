@@ -39,12 +39,12 @@
             </nb-accordion-item-header>
             <nb-accordion-item-body>
               <form [formGroup]="searchForm" (ngSubmit)="search()">
-                <div class="row">
-                  <div class="col-xl-4 col-lg-12">
-                    <label for="name">
-                      {{ 'PIPELINES_PAGE.NAME' | translate }}
-                    </label>
-                    <div class="w-100">
+                <div class="row w-100 search-filters">
+                  <div class="col search-filter-col">
+                    <div class="form-group">
+                      <label for="name" class="label">
+                        {{ 'PIPELINES_PAGE.NAME' | translate }}
+                      </label>
                       <input
                         [placeholder]="'PIPELINES_PAGE.NAME' | translate"
                         formControlName="name"
@@ -52,71 +52,62 @@
                         fullWidth
                         nbInput
                         id="name"
-                        />
-                      </div>
+                      />
                     </div>
-                    <div class="col-xl-2 col-lg-4 col-12">
-                      <label for="stages">
+                  </div>
+                  <div class="col search-filter-col">
+                    <div class="form-group">
+                      <label for="stages" class="label">
                         {{ 'PIPELINES_PAGE.STAGE' | translate }}
                       </label>
-                      <div class="w-100">
-                        <input
-                          [placeholder]="'PIPELINES_PAGE.SEARCH_STAGE' | translate"
-                          type="text"
-                          nbInput
-                          fullWidth
-                          id="stages"
-                          formControlName="stages"
-                          />
-                        </div>
-                      </div>
-                      <div class="col-xl-2 col-lg-4 col-12">
-                        <label for="status">
-                          {{ 'PIPELINES_PAGE.STATUS' | translate }}
-                        </label>
-                        <div class="w-100">
-                          <nb-select
-                            fullWidth
-                            [placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
-                            id="status"
-                            formControlName="status"
-                            >
-                            <nb-option [value]="true">
-                              {{ 'PIPELINES_PAGE.ACTIVE' | translate }}
-                            </nb-option>
-                            <nb-option [value]="false">
-                              {{ 'PIPELINES_PAGE.INACTIVE' | translate }}
-                            </nb-option>
-                          </nb-select>
-                        </div>
-                      </div>
+                      <input
+                        [placeholder]="'PIPELINES_PAGE.SEARCH_STAGE' | translate"
+                        type="text"
+                        nbInput
+                        fullWidth
+                        id="stages"
+                        formControlName="stages"
+                      />
                     </div>
-                    <div class="row">
-                      <div class="col-12 mt-3">
-                        <button
-                          type="submit"
-                          nbButton
-                          size="small"
-                          status="success"
-                          outline
-                          [disabled]="searchForm.invalid"
-                          >
-                          {{ 'PIPELINES_PAGE.SEARCH' | translate }}
-                        </button>
-                        <button
-                          type="reset"
-                          nbButton
-                          size="small"
-                          status="basic"
-                          outline
-                          [disabled]="searchForm.invalid"
-                          (click)="reset()"
-                          >
-                          {{ 'PIPELINES_PAGE.RESET' | translate }}
-                        </button>
-                      </div>
+                  </div>
+                  <div class="col search-filter-col">
+                    <div class="form-group">
+                      <label for="status" class="label">
+                        {{ 'PIPELINES_PAGE.STATUS' | translate }}
+                      </label>
+                      <nb-select
+                        fullWidth
+                        [placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
+                        id="status"
+                        formControlName="status"
+                      >
+                        <nb-option [value]="true">
+                          {{ 'PIPELINES_PAGE.ACTIVE' | translate }}
+                        </nb-option>
+                        <nb-option [value]="false">
+                          {{ 'PIPELINES_PAGE.INACTIVE' | translate }}
+                        </nb-option>
+                      </nb-select>
                     </div>
-                  </form>
+                  </div>
+                  <div class="search-actions">
+                    <button type="submit" status="success" size="small" nbButton [disabled]="searchForm.invalid">
+                      {{ 'PIPELINES_PAGE.SEARCH' | translate }}
+                    </button>
+                    <button
+                      type="reset"
+                      status="basic"
+                      outline
+                      size="small"
+                      nbButton
+                      [disabled]="searchForm.invalid"
+                      (click)="reset()"
+                    >
+                      {{ 'PIPELINES_PAGE.RESET' | translate }}
+                    </button>
+                  </div>
+                </div>
+              </form>
                 </nb-accordion-item-body>
               </nb-accordion-item>
             </nb-accordion>
@@ -135,6 +126,18 @@
     <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
       <div class="btn-group actions">
         <ng-template ngxPermissionsOnly="VIEW_SALES_PIPELINES">
+          <!-- Opens the selected pipeline's own page. -->
+          <button
+            [disabled]="!selectedItem && disableButton"
+            (click)="viewPipeline(selectedItem)"
+            status="basic"
+            class="action secondary"
+            size="small"
+            nbButton
+            >
+            <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+            <span> {{ 'BUTTONS.VIEW' | translate }} </span>
+          </button>
           <button
             [disabled]="!selectedItem && disableButton"
             (click)="viewDeals(selectedItem)"

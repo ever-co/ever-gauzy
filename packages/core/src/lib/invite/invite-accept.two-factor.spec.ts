@@ -3,6 +3,7 @@ import '../core/entities/internal';
 import { HttpStatus } from '@nestjs/common';
 import { RolesEnum, TWO_FACTOR_REQUIRED_CODE } from '@gauzy/contracts';
 import { TwoFactorRequiredException, verifyTwoFactorChallenge } from '../auth/two-factor/two-factor-challenge';
+import { RequestContext } from '../core/context';
 import { InviteAcceptHandler } from './commands/handlers/invite-accept.handler';
 import { InviteAcceptCommand } from './commands/invite-accept.command';
 
@@ -31,7 +32,12 @@ function buildHandler(asksForCode: boolean) {
 	};
 	const existingUser = { id: 'existing-user', email: EMAIL, tenantId: TENANT_ID, isActive: true };
 	const commandBus = { execute: jest.fn().mockResolvedValue(existingUser) };
-	const typeOrmUserRepository = { findOneOrFail: jest.fn().mockResolvedValue(existingUser) };
+	const typeOrmUserRepository = {
+		find: jest.fn().mockResolvedValue([existingUser]),
+		findOneOrFail: jest.fn().mockResolvedValue(existingUser)
+	};
+	// An existing account accepts from its own session: the invitation alone no longer opens it
+	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(existingUser.id);
 	const authService = {
 		getJwtAccessToken: jest.fn().mockResolvedValue('access'),
 		getJwtRefreshToken: jest.fn().mockResolvedValue('refresh'),
@@ -60,6 +66,10 @@ const accept = (handler: InviteAcceptHandler) =>
 	);
 
 describe('InviteAcceptHandler with two-factor authentication', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
 	it('answers the challenge for an account that has it on, and mints no token', async () => {
 		const { handler, authService, userService } = buildHandler(true);
 

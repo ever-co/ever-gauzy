@@ -145,7 +145,7 @@ spec:
                       - name: EVER_TEAMS_CLIENT_IP_SECRET
                         value: ''
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
-                        value: '86400'
+                        value: '604800'
                       - name: ALLOWED_ORIGINS
                         value: '$ALLOWED_ORIGINS'
                       - name: OTEL_ENABLED

@@ -219,6 +219,51 @@ export class EverConnectStore {
 	}
 
 	/**
+	 * Keeps the installation's reported address, in one statement, only while the connection is the one
+	 * it was sent for (`connected`, same Registry id) and `instance_url` is still enabled under the
+	 * consent it was sent under. Returns whether it was kept; when it was not, nothing changed.
+	 */
+	async setPublicUrlIfConsented(values: {
+		publicUrl: string;
+		publicUrlCheckUntil: number;
+		platformInstanceId: string;
+		consentId: string | null;
+	}): Promise<boolean> {
+		await this.connection();
+		const q = (c: string) => this.sql.q(c);
+		// Parameters in the order they appear (`?` on SQLite and MySQL, `$n` on Postgres).
+		const params: unknown[] = [];
+		const bind = (value: unknown) => {
+			params.push(value);
+			return this.sql.ph(params.length);
+		};
+		const sets = [
+			`${q('publicUrl')} = ${bind(values.publicUrl)}`,
+			`${q('publicUrlCheckUntil')} = ${bind(values.publicUrlCheckUntil)}`,
+			`${q('updatedAt')} = ${bind(this.now())}`
+		].join(', ');
+		const sameConnection = [
+			`${q('id')} = ${bind(CONNECTION_ROW_ID)}`,
+			`${q('status')} = ${bind('connected')}`,
+			`${q('platformInstanceId')} = ${bind(values.platformInstanceId)}`
+		].join(' AND ');
+		const sameConsent = [
+			`i.${q('scope')} = ${bind('instance')}`,
+			`i.${q('name')} = ${bind('instance_url')}`,
+			`i.${q('enabled')} = ${bind(true)}`,
+			values.consentId === null
+				? `i.${q('consentId')} IS NULL`
+				: `i.${q('consentId')} = ${bind(values.consentId)}`
+		].join(' AND ');
+		const { affected } = await this.sql.run(
+			`UPDATE ${q(CONNECTION)} SET ${sets} WHERE ${sameConnection} ` +
+				`AND EXISTS (SELECT 1 FROM ${q(INTEGRATION)} i WHERE ${sameConsent})`,
+			params
+		);
+		return affected !== 0;
+	}
+
+	/**
 	 * Takes (or renews) the lease that lets one API process run the heartbeat and the event feed:
 	 * compare and set on the connection row. Returns whether this process holds it.
 	 */
@@ -232,6 +277,24 @@ export class EverConnectStore {
 			[holder, at + durationMs, CONNECTION_ROW_ID, holder, at]
 		);
 		return affected === 1;
+	}
+
+	/**
+	 * Whether `holder` holds the lease now, read with `sql` (an open transaction's, to check it in the transaction
+	 * of a change). On Postgres and MySQL the connection row is locked until that transaction ends, so the lease cannot
+	 * pass to another process before the change commits.
+	 */
+	async holdsLease(holder: string, sql: EverConnectSql = this.sql): Promise<boolean> {
+		const q = (c: string) => sql.q(c);
+		const forUpdate = sql.dialect === 'sqlite' ? '' : ' FOR UPDATE';
+		const { rows } = await sql.run(
+			`SELECT ${q('leasedBy')} AS ${q('leasedBy')}, ${q('leaseUntil')} AS ${q('leaseUntil')} FROM ${q(CONNECTION)} ` +
+				`WHERE ${q('id')} = ${sql.ph(1)}${forUpdate}`,
+			[CONNECTION_ROW_ID]
+		);
+		const row = rows[0];
+		const until = row ? num(row['leaseUntil']) : null;
+		return !!row && row['leasedBy'] === holder && until !== null && until > this.now();
 	}
 
 	async releaseLease(holder: string): Promise<void> {
@@ -282,6 +345,36 @@ export class EverConnectStore {
 	async liveLinks(): Promise<LinkRecord[]> {
 		const rows = await this.sql.select(LINK, {}, { orderBy: [['createdAt', 'ASC']] });
 		return rows.map(toLink).filter((link) => link.status !== 'unlinked');
+	}
+
+	/**
+	 * The newest `limit` links that are not `unlinked` (only the Ever side the operator's Connection tab
+	 * lists) and how many there are: filtered, sorted and limited in the database, so the archived
+	 * links and the stored documents are never read.
+	 */
+	async latestLiveLinks(limit: number): Promise<{
+		total: number;
+		links: Array<Pick<LinkRecord, 'linkId' | 'everOrgId' | 'everHandle' | 'status' | 'createdAt'>>;
+	}> {
+		const q = (column: string) => this.sql.q(column);
+		const live = `${q('status')} <> ${this.sql.ph(1)}`;
+		const columns = ['linkId', 'everOrgId', 'everHandle', 'status', 'createdAt'].map(q).join(', ');
+		const order = `${q('createdAt')} DESC, ${q('id')} DESC`;
+		const total = await this.sql.run(`SELECT COUNT(*) AS ${q('n')} FROM ${q(LINK)} WHERE ${live}`, ['unlinked']);
+		const { rows } = await this.sql.run(
+			`SELECT ${columns} FROM ${q(LINK)} WHERE ${live} ORDER BY ${order} LIMIT ${Math.max(0, Math.floor(limit))}`,
+			['unlinked']
+		);
+		return {
+			total: num(total.rows[0]?.['n']) ?? 0,
+			links: rows.map((row) => ({
+				linkId: String(row['linkId']),
+				everOrgId: String(row['everOrgId']),
+				everHandle: str(row['everHandle']),
+				status: String(row['status']) as LinkRecord['status'],
+				createdAt: num(row['createdAt']) ?? 0
+			}))
+		};
 	}
 
 	/**

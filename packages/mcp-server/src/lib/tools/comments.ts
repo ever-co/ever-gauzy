@@ -9,6 +9,7 @@ import { buildListQuery, containsText, pageOf, readAllPages, toApiEntity, valida
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('CommentTools');
 
 /** Comments matching `where` whose text contains `query`, read page by page: the API has no comment search. */
@@ -66,7 +67,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error fetching comments:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch comments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get comment count tool
@@ -105,7 +107,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error fetching comment count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch comment count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get comment by ID tool
@@ -140,7 +143,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error fetching comment:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch comment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create comment tool
@@ -183,7 +187,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error creating comment:', sanitizeForLogging(error));
 				throw new Error(`Failed to create comment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update comment tool
@@ -215,7 +220,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error updating comment:', sanitizeForLogging(error));
 				throw new Error(`Failed to update comment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete comment tool
@@ -246,7 +252,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error deleting comment:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete comment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get comments by entity tool
@@ -294,7 +301,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error fetching comments by entity:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch comments by entity: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Reply to comment tool
@@ -335,7 +343,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error replying to comment:', sanitizeForLogging(error));
 				throw new Error(`Failed to reply to comment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get comment replies tool
@@ -369,7 +378,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error fetching comment replies:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch comment replies: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my comments tool
@@ -412,7 +422,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error fetching my comments:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my comments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add comment to task tool
@@ -450,7 +461,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error adding comment to task:', sanitizeForLogging(error));
 				throw new Error(`Failed to add comment to task: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Add comment to project tool
@@ -488,7 +500,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error adding comment to project:', sanitizeForLogging(error));
 				throw new Error(`Failed to add comment to project: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Add comment to goal tool
@@ -526,7 +539,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error adding comment to goal:', sanitizeForLogging(error));
 				throw new Error(`Failed to add comment to goal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Search comments tool
@@ -563,7 +577,8 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error searching comments:', sanitizeForLogging(error));
 				throw new Error(`Failed to search comments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get recent comments tool
@@ -601,6 +616,7 @@ export const registerCommentTools = (server: McpServer) => {
 				logger.error('Error fetching recent comments:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch recent comments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

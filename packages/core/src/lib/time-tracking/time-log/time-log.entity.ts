@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OnLoad } from '@mikro-orm/core';
-import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
+import { RelationId, JoinColumn, JoinTable, AfterLoad } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -17,6 +17,7 @@ import {
 	ITimeSlot,
 	IOrganizationTeam,
 	IInvoiceItem,
+	ITag,
 	ID
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isMySQL } from '@gauzy/config';
@@ -26,6 +27,7 @@ import {
 	OrganizationContact,
 	OrganizationProject,
 	OrganizationTeam,
+	Tag,
 	Task,
 	TenantOrganizationBaseEntity,
 	Timesheet,
@@ -48,6 +50,13 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
  */
 @ColumnIndex('IDX_time_log_tenant_org_employee_started', ['tenantId', 'organizationId', 'employeeId', 'startedAt'])
 @ColumnIndex('IDX_time_log_tenant_org_started', ['tenantId', 'organizationId', 'startedAt'])
+// One running timer run per employee (`AddTimeLogOneRunningTimerPerEmployee1791000018800`). The desktop's rows are left
+// out: it stores the time it uploads as running by design. MySQL has no filtered index: the migration indexes a virtual
+// generated `runningTimerKey` column there instead, which no entity declares.
+@ColumnIndex('UQ_time_log_running_timer_employee', ['employeeId'], {
+	unique: true,
+	where: `"isRunning" = true AND "deletedAt" IS NULL AND "source" <> 'DESKTOP'`
+})
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, ITimeLogStoredRates {
 	@ApiProperty({ type: () => 'timestamptz' })
@@ -121,6 +130,17 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, I
 	@ColumnIndex()
 	@MultiORMColumn({ update: false, nullable: true })
 	version?: string;
+
+	/**
+	 * The log this one was cut from, when a split saved it as the part after the new range (see
+	 * `DeleteTimeSpanHandler`). Written in the same save as the part. While a part of a log still ends where the log
+	 * ends and starts inside it (a split whose cut and undo both failed), the log is not split again, on any API
+	 * process. Set by the API only: no request body names it.
+	 */
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	splitFromTimeLogId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -356,6 +376,29 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, I
 		onDelete: 'CASCADE'
 	})
 	timeSlots?: ITimeSlot[];
+
+	/**
+	 * The tags the time is filed under: the kind of work, whatever the task (ever-co/ever-gauzy#12029). Tags of the
+	 * log's organization, or of its whole tenant; the writes check each one (see time-log-tags.ts). One-sided: the core
+	 * `Tag` entity gets no inverse property, so its own reads and counters are unchanged. Deleting a tag removes it from
+	 * every log; the logs stay.
+	 */
+	@MultiORMManyToMany(() => Tag, {
+		/** Database cascade action on update. */
+		onUpdate: 'CASCADE',
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE',
+		/** The time log owns the relation. */
+		owner: true,
+		/** Pivot table for many-to-many relationship. */
+		pivotTable: 'tag_time_log',
+		/** Column in pivot table referencing 'time_log' primary key. */
+		joinColumn: 'timeLogId',
+		/** Column in pivot table referencing 'tag' primary key. */
+		inverseJoinColumn: 'tagId'
+	})
+	@JoinTable({ name: 'tag_time_log' })
+	tags?: ITag[];
 
 	/*
 	|--------------------------------------------------------------------------

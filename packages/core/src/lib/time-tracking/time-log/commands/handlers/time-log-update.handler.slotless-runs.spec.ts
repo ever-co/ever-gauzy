@@ -74,6 +74,8 @@ async function stopRun(
 	);
 	(handler as any).ormType = MultiORMEnum.TypeORM;
 	jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
+	// The employee's slots at the starts of the range the stop gives the run: none (#11889)
+	jest.spyOn(handler as any, 'findTimeSlots').mockResolvedValue([]);
 	jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
 	jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
 	const save = jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockImplementation(async (log) => log);
@@ -130,6 +132,15 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 
 		expect(bulkCreate).toHaveBeenCalledTimes(1);
 		expect(slotCount).not.toHaveBeenCalled();
+	});
+
+	it('gives an embedded timer run the slots of its 30 minutes, as a web timer run, so the day counts it', async () => {
+		const { bulkCreate, slotCount, savedRun } = await stopRun(TimeLogSourceEnum.EMBED);
+
+		expect(bulkCreate).toHaveBeenCalledTimes(1);
+		expect(slotCount).not.toHaveBeenCalled();
+		const seconds = savedRun.timeSlots?.reduce((sum, slot) => sum + slot.duration, 0);
+		expect(seconds).toBe(30 * 60);
 	});
 
 	it('still leaves a desktop run to the slots its tracker posts', async () => {

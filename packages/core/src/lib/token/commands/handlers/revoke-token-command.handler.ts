@@ -4,6 +4,7 @@ import { TokenStatus } from '../../interfaces';
 import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
+import { findEndOfRotationLine } from '../../shared/rotation-reuse';
 import { TokenHasher } from '../../shared/token-hasher';
 import { tokenWithRules } from '../../shared/token-rules';
 import { RevokeTokenCommand } from '../revoke-token.command';
@@ -31,9 +32,15 @@ export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, v
 		}
 
 		// The rule is the record's own method; a MikroORM read answers the row without it, see `tokenWithRules`.
-		const token = tokenWithRules(stored);
+		const presented = tokenWithRules(stored);
 
-		if (!token.canRevoke()) {
+		// A rotated token has nothing left to revoke itself: its session goes on with the token its line of rotations
+		// ends with, and that is the one to revoke (see `findEndOfRotationLine`).
+		const token = presented.isRotated()
+			? await findEndOfRotationLine(presented, (id) => this.tokenReadRepository.findById(id))
+			: presented;
+
+		if (!token?.canRevoke()) {
 			return; // Already revoked/expired
 		}
 

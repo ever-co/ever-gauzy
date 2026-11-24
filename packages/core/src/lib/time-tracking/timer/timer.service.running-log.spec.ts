@@ -19,6 +19,12 @@ import { ScheduleTimeLogEntriesCommand } from '../time-log/commands/schedule-tim
 import { ScheduleTimeLogEntriesHandler } from '../time-log/commands/handlers/schedule-time-log-entries.handler';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * A running time log could be stored with `isRunning: true` and a null `stoppedAt` (`TimeLogCreateHandler` gave a
  * desktop-source log `isRunning: true` by default, and `IntegrationMapSyncTimeLogHandler` passes its entity as-is),

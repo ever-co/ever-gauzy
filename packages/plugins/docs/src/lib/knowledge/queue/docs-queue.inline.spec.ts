@@ -14,7 +14,17 @@
  *     worker host calls, in the background, coalesced per stage+document.
  */
 jest.mock('@gauzy/scheduler', () => ({ SchedulerQueueService: class {} }));
+// The one helper taken from the platform's barrel (which boots the whole application graph) opens MikroORM's own request
+// context under DB_ORM=mikro-orm, given the instance, as the platform's does; the work as it is otherwise.
+jest.mock('@gauzy/core', () => ({
+	runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+		orm && process.env.DB_ORM === 'mikro-orm'
+			? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+			: work()
+}));
 
+import { Logger } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DOCS_JOB_ATTEMPTS, DOCS_JOB_BACKOFF_DELAY_MS } from '../../docs.constants';
 import { DOCS_JOB_CHUNK, DOCS_JOB_EXTRACT, DOCS_PROCESSING_QUEUE } from './constants';
 import { IDocsJobBase } from './docs-job.types';
@@ -39,7 +49,7 @@ const flush = (): Promise<void> => new Promise((resolve) => setImmediate(() => s
  * @param schedulerQueueService Pass a stub for queue mode, or omit for inline mode.
  * @param runStageSafely Optional custom runner implementation.
  */
-const buildService = (schedulerQueueService?: any, runStageSafely?: jest.Mock) => {
+const buildService = (schedulerQueueService?: any, runStageSafely?: jest.Mock, orm?: unknown) => {
 	const runner = { runStageSafely: runStageSafely ?? jest.fn().mockResolvedValue(undefined) };
 	const moduleRef: any = {
 		get: jest.fn((token: unknown) => {
@@ -49,7 +59,7 @@ const buildService = (schedulerQueueService?: any, runStageSafely?: jest.Mock) =
 			throw new Error(`Unknown token ${String(token)}`);
 		})
 	};
-	const service = new DocsQueueService(moduleRef, schedulerQueueService);
+	const service = new DocsQueueService(moduleRef, schedulerQueueService, orm as never);
 	return { service, runner, moduleRef };
 };
 
@@ -249,5 +259,50 @@ describe('DocsQueueService — inline mode', () => {
 		await service.enqueue(DOCS_JOB_CHUNK, PAYLOAD);
 		await flush();
 		expect(moduleRef.get).toHaveBeenCalledTimes(1);
+	});
+});
+
+/**
+ * An inline stage runs after the request that asked for it, or from a timer (the recovery scan, the import sweep). Under
+ * DB_ORM=mikro-orm its stages read and write through MikroORM (the tenant's storage settings and AI credentials, the
+ * activity log), which refuses its global EntityManager outside a request context.
+ */
+describe('DocsQueueService — inline mode under DB_ORM=mikro-orm', () => {
+	const originalOrm = process.env.DB_ORM;
+
+	afterEach(() => {
+		if (originalOrm === undefined) delete process.env.DB_ORM;
+		else process.env.DB_ORM = originalOrm;
+	});
+
+	it('runs each inline stage in a MikroORM request context of its own', async () => {
+		process.env.DB_ORM = 'mikro-orm';
+		let forks = 0;
+		const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+		const ranIn: unknown[] = [];
+		const runStageSafely = jest.fn(async () => {
+			const em = MikroOrmRequestContext.getEntityManager();
+			if (!em)
+				throw new Error(
+					'Using global EntityManager instance methods for context specific actions is disallowed.'
+				);
+			ranIn.push(em);
+		});
+		const { service } = buildService(undefined, runStageSafely, orm);
+		const { logger } = service as unknown as { logger: Logger };
+		jest.spyOn(logger, 'log').mockImplementation(() => undefined);
+		const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+
+		await service.enqueue(DOCS_JOB_EXTRACT, PAYLOAD);
+		await service.enqueue(DOCS_JOB_CHUNK, PAYLOAD);
+		await flush();
+
+		expect(runStageSafely).toHaveBeenCalledTimes(2);
+		expect(errorSpy).not.toHaveBeenCalled();
+		// A fresh fork for each stage
+		expect(ranIn).toEqual([
+			{ name: 'default', fork: 1 },
+			{ name: 'default', fork: 2 }
+		]);
 	});
 });

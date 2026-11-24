@@ -3,11 +3,20 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import {
+	buildListQuery,
+	getCurrentEmployeeId,
+	personTexts,
+	readSearchedList,
+	relationsForSearch,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { EmployeeInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EmployeeTools');
 
 const workingEmployeesForRangeSchema = z
@@ -73,17 +82,12 @@ export const registerEmployeeTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
-				};
-
-				const response = await apiClient.get('/api/employee', { params });
+				// The list route has no search: one of the name or email is kept here, on the whole list
+				const listOptions = { page, limit, relations: relationsForSearch(search, relations, 'user') };
+				const response = await readSearchedList('/api/employee', defaultParams, { ...where }, listOptions, {
+					search,
+					textsOf: personTexts
+				});
 
 				return {
 					content: [
@@ -97,7 +101,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employees:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employees: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee count tool
@@ -138,7 +143,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employee count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employee count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employees pagination tool
@@ -163,15 +169,13 @@ export const registerEmployeeTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
-				};
+				// The pagination route matches the search against the name or the email of the employee's user
+				const userSearch = { ...(search && { user: { name: search, email: search } }) };
+				const params = buildListQuery(
+					defaultParams,
+					{ ...where, ...userSearch },
+					{ page, limit, relations, skipIsPage: true }
+				);
 
 				const response = await apiClient.get('/api/employee/pagination', { params });
 
@@ -187,7 +191,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employees pagination:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employees pagination: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get working employees tool
@@ -214,7 +219,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching working employees:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch working employees: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get working employees count tool
@@ -241,7 +247,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching working employees count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch working employees count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization members tool
@@ -282,7 +289,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching organization members:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization members: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee by ID tool
@@ -317,14 +325,15 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee statistics tool
 	registerTool(
 		server,
 		'get_employee_statistics',
-		"Get statistics for an employee in the authenticated user's organization",
+		"Get an employee's income, expenses, bonus and profit per month over a date range (the current month by default)",
 		{
 			employeeId: z.string().uuid().describe('The employee ID'),
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
@@ -342,7 +351,7 @@ export const registerEmployeeTools = (server: McpServer) => {
 					...(endDate && { endDate })
 				};
 
-				const response = await apiClient.get('/api/employee/statistics', { params });
+				const response = await apiClient.get('/api/employee-statistics/months', { params });
 
 				return {
 					content: [
@@ -356,7 +365,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employee statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employee statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get current employee tool
@@ -372,11 +382,14 @@ export const registerEmployeeTools = (server: McpServer) => {
 		},
 		async ({ relations }) => {
 			try {
+				// The employee routes read the tenant from the query: without it they refuse the read
 				const params = {
+					...resolveOrganizationScope(),
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get('/api/employee/me', { params });
+				const employeeId = await getCurrentEmployeeId();
+				const response = await apiClient.get(`/api/employee/${employeeId}`, { params });
 
 				return {
 					content: [
@@ -390,7 +403,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching current employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch current employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create employee tool
@@ -426,7 +440,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error creating employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to create employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update employee tool
@@ -456,7 +471,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error updating employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to update employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update employee profile tool
@@ -469,9 +485,14 @@ export const registerEmployeeTools = (server: McpServer) => {
 		},
 		async ({ employee_data }) => {
 			try {
-				const updateData = convertEmployeeDateFields(employee_data);
+				// The profile DTO requires the organization, and the route reads the tenant from the body
+				const updateData = {
+					...convertEmployeeDateFields(employee_data),
+					...resolveOrganizationScope()
+				};
 
-				const response = await apiClient.put('/api/employee/me', updateData);
+				const employeeId = await getCurrentEmployeeId();
+				const response = await apiClient.put(`/api/employee/${employeeId}/profile`, updateData);
 
 				return {
 					content: [
@@ -485,7 +506,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error updating employee profile:', sanitizeForLogging(error));
 				throw new Error(`Failed to update employee profile: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Soft delete employee tool
@@ -516,7 +538,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error soft deleting employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to soft delete employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Restore employee tool
@@ -529,7 +552,13 @@ export const registerEmployeeTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				const response = await apiClient.post(`/api/employee/${id}/restore`);
+				const defaultParams = validateOrganizationContext();
+				const scope = {
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+				};
+
+				await apiClient.put(`/api/employee/${id}/recover`, scope);
 
 				return {
 					content: [
@@ -547,7 +576,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error restoring employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to restore employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentWrite
 	);
 
 	// Bulk create employees tool
@@ -590,6 +620,7 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error bulk creating employees:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk create employees: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 };

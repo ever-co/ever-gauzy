@@ -1,0 +1,56 @@
+<!-- A recurring expense's own page, laid out as the expense page: the actions beside the back button, then the
+     expense as the list's drawer shows it, given the whole width. -->
+<ngx-record-view-page heading="ORGANIZATIONS_PAGE.RECURRING_EXPENSE" [backLink]="backLink" [state]="state" (retry)="load()">
+	@if (expense) {
+		<!-- The page's actions, on one line with its back button. -->
+		<div recordPageActions class="recurring-page-actions">
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+				<button
+					nbButton
+					size="tiny"
+					status="primary"
+					type="button"
+					[disabled]="busy"
+					[attr.aria-label]="'BUTTONS.EDIT' | translate"
+					(click)="edit()"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span class="recurring-page-action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+			</ng-template>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
+				(click)="copyLink()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="danger"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DELETE' | translate"
+					(click)="delete()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	}
+
+	@if (expense) {
+		<ga-recurring-expense-quick-look [expense]="expense" [scope]="viewScope" [page]="true"></ga-recurring-expense-quick-look>
+	}
+</ngx-record-view-page>

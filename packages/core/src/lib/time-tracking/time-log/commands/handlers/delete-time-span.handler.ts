@@ -1,21 +1,39 @@
-import { Logger } from '@nestjs/common';
+import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { FindOptionsSelect, In } from 'typeorm';
+import { DataSource, EntityManager, FindOptionsSelect, In, IsNull } from 'typeorm';
 import { omit, pick } from 'underscore';
-import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
+import { Timesheet } from '../../../timesheet/timesheet.entity';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from './../../time-log.entity';
-import { DeleteTimeSpanCommand } from '../delete-time-span.command';
-import { TimeLogUpdateCommand } from '../time-log-update.command';
+import { createdChange, deletedChange, updatedChange } from '../../time-log-history';
+import {
+	historySubject,
+	locksRowsForChange,
+	recordTimeLogHistory,
+	TimeLogHistoryOptions,
+	TimeLogHistoryRecord
+} from '../../time-log-history.writer';
+import { isTimeLogUnchangedSince } from '../../time-log-precondition';
+import { TimeLogSplitBusyError, withTimeLogSplitLock } from '../../time-log-split-lock';
+import { DeleteTimeSpanCommand, TimeLogSplitOptions, TimeLogSplitPartChanges } from '../delete-time-span.command';
+import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
+import { TimeLogUpdateCommand, TimeLogUpdateOptions } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { generateTimeSlots } from './../../../time-slot/utils';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+import {
+	TIME_LOG_CREATED,
+	TIME_LOG_DELETED,
+	TIME_LOG_UPDATED,
+	TimeLogFactsService
+} from '../../time-log-facts.service';
 
 /** The rates a time log stores (see time-log-rates.ts), which the second part of a split keeps. */
 const STORED_RATE_FIELDS: Array<keyof TimeLog> = [
@@ -36,6 +54,90 @@ const STORED_RATE_SELECT: FindOptionsSelect<TimeLog> = Object.fromEntries([
 	...STORED_RATE_FIELDS.map((field) => [field, true])
 ]);
 
+/**
+ * The changes a split's second part names, without the fields left undefined: those keep the log's value (a field
+ * spread as undefined would be saved as empty). A field named `null` clears it.
+ *
+ * @param changes - What the second part changes, if anything.
+ */
+function definedChanges(changes: TimeLogSplitPartChanges | undefined): TimeLogSplitPartChanges {
+	const entries = Object.entries(changes ?? {}).filter(([, value]) => value !== undefined);
+	return Object.fromEntries(entries) as TimeLogSplitPartChanges;
+}
+
+/**
+ * Raised under the log's lock, in the transaction of a split's cut, when what the split route checked no longer holds:
+ * the log was written since the route read it (an invoice line billed it, an edit changed it), or its timesheet was
+ * approved or billed. The cut writes nothing, the second part is taken back, and the split answers that the log changed.
+ */
+class TimeLogChangedSinceSplitCheckError extends Error {
+	constructor(timeLogId: ID, what: string) {
+		super(`Time log ${timeLogId} changed since its split was checked: ${what}`);
+		this.name = 'TimeLogChangedSinceSplitCheckError';
+	}
+}
+
+/**
+ * The `updatedAt` the split route read the log at, as an instant: what the split compares the stored log with. Null
+ * when the log it was given carries none (the route's read always does).
+ *
+ * @param checked - The time log as the route read it.
+ */
+function checkedVersionOf(checked: ITimeLog): Date | null {
+	if (checked?.updatedAt === undefined || checked?.updatedAt === null) {
+		return null;
+	}
+	const version = new Date(checked.updatedAt);
+	if (Number.isNaN(version.getTime())) {
+		return null;
+	}
+	return version;
+}
+
+/**
+ * The check a split's cut makes in its own transaction, under the log's lock, before it writes (see
+ * `TimeLogUpdateOptions.assertBeforeWrite`), against the log as the split route read it at `version`:
+ * - the log is still at that version: every write of a log moves its `updatedAt`, an invoice line that bills it
+ *   included (ever-co/ever-teams#5382), and that write locks the same row, so a billing either landed before this read
+ *   and is seen, or waits until the split is whole;
+ * - its timesheet is neither approved nor billed: read under a shared lock, which the approval's own locking read waits
+ *   for, so an approval that landed before is seen, and one that comes after waits until the split is whole. The read
+ *   never waits for that row (`SKIP LOCKED`): the cut already holds the log's lock, and a move of a task's time to
+ *   another project locks the timesheets before the logs (`TaskService`), so a wait here could close a lock cycle with
+ *   it. A timesheet another transaction holds for a change (an approval in flight) refuses the cut instead.
+ *
+ * @param version - The `updatedAt` the route read the log at.
+ * @returns The check.
+ * @throws TimeLogChangedSinceSplitCheckError when either no longer holds, or the timesheet is being changed.
+ */
+function splitStillAsChecked(version: Date): TimeLogUpdateOptions['assertBeforeWrite'] {
+	return async (manager: EntityManager, current: ITimeLog): Promise<void> => {
+		if (!isTimeLogUnchangedSince(current.updatedAt, version)) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'it was written since');
+		}
+		if (!current.timesheetId) {
+			return;
+		}
+		const locksRows = locksRowsForChange();
+		const timesheet = await manager.findOne(Timesheet, {
+			where: { id: current.timesheetId, tenantId: current.tenantId },
+			select: { id: true, status: true, isBilled: true },
+			loadEagerRelations: false,
+			...(locksRows ? { lock: { mode: 'pessimistic_read' as const, onLocked: 'skip_locked' as const } } : {})
+		});
+		// The log's key keeps its timesheet while the log is locked: a row the read skipped is held for a change
+		if (locksRows && !timesheet) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'its timesheet is being changed');
+		}
+		if (timesheet?.status === TimesheetStatus.APPROVED) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'its timesheet was approved');
+		}
+		if (timesheet?.isBilled === true) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'its timesheet was billed');
+		}
+	};
+}
+
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanCommand> {
 	private readonly logger = new Logger(DeleteTimeSpanHandler.name);
@@ -44,21 +146,20 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * The cleanups running in this process, by time log: each waits for the one before it to settle, then reads the
 	 * log afresh. Two requests over the same log (an entry sent twice, a stop during a manual edit) otherwise both read
 	 * it before either wrote, and both split it. The API pods do not share this order; nothing here locks a log across
-	 * them, as nothing locks the timer start and stop either.
+	 * them, as nothing locks the timer start and stop either. The split route's splits alone also take the database's
+	 * lock on their log (see `withTimeLogSplitLock`), so they run one after the other on every pod.
 	 */
 	private readonly cleanups = new Map<ID, Promise<unknown>>();
-
-	/**
-	 * The second part each split left behind in this process when neither its cut nor the undo of that cut went
-	 * through, by the log it was cut from. Nothing stored says which log a part was cut from, so this is how the next
-	 * split of that log knows it (see `assertNoSecondPartLeft`).
-	 */
-	private readonly secondPartsLeft = new Map<ID, ID>();
 
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		// Records a split's second part in its history, with the part itself; a handler built without it writes as before.
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes the facts of a split's second part for the webhooks: its creation, and its deletion when the split is
+		// taken back; a handler built without it writes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -70,7 +171,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	public async execute(command: DeleteTimeSpanCommand): Promise<boolean> {
 		const { id } = command.timeLog;
 		const previous = this.cleanups.get(id) ?? Promise.resolve();
-		const run = previous.then(() => this.cleanUp(command));
+		const run = previous.then(() => this.cleanUpInTurn(command));
 		const settled = run.catch(() => undefined);
 		this.cleanups.set(id, settled);
 		try {
@@ -83,13 +184,36 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
+	 * Runs the cleanup, once the split route's split holds the database's lock on its log: a split of the same log on
+	 * another API process runs before or after it, never beside it. A split still waiting once that other one ran
+	 * for the whole wait writes nothing, and answers that the log was not split, as a log that changed.
+	 *
+	 * @param command - The command containing newTime, timeLog, and timeSlot
+	 * @returns Whether the log was cut, split or deleted.
+	 */
+	private async cleanUpInTurn(command: DeleteTimeSpanCommand): Promise<boolean> {
+		if (!command.split) {
+			return await this.cleanUp(command);
+		}
+		try {
+			return await withTimeLogSplitLock(this.dataSource, command.timeLog.id, () => this.cleanUp(command));
+		} catch (error) {
+			if (error instanceof TimeLogSplitBusyError) {
+				this.logger.warn(`${error.message}: time log ${command.timeLog.id} left whole`);
+				return false;
+			}
+			throw error;
+		}
+	}
+
+	/**
 	 * Removes the new range from one time log, as the log is stored when this runs.
 	 *
 	 * @param command - The command containing newTime, timeLog, and timeSlot
 	 * @returns Whether the log was cut, split or deleted.
 	 */
 	private async cleanUp(command: DeleteTimeSpanCommand): Promise<boolean> {
-		const { newTime, timeLog, timeSlot, forceDelete } = command;
+		const { newTime, timeLog, timeSlot, forceDelete, split } = command;
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
@@ -111,6 +235,11 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		if (log.isRunning) {
 			this.debug(() => `Time log ${log.id} is running: left whole`);
 			return false;
+		}
+
+		// A split asked for at one moment, of any log, manual time without slots included
+		if (split) {
+			return await this.splitAtMoment(log, timeLog, start, split, forceDelete);
 		}
 
 		// The TypeORM conflict lookup lists only logs holding time slots: time saved over a log holding none, which
@@ -242,7 +371,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				await this.finishFailedCut(
 					log,
 					(stored) => moment(stored.startedAt).isSame(end),
-					(slot) => moment(slot.startedAt).isBefore(firstKept)
+					(slot) => moment(slot.startedAt).isBefore(firstKept),
+					forceDelete
 				);
 				throw error;
 			}
@@ -302,7 +432,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				await this.finishFailedCut(
 					log,
 					(stored) => moment(stored.stoppedAt).isSame(start),
-					(slot) => !moment(slot.startedAt).isBefore(start)
+					(slot) => !moment(slot.startedAt).isBefore(start),
+					forceDelete
 				);
 				throw error;
 			}
@@ -329,23 +460,60 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @param start - The start of the new range, the end of the first part.
 	 * @param end - The end of the new range, the start of the second part.
 	 * @param forceDelete - Whether to hard delete what goes (default: false).
+	 * @param split - Given by the split route: what the second part changes, and the history to record.
+	 * @param assertBeforeCut - Given by the split route: what the cut checks under the log's lock, in its own
+	 * transaction, before it writes (see `splitStillAsChecked`). A cut it refuses wrote nothing: only the second part is
+	 * taken back, and its error is raised.
 	 * @throws The error of the write that failed.
 	 */
-	private async splitAround(log: TimeLog, start: Date, end: Date, forceDelete: boolean = false): Promise<void> {
+	private async splitAround(
+		log: TimeLog,
+		start: Date,
+		end: Date,
+		forceDelete = false,
+		split?: TimeLogSplitOptions,
+		assertBeforeCut?: TimeLogUpdateOptions['assertBeforeWrite']
+	): Promise<void> {
 		await this.assertNoSecondPartLeft(log);
-		const secondPart = await this.createSecondPart(log, end, log.stoppedAt);
+		const secondPart = await this.createSecondPart(log, end, log.stoppedAt, split);
 
+		let options: TimeLogUpdateOptions = {};
+		if (assertBeforeCut) {
+			options = { assertBeforeWrite: assertBeforeCut };
+		}
 		try {
 			// With its own start too: an update naming none files the log under the current week's timesheet
 			await this._commandBus.execute(
-				new TimeLogUpdateCommand({ startedAt: log.startedAt, stoppedAt: start }, log, true, forceDelete)
+				new TimeLogUpdateCommand(
+					{ startedAt: log.startedAt, stoppedAt: start },
+					log,
+					true,
+					forceDelete,
+					split?.history,
+					false,
+					options
+				)
 			);
 		} catch (error) {
+			if (error instanceof TimeLogChangedSinceSplitCheckError) {
+				this.logger.warn(`${error.message}: the split of time log ${log.id} is taken back`);
+				try {
+					await this.takeBackSecondPart(log, secondPart, split?.history);
+				} catch (takeBackError) {
+					// As for a failed recovery: the part left behind blocks the next split of the log until it is deleted
+					this.logger.error(
+						`Error while taking back the second part ${secondPart.id} of time log ${log.id}: ${takeBackError?.message ?? takeBackError}`,
+						takeBackError?.stack
+					);
+				}
+				throw error;
+			}
 			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
 			try {
-				await this.recoverFailedSplit(log, start, secondPart);
+				await this.recoverFailedSplit(log, start, secondPart, forceDelete, split?.history);
 			} catch (recoveryError) {
-				this.secondPartsLeft.set(log.id, secondPart.id);
+				// The part left behind still names this log (`splitFromTimeLogId`): the next split of it is refused
+				// until one of the two is deleted (see `assertNoSecondPartLeft`).
 				this.logger.error(
 					`Error while recovering the split of time log ${log.id} (second part ${secondPart.id}): ${recoveryError?.message ?? recoveryError}`,
 					recoveryError?.stack
@@ -356,46 +524,61 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Refuses to split a log while the second part an earlier split of it left behind in this process (see
-	 * `secondPartsLeft`) still counts the same time: it is still there, inside the log and ending where the log ends.
-	 * Splitting again would save one more copy of that time; the error stops the caller instead, as a failed split
-	 * does. Once that part is deleted, or either log has changed, it is forgotten and the log splits as any other.
+	 * Refuses to split a log while a second part an earlier split of it left behind still counts the same time: a live
+	 * log cut from it (`splitFromTimeLogId`), inside it and ending where it ends. That is what a split whose cut and
+	 * undo both failed leaves. Splitting again would save one more copy of that time; the error stops the caller
+	 * instead, as a failed split does. The link is stored, so this holds on every API process and after a restart.
+	 * Once that part is deleted, or either log has changed, the log splits as any other; the part of a split that went
+	 * through starts after the log's new end, and never stops one.
 	 *
-	 * Only that very part is looked for: another log ending where this one ends (older overlapping data has them) is
-	 * not a part of it, and never stops a split.
+	 * Only the parts cut from this very log are looked for: another log ending where this one ends (older overlapping
+	 * data has them) is not a part of it, and never stops a split.
 	 *
 	 * @param log - The time log as stored.
-	 * @throws While the second part left behind still duplicates the log's time.
+	 * @throws While a second part left behind still duplicates the log's time.
 	 */
 	private async assertNoSecondPartLeft(log: TimeLog): Promise<void> {
-		const secondPartId = this.secondPartsLeft.get(log.id);
-		if (!secondPartId) {
-			return;
-		}
-		const secondPart = await this.typeOrmTimeLogRepository.findOne({ where: { id: secondPartId } });
-		const duplicatesLog =
-			!!secondPart &&
-			moment(secondPart.stoppedAt).isSame(log.stoppedAt) &&
-			moment(secondPart.startedAt).isAfter(log.startedAt);
-		if (!duplicatesLog) {
-			this.secondPartsLeft.delete(log.id);
+		const parts = await this.typeOrmTimeLogRepository.find({
+			where: { splitFromTimeLogId: log.id, tenantId: log.tenantId }
+		});
+		const left = parts.find(
+			(part) =>
+				moment(part.stoppedAt).isSame(log.stoppedAt) &&
+				moment(part.startedAt).isAfter(log.startedAt) &&
+				moment(part.startedAt).isBefore(log.stoppedAt)
+		);
+		if (!left) {
 			return;
 		}
 		throw new Error(
-			`Time log ${log.id} still has the second part (time log ${secondPartId}) of a split that could not be undone; delete one of them first`
+			`Time log ${log.id} still has the second part (time log ${left.id}) of a split that could not be undone; delete one of them first`
 		);
 	}
 
 	/**
 	 * Creates the part of a split log after the new range: the log's fields over `end`–`stoppedAt`, holding the log's
-	 * slots from the ten-minute slot of `end` on. One save, so a failure writes neither the log nor its join rows.
+	 * slots from the ten-minute slot of `end` on, and naming the log it was cut from (`splitFromTimeLogId`, see
+	 * `assertNoSecondPartLeft`). One save, so a failure writes neither the log, nor that link, nor its join rows.
+	 *
+	 * A split asked for by the route may give that part another task, project, notes or billable state; on another
+	 * project it takes that project's client rates, as an edit of the project does. With the route's history, the part
+	 * and its history row are written in one transaction.
+	 *
+	 * The part is a new time entry: its `time_log.created` fact (for the webhooks) commits with it where the outbox can
+	 * share its transaction, and is written right after it otherwise (see `TimeLogFactsService`).
 	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param end - The end of the new range, the second part's start.
 	 * @param stoppedAt - The log's original end, the second part's end.
+	 * @param split - Given by the split route: what the second part changes, and the history to record.
 	 * @returns The second part, with the slots it holds.
 	 */
-	private async createSecondPart(log: TimeLog, end: Date, stoppedAt: Date): Promise<TimeLog> {
+	private async createSecondPart(
+		log: TimeLog,
+		end: Date,
+		stoppedAt: Date,
+		split?: TimeLogSplitOptions
+	): Promise<TimeLog> {
 		const from = this.firstSlotStart(end, stoppedAt);
 		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
@@ -406,15 +589,147 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			select: STORED_RATE_SELECT
 		});
 
-		return await this.typeOrmTimeLogRepository.save(
-			new TimeLog({
-				...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
-				...pick(storedRates ?? {}, STORED_RATE_FIELDS),
-				startedAt: end,
-				stoppedAt,
-				timeSlots
-			})
-		);
+		// The same kind of work too: the tags the log is filed under (ever-co/ever-gauzy#12029), which its read leaves out
+		// With the soft deleted ones: the part keeps every link the log has, so a tag restored later is on both parts
+		const tagged = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: log.id },
+			relations: { tags: true },
+			select: { id: true, tags: { id: true } },
+			withDeleted: true
+		});
+
+		const changes = definedChanges(split?.secondPart);
+		const projectRates = await this.clientRatesOfAnotherProject(log, changes);
+
+		const secondPart = new TimeLog({
+			...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited', 'tags']),
+			...pick(storedRates ?? {}, STORED_RATE_FIELDS),
+			...changes,
+			...projectRates,
+			startedAt: end,
+			stoppedAt,
+			splitFromTimeLogId: log.id,
+			timeSlots,
+			tags: tagged?.tags ?? []
+		});
+
+		const recordsHistory = Boolean(split?.history) && Boolean(this.dataSource);
+		const appendsFactWithin = this.facts?.appendsWithinWrites() ?? false;
+		if (!recordsHistory && !appendsFactWithin) {
+			const saved = await this.typeOrmTimeLogRepository.save(secondPart);
+			await this.facts?.record(TIME_LOG_CREATED, saved);
+			return saved;
+		}
+		const writeInTransaction = async (manager: EntityManager): Promise<TimeLog> => {
+			const saved = await manager.save(secondPart);
+			if (recordsHistory) {
+				const record = {
+					subject: historySubject(saved),
+					change: createdChange(saved),
+					reason: split.history.reason
+				};
+				await recordTimeLogHistory(manager, [record]);
+			}
+			if (appendsFactWithin) {
+				await this.facts.recordWithin(manager, TIME_LOG_CREATED, saved);
+			}
+			return saved;
+		};
+		const saved = this.dataSource
+			? await this.dataSource.transaction(writeInTransaction)
+			: await this.typeOrmTimeLogRepository.manager.transaction(writeInTransaction);
+		if (!appendsFactWithin) {
+			await this.facts?.record(TIME_LOG_CREATED, saved);
+		}
+		return saved;
+	}
+
+	/**
+	 * The client rates of the project a split's second part moves to, as `TimeLogUpdateHandler` gives them to a log an
+	 * edit moves to another project; none when the part stays on the log's project.
+	 *
+	 * @param log - The time log as stored.
+	 * @param changes - What the second part changes.
+	 */
+	private async clientRatesOfAnotherProject(
+		log: TimeLog,
+		changes: TimeLogSplitPartChanges
+	): Promise<Partial<TimeLog>> {
+		const namesProject = changes.projectId !== undefined;
+		const changesProject = namesProject && String(changes.projectId ?? '') !== String(log.projectId ?? '');
+		if (!changesProject) {
+			return {};
+		}
+		const { tenantId, organizationId, employeeId } = log;
+		const scope = { tenantId, organizationId, employeeId, projectId: changes.projectId ?? null };
+		const rates = await this._commandBus.execute(new FindTimeLogRatesCommand(scope, 'client'));
+		return rates ?? {};
+	}
+
+	/**
+	 * Splits a log at the moment the split route names: the log ends there, and the rest becomes its second part,
+	 * through the same split as time saved inside a log (`splitAround`). The route checked the moment against the log it
+	 * read; this runs on the log as it is stored once the splits before it settled, and leaves it whole when its range
+	 * is no longer the one the route checked (another split, an edit or a delete came first): a split at a moment still
+	 * inside it would otherwise cut a part the route never measured, or give the other split's time this one's changes.
+	 * It leaves it whole too when it is no longer the time of the member and organization the route checked the caller
+	 * against.
+	 *
+	 * It leaves it whole as well when the log was written in any other way since the route read it: its `updatedAt` is
+	 * no longer the one read (an invoice line that bills it moves it, ever-co/ever-teams#5382). The route refuses billed
+	 * or approved time, and its check is only as good as the read it made: the cut compares that `updatedAt` again, and
+	 * reads the timesheet, under the locks a billing and an approval take, in the transaction it writes in (see
+	 * `splitStillAsChecked`). A billing or an approval that lands between the route's check and the cut refuses the cut,
+	 * and the split is taken back whole; one that comes after waits for it.
+	 *
+	 * @param log - The time log as stored, with its slots.
+	 * @param checked - The time log as the route read it, when it checked the split.
+	 * @param at - The moment to split at.
+	 * @param split - What the second part changes, and the history to record.
+	 * @param forceDelete - Whether to hard delete what goes (default: false).
+	 * @returns Whether the log was split.
+	 * @throws The error of the write that failed, as for any split.
+	 */
+	private async splitAtMoment(
+		log: TimeLog,
+		checked: ITimeLog,
+		at: Date,
+		split: TimeLogSplitOptions,
+		forceDelete = false
+	): Promise<boolean> {
+		const keepsStart = moment(log.startedAt).isSame(moment(checked.startedAt));
+		const keepsEnd = moment(log.stoppedAt).isSame(moment(checked.stoppedAt));
+		const keepsMember = log.employeeId === checked.employeeId;
+		const keepsOrganization = log.organizationId === checked.organizationId;
+		// The route's read always carries the version; a log given without one is compared on the fields above alone
+		const version = checkedVersionOf(checked);
+		const keepsVersion = version === null || isTimeLogUnchangedSince(log.updatedAt, version);
+		const isAsChecked = keepsStart && keepsEnd && keepsMember && keepsOrganization && keepsVersion;
+		if (!isAsChecked) {
+			this.debug(() => `Time log ${log.id} changed since the split was checked: left whole`);
+			return false;
+		}
+		const isAfterStart = moment(at).isAfter(moment(log.startedAt));
+		const isBeforeEnd = moment(at).isBefore(moment(log.stoppedAt));
+		const isInsideLog = isAfterStart && isBeforeEnd;
+		if (!isInsideLog) {
+			this.debug(() => `Time log ${log.id} no longer holds ${at}: left whole`);
+			return false;
+		}
+		let assertBeforeCut: TimeLogUpdateOptions['assertBeforeWrite'] | undefined;
+		if (version !== null) {
+			assertBeforeCut = splitStillAsChecked(version);
+		}
+		try {
+			await this.splitAround(log, at, at, forceDelete, split, assertBeforeCut);
+		} catch (error) {
+			// Refused under the lock: nothing of the log was written, and the second part was taken back
+			if (error instanceof TimeLogChangedSinceSplitCheckError) {
+				return false;
+			}
+			throw error;
+		}
+		return true;
 	}
 
 	/**
@@ -428,20 +743,34 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * totals the cut did not get to (see `finishRelease`). Otherwise nothing of the log was deleted, and the split is
 	 * undone: every slot the log held and lost goes back to it, the log gets its range and timesheet back, and the second
 	 * part is deleted with its join rows. In that order, so that a failure on the way leaves the time counted twice
-	 * rather than lost.
+	 * rather than lost. A split the route recorded in the history gets its undo recorded there too.
 	 *
 	 * @param log - The time log as it was read before the split, with its slots.
 	 * @param start - The start of the new range, the end the cut gives the log.
 	 * @param secondPart - The second part.
+	 * @param forceDelete - Whether the cut hard deletes what goes.
+	 * @param history - Given by the split route: the split was recorded in the history.
 	 */
-	private async recoverFailedSplit(log: TimeLog, start: Date, secondPart: TimeLog): Promise<void> {
+	private async recoverFailedSplit(
+		log: TimeLog,
+		start: Date,
+		secondPart: TimeLog,
+		forceDelete: boolean,
+		history?: TimeLogHistoryOptions
+	): Promise<void> {
 		const slots = await this.slotsAsTheyStand(log);
 		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
 		const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
 		const cut = moment(stored?.stoppedAt).isSame(start);
 
 		if (cut && slots.length < (log.timeSlots ?? []).length) {
-			await this.finishRelease(log, stored, slots, (slot) => !moment(slot.startedAt).isBefore(start));
+			await this.finishRelease(
+				log,
+				stored,
+				slots,
+				(slot) => !moment(slot.startedAt).isBefore(start),
+				forceDelete
+			);
 			return;
 		}
 
@@ -454,38 +783,205 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				.add(log.id);
 		}
 
-		const { startedAt, stoppedAt, timesheetId } = log;
-		await this.typeOrmTimeLogRepository.update(
-			{ id: log.id, tenantId: log.tenantId },
-			{ startedAt, stoppedAt, timesheetId }
-		);
-		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+		await this.restoreRange(log);
+		const partAsStored = await this.storedForFact(secondPart);
+		const taken = await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+		// Told of only when this undo removed it: a part deleted meanwhile was told of by its own deletion
+		if (taken?.affected !== 0) {
+			await this.facts?.record(TIME_LOG_DELETED, partAsStored);
+		}
+		await this.recordUndoneSplit(log, stored, secondPart, history);
 	}
 
 	/**
-	 * After a cut at one end failed: when it had written the log's new start or end, the release is finished as far as
-	 * it can be (see `finishRelease`), for the log's own slots there may already be deleted; when it had not, nothing
-	 * was written. A failure here is logged, and the cut's own error stays the one raised.
+	 * Takes back a split whose cut was refused under the log's lock (see `splitStillAsChecked`): the cut wrote nothing,
+	 * so the log is as the write that came first left it, and stays so (its range, its slots, its timesheet). Only the
+	 * second part is deleted, with its join rows, and that is recorded in the history when the split recorded its
+	 * creation there. A recalculation that ran while the second part stood counted its time as well, so its timesheet
+	 * and its employee's worked hours are counted again without it.
+	 *
+	 * The second part is deleted only while no invoice line bills it and it is still the time of the employee and the
+	 * timesheet it was saved for, checked in the statement that deletes it: billing and a move write those columns under
+	 * the row's lock, so a part billed meanwhile is never deleted from under its invoice line, and a part moved meanwhile
+	 * never leaves its new owner's totals counting time it no longer holds. It is kept then, as a failed undo leaves it,
+	 * and blocks the next split of the log until one of the two is deleted (see `assertNoSecondPartLeft`).
+	 *
+	 * Once the part is deleted, the history and each total are written apart: one that fails is logged, and never
+	 * stops the others.
+	 *
+	 * @param log - The time log as it was read before the split.
+	 * @param secondPart - The second part, as it was saved.
+	 * @param history - Given by the split route: the split was recorded in the history.
+	 */
+	private async takeBackSecondPart(
+		log: TimeLog,
+		secondPart: TimeLog,
+		history: TimeLogHistoryOptions | undefined
+	): Promise<void> {
+		const partAsStored = await this.storedForFact(secondPart);
+		const taken = await this.typeOrmTimeLogRepository.delete({
+			id: secondPart.id,
+			invoiceItemId: IsNull(),
+			employeeId: secondPart.employeeId,
+			timesheetId: secondPart.timesheetId ?? IsNull()
+		});
+		if (taken?.affected === 0) {
+			this.logger.error(
+				`The second part ${secondPart.id} of time log ${log.id} was billed or moved before its split was taken back: it is kept`
+			);
+			return;
+		}
+		// Its creation was told of (`createSecondPart`), so its deletion is too; never throws
+		await this.facts?.record(TIME_LOG_DELETED, partAsStored);
+		const followUps: Array<[string, () => Promise<unknown>]> = [
+			['record the undone split', () => this.recordUndoneSplit(log, null, secondPart, history)]
+		];
+		if (secondPart.timesheetId) {
+			followUps.push([
+				'recalculate the timesheet',
+				() => this._commandBus.execute(new TimesheetRecalculateCommand(secondPart.timesheetId))
+			]);
+		}
+		if (secondPart.employeeId) {
+			followUps.push([
+				"recalculate the employee's worked hours",
+				() => this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(secondPart.employeeId))
+			]);
+		}
+		for (const [what, followUp] of followUps) {
+			try {
+				await followUp();
+			} catch (error) {
+				this.logger.error(
+					`Could not ${what} after taking back the second part ${secondPart.id} of time log ${log.id}: ${error?.message ?? error}`,
+					error?.stack
+				);
+			}
+		}
+	}
+
+	/**
+	 * Records in the history what the undo of a split recorded there put back, so the history ends as the logs do: the
+	 * second part, saved with its creation, is deleted, and the log takes back the range that a cut, written with its
+	 * own history row, had changed (nothing is recorded for the log when the cut never wrote). A split that recorded
+	 * nothing records nothing here either.
+	 *
+	 * @param log - The time log as it was read before the split.
+	 * @param stored - The time log as the failed cut left it, if it is still there.
+	 * @param secondPart - The second part, now deleted.
+	 * @param history - Given by the split route: the split was recorded in the history.
+	 */
+	private async recordUndoneSplit(
+		log: TimeLog,
+		stored: TimeLog | null,
+		secondPart: TimeLog,
+		history: TimeLogHistoryOptions | undefined
+	): Promise<void> {
+		const recordedSplit = Boolean(history) && Boolean(this.dataSource);
+		if (!recordedSplit) {
+			return;
+		}
+		const records: TimeLogHistoryRecord[] = [
+			{ subject: historySubject(secondPart), change: deletedChange(secondPart), reason: null }
+		];
+		if (stored) {
+			const restored = { ...stored, startedAt: log.startedAt, stoppedAt: log.stoppedAt };
+			const rangeBack = updatedChange(stored, restored);
+			if (rangeBack) {
+				records.push({ subject: historySubject(restored), change: rangeBack, reason: null });
+			}
+		}
+		await this.dataSource.transaction(async (manager) => recordTimeLogHistory(manager, records));
+	}
+
+	/**
+	 * After a cut at one end failed: when it had written the log's new start or end, the log is left holding no slot
+	 * outside that range. The release is finished (see `finishRelease`): the cut may have failed on the delete of the
+	 * slots only the log held there, which goes in one go, so they may all still be there. When the release cannot be
+	 * finished and the log still holds every slot it held before the cut, nothing of it was deleted, and the log gets
+	 * its range and timesheet back instead. When the cut had not written the new start or end, nothing was written.
+	 * A failure here is logged, and the cut's own error stays the one raised.
 	 *
 	 * @param log - The time log as it was read before the cut, with its slots.
 	 * @param isCut - Whether the log as stored has its new start or end.
 	 * @param outside - Whether a slot lies outside the log's new range.
+	 * @param forceDelete - Whether the cut hard deletes what goes.
 	 */
 	private async finishFailedCut(
 		log: ITimeLog,
 		isCut: (stored: ITimeLog) => boolean,
-		outside: (slot: ITimeSlot) => boolean
+		outside: (slot: ITimeSlot) => boolean,
+		forceDelete: boolean
 	): Promise<void> {
 		try {
 			const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
-			if (stored && isCut(stored)) {
-				await this.finishRelease(log, stored, await this.slotsAsTheyStand(log), outside);
+			if (!stored || !isCut(stored)) {
+				return;
+			}
+			try {
+				await this.finishRelease(log, stored, await this.slotsAsTheyStand(log), outside, forceDelete);
+			} catch (releaseError) {
+				if (!(await this.holdsEverySlot(log))) {
+					throw releaseError;
+				}
+				this.logger.warn(
+					`Time log ${log.id} gets its range back, as its slots outside the new one could not be deleted: ${releaseError?.message ?? releaseError}`
+				);
+				await this.restoreRange(log);
 			}
 		} catch (finishError) {
 			this.logger.error(
 				`Error while finishing the failed cut of time log ${log.id}: ${finishError?.message ?? finishError}`,
 				finishError?.stack
 			);
+		}
+	}
+
+	/**
+	 * Whether the log still holds every slot it held when it was read: none of them was deleted or taken off it.
+	 *
+	 * @param log - The time log as it was read, with its slots.
+	 */
+	private async holdsEverySlot(log: ITimeLog): Promise<boolean> {
+		const slots = await this.slotsAsTheyStand(log);
+		const holdsIt = (slot: ITimeSlot) => (slot.timeLogs ?? []).some((held) => held.id === log.id);
+		return slots.length === (log.timeSlots ?? []).length && slots.every(holdsIt);
+	}
+
+	/**
+	 * Gives a log back the range and the timesheet it had when it was read, which a cut had changed.
+	 *
+	 * @param log - The time log as it was read before the cut.
+	 */
+	private async restoreRange(log: ITimeLog): Promise<void> {
+		const { startedAt, stoppedAt, timesheetId } = log;
+		await this.typeOrmTimeLogRepository.update(
+			{ id: log.id, tenantId: log.tenantId },
+			{ startedAt, stoppedAt, timesheetId }
+		);
+		// The cut's own edit was told of (`time_log.updated`), so the range it gets back is too, as stored. A read that
+		// fails is logged and never stops the recovery that called this
+		if (this.facts) {
+			await this.facts.record(TIME_LOG_UPDATED, await this.storedForFact(log));
+		}
+	}
+
+	/**
+	 * A time log as stored, for its fact (see `TimeLogFactsService`): read just before a compensation deletes it, or
+	 * just after it restores it, through TypeORM. Nothing when there is no such row, or when the read fails, which is
+	 * logged: a fact never stops the compensation that tells of it.
+	 *
+	 * @param log - The time log, as the handler holds it.
+	 */
+	private async storedForFact(log: ITimeLog): Promise<ITimeLog | null> {
+		if (!this.facts) {
+			return null;
+		}
+		try {
+			return await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id, tenantId: log.tenantId } });
+		} catch (error) {
+			this.logger.warn(`Time log ${log.id} could not be read for its fact: ${error?.message ?? error}`);
+			return null;
 		}
 	}
 
@@ -519,25 +1015,51 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Finishes the release of a cut that wrote the log's new range, deleted the slots the log alone held there, and then
-	 * failed: the log is taken off the slots it still holds outside that range with another log (the unlinks the cut
-	 * did not get to), and the totals the cut recalculates last are recalculated.
+	 * Finishes the release of a cut that wrote the log's new range and then failed, in the cut's own order: the slots
+	 * outside that range only the log still holds are deleted, hard or soft as the cut was asked (the cut deletes them
+	 * in one go, so they are all still there when that delete failed, and none when it went through), each only while
+	 * the log still holds it alone, the log is taken off the slots it still holds there with another log, and the totals
+	 * the cut recalculates last are recalculated.
 	 *
 	 * @param log - The time log as it was read before the cut.
 	 * @param stored - The same log as stored after the cut, which may have filed it under another week's timesheet.
 	 * @param slots - The slots the log held before the cut, as they now stand, with their logs.
 	 * @param outside - Whether a slot lies outside the log's new range.
+	 * @param forceDelete - Whether the cut hard deletes what goes.
 	 */
 	private async finishRelease(
 		log: ITimeLog,
 		stored: ITimeLog,
 		slots: ITimeSlot[],
-		outside: (slot: ITimeSlot) => boolean
+		outside: (slot: ITimeSlot) => boolean,
+		forceDelete: boolean
 	): Promise<void> {
 		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
-		const shared = slots
-			.filter(outside)
-			.filter((slot) => heldBy(slot).includes(log.id) && heldBy(slot).some((id) => id !== log.id))
+		const heldOutside = (standing: ITimeSlot[]) =>
+			standing.filter(outside).filter((slot) => heldBy(slot).includes(log.id));
+		const heldByAnother = (slot: ITimeSlot) => heldBy(slot).some((id) => id !== log.id);
+
+		let standing = slots;
+		const own = heldOutside(standing)
+			.filter((slot) => !heldByAnother(slot))
+			.map((slot) => slot.id);
+		if (own.length > 0) {
+			// Deleted only while the log still holds each of them alone, as the slot delete reads them (its conditional
+			// mode): a slot another log took since they were read here, a timer started in its ten minutes, stays.
+			const { organizationId, employeeId, tenantId } = log;
+			await this._commandBus.execute(
+				new TimeSlotBulkDeleteCommand(
+					{ organizationId, employeeId, tenantId, timeLog: log, timeSlotsIds: own },
+					forceDelete,
+					false
+				)
+			);
+			// What is left of them, with their logs as they now are
+			standing = await this.slotsAsTheyStand(log);
+		}
+
+		const shared = heldOutside(standing)
+			.filter(heldByAnother)
 			.map((slot) => slot.id);
 		if (shared.length > 0) {
 			await this.typeOrmTimeSlotRepository

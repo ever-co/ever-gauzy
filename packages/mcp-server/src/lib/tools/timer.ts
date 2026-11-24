@@ -4,8 +4,10 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
+import { sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('TimerTools');
 
 export const registerTimerTools = (server: McpServer) => {
@@ -42,10 +44,13 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching timer status:', error instanceof Error ? error.stack : undefined);
-				throw new Error(`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+				logger.error('Error fetching timer status:', sanitizeForLogging(error));
+				throw new Error(
+					`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`
+				);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Start timer tool
@@ -68,7 +73,10 @@ export const registerTimerTools = (server: McpServer) => {
 				.optional()
 				.describe('Source of the timer'),
 			isBillable: z.boolean().optional().describe('Whether the time is billable'),
-			tags: z.array(z.string()).optional().describe('Tags for the time entry'),
+			tags: z
+				.array(z.string().uuid())
+				.optional()
+				.describe('IDs of the tags to file the time entry under (organization or tenant-wide tags)'),
 			manualTimeSlot: z.boolean().optional().describe('Whether to use manual time slot')
 		},
 		async ({
@@ -119,10 +127,11 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error starting timer:', error);
+				logger.error('Error starting timer:', sanitizeForLogging(error));
 				throw new Error(`Failed to start timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Stop timer tool
@@ -136,9 +145,16 @@ export const registerTimerTools = (server: McpServer) => {
 				.enum(['BROWSER', 'DESKTOP', 'MOBILE', 'UPWORK', 'HUBSTAFF', 'TEAMS', 'BROWSER_EXTENSION', 'CLOC'])
 				.optional()
 				.describe('Source of the timer'),
-			manualTimeSlot: z.boolean().optional().describe('Whether to use manual time slot')
+			manualTimeSlot: z.boolean().optional().describe('Whether to use manual time slot'),
+			timeLogId: z
+				.string()
+				.uuid()
+				.optional()
+				.describe(
+					'The run to stop: the ID of the running time log (timer_status answers it as lastLog). When another run is the running one, the stop is refused and that run goes on.'
+				)
 		},
-		async ({ description, source, manualTimeSlot }) => {
+		async ({ description, source, manualTimeSlot, timeLogId }) => {
 			try {
 				// Get default parameters from authenticated user
 				const defaultParams = authManager.getDefaultParams();
@@ -154,7 +170,8 @@ export const registerTimerTools = (server: McpServer) => {
 					organizationId: defaultParams.organizationId,
 					...(description && { description }),
 					source: source || 'BROWSER',
-					...(manualTimeSlot !== undefined && { manualTimeSlot })
+					...(manualTimeSlot !== undefined && { manualTimeSlot }),
+					...(timeLogId && { timeLogId })
 				};
 
 				const response = await apiClient.post('/api/timesheet/timer/stop', stopData);
@@ -168,9 +185,10 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error stopping timer:', error);
+				logger.error('Error stopping timer:', sanitizeForLogging(error));
 				throw new Error(`Failed to stop timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 };

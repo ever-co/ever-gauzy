@@ -9,7 +9,10 @@ export interface ITrackingTurnedOffScope {
 	organizationTeamId?: ID;
 }
 
-/** An employee's time tracking was turned off, for the whole organization or for one team. */
+/**
+ * An employee's time tracking was turned off, for the whole organization or for one team; their membership of a team
+ * ending turns it off for that team. The timer they still run there stops.
+ */
 export class TrackingTurnedOffEvent implements IEvent {
 	constructor(public readonly scope: ITrackingTurnedOffScope) {}
 }

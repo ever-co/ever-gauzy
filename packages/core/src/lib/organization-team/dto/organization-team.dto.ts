@@ -18,7 +18,8 @@ export class OrganizationTeamDTO
 			'imageId',
 			'shareProfileView',
 			'requirePlanToTrack',
-			'defaultProjectId'
+			'defaultProjectId',
+			'notificationDefaults'
 		])
 	)
 	implements Omit<IOrganizationTeam, 'name'>

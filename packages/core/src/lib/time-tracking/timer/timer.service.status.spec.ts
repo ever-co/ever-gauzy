@@ -10,6 +10,12 @@ import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-iso
 import { exclusiveWindowEnd, secondsWithinWindow } from './timer.helper';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * `getTimerStatus` looked up the last log (running or completed) with the same `startedAt` window as today's
  * completed logs, so a timer started before `todayStart` (one still running past midnight) was never found: the
@@ -190,6 +196,26 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 	afterEach(() => {
 		restore();
 		jest.restoreAllMocks();
+	});
+
+	it('answers the last log with the tags the loader read for it (ever-co/ever-gauzy#12029)', async () => {
+		const { loadTimeLogTags } = jest.requireMock('../time-log/time-log-tags');
+		loadTimeLogTags.mockImplementationOnce(async (_manager: unknown, logs: Array<{ tags?: unknown }>) => {
+			logs[0].tags = [{ id: 'meeting', name: 'meeting', color: '#2563eb' }];
+		});
+		const runningToday = timeLog({
+			id: 'running-today',
+			isRunning: true,
+			startedAt: new Date('2026-10-24T00:30:00.000Z'),
+			stoppedAt: new Date('2026-10-24T01:59:00.000Z')
+		});
+
+		const status = await getTimerStatus([runningToday]);
+
+		expect(status.lastLog).toMatchObject({
+			id: 'running-today',
+			tags: [{ id: 'meeting', name: 'meeting', color: '#2563eb' }]
+		});
 	});
 
 	it('keeps a timer started before todayStart running, and counts only its part since todayStart', async () => {

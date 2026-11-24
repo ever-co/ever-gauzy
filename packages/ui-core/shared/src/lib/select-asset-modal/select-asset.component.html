@@ -1,50 +1,74 @@
-<nb-card class="main" size="large">
-  <nb-card-header class="d-flex flex-column">
-    <span class="cancel"> <i class="fas fa-times" (click)="dialogRef.close()"></i> </span>
-    <h5 class="title">
-      {{ 'INVENTORY_PAGE.SELECT_OR_UPLOAD_IMAGE' | translate }}
-    </h5>
-  </nb-card-header>
-  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-    <div class="row">
-      <div class="col-md-8">
-        @if (settings.uploadImageEnabled) {
-          <div class="mb-3">
-            <ngx-file-uploader-input
-              class="browse-image"
-              id="inputImageUrl"
-              [placeholder]="'upload image'"
-              (uploadedImgData)="onImageUploaded($event)"
-            ></ngx-file-uploader-input>
-            <!-- <button class="button-import" outline status="primary" size="medium" nbButton>
-            {{ 'INVENTORY_PAGE.BROWSE' | translate }}
-          </button> -->
-        </div>
-      }
-      <div class="row image-assets-container">
-        @for (image of gallery; track image) {
-          <div class="col-lg-3 col-md-4 col-sm-6 mb-3 image-item">
-            <ngx-img-asset
-              [imageAsset]="image"
-              [selectedImages]="selectedImages"
-              [deleteImageEnabled]="settings.deleteImageEnabled"
-              (imageClicked)="onSelectImage($event)"
-              (assetDeleted)="onImageAssetDeleted($event)"
-            ></ngx-img-asset>
-          </div>
-        }
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="row pl-3">
-        <ngx-img-preview [selectedImage]="activeImage"></ngx-img-preview>
-      </div>
-    </div>
-  </div>
-</nb-card-body>
-<nb-card-footer>
-  <button class="primary button-home" status="primary" nbButton nbStepperNext (click)="onSelectImageClick()">
-    {{ 'INVENTORY_PAGE.SELECT_IMAGE' | translate }}
-  </button>
-</nb-card-footer>
+<nb-card class="main asset-dialog">
+	<nb-card-header class="asset-header">
+		<h5 class="title">
+			{{ 'INVENTORY_PAGE.SELECT_OR_UPLOAD_IMAGE' | translate }}
+		</h5>
+		<button type="button" class="close-button" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="dialogRef.close()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
+	</nb-card-header>
+	<nb-card-body class="asset-body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		<!-- The images on the left, with the upload above them; the chosen one, larger, on the right. -->
+		<div class="asset-layout">
+			<section class="asset-main">
+				@if (settings.uploadImageEnabled) {
+					<ngx-file-uploader-input
+						class="browse-image"
+						id="inputImageUrl"
+						[placeholder]="'INVENTORY_PAGE.UPLOAD_IMAGE' | translate"
+						(uploadedImgData)="onImageUploaded($event)"
+					></ngx-file-uploader-input>
+				}
+
+				<div class="gallery-heading">
+					<h6 class="group-title">{{ 'INVENTORY_PAGE.IMAGES' | translate }}</h6>
+					@if (gallery.length) {
+						<span class="gallery-count">{{ gallery.length }}</span>
+					}
+				</div>
+
+				@if (gallery.length) {
+					<ul class="gallery" role="list">
+						@for (image of gallery; track image) {
+							<li>
+								<ngx-img-asset
+									[imageAsset]="image"
+									[selectedImages]="selectedImages"
+									[deleteImageEnabled]="settings.deleteImageEnabled"
+									(imageClicked)="onSelectImage($event)"
+									(assetDeleted)="onImageAssetDeleted($event)"
+								></ngx-img-asset>
+							</li>
+						}
+					</ul>
+				} @else if (!loading) {
+					<div class="gallery-empty">
+						<nb-icon icon="image-outline" aria-hidden="true"></nb-icon>
+						<p>{{ 'INVENTORY_PAGE.NO_IMAGES' | translate }}</p>
+					</div>
+				}
+			</section>
+
+			<aside class="asset-side">
+				<ngx-img-preview [selectedImage]="activeImage"></ngx-img-preview>
+			</aside>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="asset-footer">
+		<button nbButton outline status="basic" size="small" type="button" (click)="dialogRef.close()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="button-home"
+			nbButton
+			status="primary"
+			size="small"
+			type="button"
+			[disabled]="!selectedImages.length"
+			(click)="onSelectImageClick()"
+		>
+			<nb-icon icon="checkmark-outline"></nb-icon>
+			{{ 'INVENTORY_PAGE.SELECT_IMAGE' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

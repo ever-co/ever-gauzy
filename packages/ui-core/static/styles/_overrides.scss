@@ -987,24 +987,130 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
 }
 
 angular2-smart-table tbody tr {
-  background: rgba(126, 126, 143, 0.05);
+  background: transparent;
 
-  &:hover {
-    background: var(--smart-table-bg-active) !important;
+  &:hover:not(.selected) {
+    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
   }
 
   &.selected {
-    box-shadow: 12.5px 0px 0px -5px var(--gauzy-card-2) inset !important;
-    background: var(--smart-table-bg-active) !important;
+    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2)) !important;
+    box-shadow: none !important;
+  }
 
-    &:first-child {
-      border-top-left-radius: var(--border-radius);
-      border-top-right-radius: var(--border-radius);
+  > td {
+    vertical-align: middle;
+  }
+}
+
+:root {
+  angular2-smart-table table tr.angular2-smart-titles > th,
+  angular2-smart-table table tr.angular2-smart-filters > th {
+    border: 0;
+    border-bottom: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    border-radius: 0;
+    vertical-align: middle;
+  }
+
+  angular2-smart-table table tr.angular2-smart-titles > th {
+    white-space: nowrap;
+  }
+
+  angular2-smart-table table tbody tr > td {
+    border: 0;
+    border-bottom: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    border-radius: 0;
+  }
+
+  angular2-smart-table table tbody tr:last-child > td {
+    border-bottom: 0;
+  }
+
+  angular2-smart-table table tbody tr > td {
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+  }
+
+  angular2-smart-table table tbody tr > td:first-child:not(.angular2-smart-actions):not([colspan]),
+  angular2-smart-table table tbody tr > td.angular2-smart-actions + td:not(.angular2-smart-actions):not([colspan]) {
+    color: var(--text-basic-color);
+    font-weight: 500;
+  }
+
+  angular2-smart-table:not(.ga-table-settling):not(.ga-table-loading)
+    tbody
+    > tr
+    > td[colspan]:not(.angular2-smart-column-expandedDetail) {
+    height: 16rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+    cursor: default;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 2rem;
+      margin: 0 auto 0.75rem;
+      background-color: currentColor;
+      opacity: 0.55;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
     }
+  }
 
-    &:last-child {
-      border-bottom-left-radius: var(--border-radius);
-      border-bottom-right-radius: var(--border-radius);
+  angular2-smart-table:not(.ga-table-settling):not(.ga-table-loading)
+    tbody
+    > tr:has(> td[colspan]:not(.angular2-smart-column-expandedDetail)):hover {
+    background: transparent !important;
+  }
+
+  angular2-smart-table nb-badge.position-center {
+    top: auto;
+    transform: none;
+  }
+
+  nb-badge.color.ga-tag-chip {
+    background: color-mix(in srgb, var(--chip-color, var(--gauzy-text-color-2)) 20%, transparent);
+    color: var(--text-basic-color);
+    box-shadow: none;
+    border-radius: 0.25rem;
+    padding: var(--gauzy-table-chip-padding-y, 0.125rem) var(--gauzy-table-chip-padding-x, 0.3125rem);
+    font-weight: 500;
+    line-height: var(--gauzy-table-chip-line-height, 0.75rem);
+  }
+
+  angular2-smart-table table tr.angular2-smart-titles > th:not(.angular2-smart-th),
+  angular2-smart-table table td.angular2-smart-action-multiple-select {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    padding-inline: 0.5rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  angular2-smart-table table tr.angular2-smart-titles > th input[type='checkbox'],
+  angular2-smart-table table td.angular2-smart-action-multiple-select input[type='checkbox'] {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0;
+    vertical-align: middle;
+    accent-color: var(--color-primary-default);
+    cursor: pointer;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default) !important;
+      outline-offset: 2px;
     }
   }
 }
@@ -1196,6 +1302,29 @@ nb-card-header.ga-page-header {
     .actions-container {
       padding-block: 0 !important;
     }
+
+    // A toggle / checkbox beside the buttons ("Include Archived"): its <label>
+    // takes Bootstrap reboot's `margin-bottom: 0.5rem`, which lifts it off the
+    // buttons' centre line. Centred on the same axis instead.
+    nb-toggle,
+    nb-checkbox {
+      display: inline-flex;
+      align-items: center;
+      align-self: center;
+      margin-block: 0;
+
+      label {
+        margin-bottom: 0;
+      }
+
+      // The label text matches the toolbar buttons beside it and the top bar:
+      // same size, regular weight instead of Nebular's bold.
+      .text {
+        font-size: var(--gauzy-header-text-size, 0.6875rem);
+        font-weight: 400;
+        line-height: 1rem;
+      }
+    }
   }
 }
 
@@ -1250,123 +1379,22 @@ nb-card-body {
     height: 100%;
     top: -1px;
   }
-
-  angular2-smart-table table tr th {
-    border-top: 1px solid var(--gauzy-border-table);
-    border-bottom: 1px solid var(--gauzy-border-table);
-    // Vertical padding deliberately NOT set here any more. It used to be
-    // `1em` top and bottom, which — `em` being the cell's own 14px — is where
-    // the 14px header padding (and a ~45px header row) came from. Header
-    // padding now has one source of truth: the `gauzy-table-header-padding-*`
-    // tokens applied in the density block above.
-  }
-
-  table thead th {
-    border-left: none;
-    border-right: none;
-
-    &:first-child {
-      border-left: 1px solid var(--gauzy-border-table);
-      border-radius: var(--border-radius) 0 0 var(--border-radius);
-    }
-
-    &:last-child {
-      border-right: 1px solid var(--gauzy-border-table);
-      border-radius: 0 var(--border-radius) var(--border-radius) 0;
-    }
-  }
-
-  table tbody tr {
-    td {
-      border-left: none;
-      border-right: none;
-      border-top: none;
-      border-bottom: 1px solid var(--gauzy-border-table);
-    }
-
-    // The body is its OWN box, not a continuation of the header's: `tbody:before`
-    // below puts a 4px spacer between the two, and all four corner radii further
-    // down are written for a self-contained rectangle. Only ONE of its four edges
-    // was ever drawn, though — every row got a bottom hairline and nothing else,
-    // the last row had even that taken away, and the header kept its own left and
-    // right edge (`thead th:first-child` / `:last-child` above). So below the
-    // title row the table had no outline at all, and the only vertical edge
-    // anywhere in the body was the one the hover tint paints under the pointer.
-    //
-    // `first-child` / `last-child` rather than a border on every cell: this table
-    // is `border-collapse: separate` with the library's `border-spacing: 0` (see
-    // the `angular2-smart-table table` rule earlier in this file), so an inline
-    // border on every cell would draw each interior divider twice — which is what
-    // the two `none`s above are there to prevent. These two edges are the box's
-    // outside, and no cell is adjacent to them.
-    //
-    // Logical, not `border-left` / `border-right`: under `dir=rtl` the first cell
-    // renders at the table's RIGHT edge, so a physical pair puts both borders on
-    // the wrong side of the box. (The header's pair above is still physical and
-    // still has that bug; it is left alone here rather than half-fixed, since its
-    // corner radii are physical too.)
-    td:first-child {
-      border-inline-start: 1px solid var(--gauzy-border-table);
-    }
-
-    td:last-child {
-      border-inline-end: 1px solid var(--gauzy-border-table);
-    }
-
-    // The top edge. Only on the first row: `border-top` is `none` on every cell
-    // above for the same doubling reason as the sides — row N's bottom hairline
-    // and row N+1's top would stack into a 2px rule.
-    //
-    // The bottom edge needs no rule of its own; it is the last row's ordinary
-    // hairline. What it needed was the removal of the `&:last-child td {
-    // border-bottom: none }` that used to open this block, which is where the
-    // open bottom came from — with the sides drawn, taking that hairline away
-    // ends both of them in mid-air and leaves the two bottom corner radii below
-    // with no border to round.
-    &:first-child td {
-      border-top: 1px solid var(--gauzy-border-table);
-    }
-  }
-
-  // The body box's four corners, logical for the same reason its four edges are:
-  // `td:first-child` is the table's RIGHT edge under `dir=rtl`, so a physical
-  // `border-top-left-radius` there rounds the corner opposite the border it is
-  // meant to finish — a rounded corner with no edge on one side of the table and
-  // a square corner with two edges meeting on the other.
-  //
-  // The mapping is the one the edges already use: block-start/-end for the first
-  // and last row, inline-start/-end for the first and last cell. In LTR these
-  // resolve to exactly the four physical corners that were here before.
-  //
-  // (The header's radii above are a `border-radius` SHORTHAND, which has no
-  // logical form, and its edges are still physical — the pair is at least
-  // consistent with itself, and is left alone here rather than half-fixed.)
-  tr:first-child td:first-child {
-    border-start-start-radius: var(--border-radius);
-  }
-
-  tr:first-child td:last-child {
-    border-start-end-radius: var(--border-radius);
-  }
-
-  tr:last-child td:first-child {
-    border-end-start-radius: var(--border-radius);
-  }
-
-  tr:last-child td:last-child {
-    border-end-end-radius: var(--border-radius);
-  }
-
-  tbody:before {
-    content: '@';
-    display: block;
-    line-height: 4px;
-    text-indent: -99999px;
-  }
 }
 
 .grid-scroll-container {
   max-height: 100%;
+}
+
+.table-scroll-container:has(angular2-smart-table),
+angular2-smart-table:not(.table-scroll-container angular2-smart-table):not(.docs-table angular2-smart-table) {
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  box-shadow: none;
+  border-radius: var(--border-radius, 0.5rem);
+}
+
+angular2-smart-table:not(.table-scroll-container angular2-smart-table):not(.docs-table angular2-smart-table) {
+  display: block;
 }
 
 nb-tabset .tab.active .tab-link {

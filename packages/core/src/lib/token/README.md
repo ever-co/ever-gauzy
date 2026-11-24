@@ -152,6 +152,7 @@ interface ITokenConfig {
 	allowRotation: boolean; // Can tokens be rotated?
 	allowMultipleSessions: boolean; // Multiple tokens per user?
 	maxUsageCount?: number; // Max times token can be used
+	rotationReuseWindow?: number; // After a rotation, how long the rotated token is still answered (ms)
 }
 ```
 
@@ -172,6 +173,15 @@ interface ITokenConfig {
 // Locks the row during rotation to prevent race conditions
 const token = await this.tokenRepository.findByHashWithLock(tokenHash);
 ```
+
+**Reuse window** (for rotation):
+
+A rotated token is refused. A type that sets `rotationReuseWindow` answers it again for that long after its
+rotation, by rotating the token its line of rotations ends with: a client whose answer was lost, or that sent the
+same token twice at once, keeps its session. The line keeps one active token at its end, and a rotated token opens
+nothing once that token is revoked or expired (`shared/rotation-reuse.ts`). The token at the end of the line is
+locked before it is rotated (`findByIdWithLock`), as the presented one is: a request that presents it at the same
+moment waits, then follows the line one token further.
 
 **Optimistic Locking** (for updates):
 
@@ -224,7 +234,8 @@ Rotates an existing token (creates new, marks old as rotated).
 
 #### revokeToken(dto: IRevokeTokenDto): Promise<void>
 
-Revokes a specific token.
+Revokes a specific token. Given a token that was already rotated, it revokes the token its line of rotations ends
+with: the session goes on with that one, so it is the one a sign-out has to end.
 
 #### revokeAllUserTokens(userId, tokenType, revokedBy?, reason?): Promise<number>
 

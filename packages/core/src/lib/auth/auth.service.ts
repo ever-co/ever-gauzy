@@ -160,6 +160,7 @@ import {
 	sessionForMint,
 	sessionOfRefreshToken
 } from './user-session/user-session-claims';
+import { sessionSourceOf } from './user-session/user-session-client';
 import {
 	TwoFactorChallengeClaims,
 	TwoFactorRequiredException,
@@ -746,6 +747,41 @@ export class AuthService extends SocialAuthService {
 			}
 			throw new UnauthorizedException();
 		}
+	}
+
+	/**
+	 * Mints the token an embed credential is exchanged for (`embed/`): an ordinary access token, judged like every
+	 * sign-in's, for the member's user in the credential's organization, carrying the claims that hold it to the timer
+	 * (`EmbedSessionGuard`), living only until `expiresAt`, with no refresh token. A person's sign-in from an allowed
+	 * site mints the same token, with its site grant (`grantId`) in place of a credential.
+	 *
+	 * @returns The signed access token.
+	 */
+	public async issueEmbedSession(input: {
+		userId: ID;
+		tenantId: ID;
+		organizationId: ID;
+		credentialId: ID;
+		employeeId: ID;
+		origin?: string;
+		clientId?: ID | null;
+		grantId?: ID;
+		expiresAt: Date;
+	}): Promise<string> {
+		const { userId, tenantId, organizationId, credentialId, employeeId, origin, clientId, grantId, expiresAt } =
+			input;
+		return await this.getJwtAccessToken(
+			{ id: userId, tenantId },
+			organizationId,
+			{
+				embedCredentialId: credentialId,
+				embedEmployeeId: employeeId,
+				embedOrigin: origin,
+				embedClientId: clientId ?? undefined,
+				embedGrantId: grantId
+			},
+			expiresAt
+		);
 	}
 
 	/**
@@ -2332,6 +2368,13 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
+			// An embed token acts for the one member the exchange resolved, active in the credential's organization.
+			// Should that member have been ended since, it is refused rather than minted for no member at all.
+			if (metadata?.embedEmployeeId && employee?.id !== metadata.embedEmployeeId) {
+				this.logger.warn(`Access token refused: embed member ${metadata.embedEmployeeId} is not active here`);
+				throw new UnauthorizedException();
+			}
+
 			// A deactivated employee (every employee record inactive or archived) gets no access token,
 			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
 			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
@@ -2369,12 +2412,22 @@ export class AuthService extends SocialAuthService {
 					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				// Which app the request came from, for the sessions list (ever-co/ever-gauzy#11983)
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId }),
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
 				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp }),
 				// Only the API token exchange passes it: the API token behind this session (user-api-token-session.ts).
-				...(metadata?.apiTokenId && { apiTokenId: metadata.apiTokenId })
+				...(metadata?.apiTokenId && { apiTokenId: metadata.apiTokenId }),
+				// Only the embed exchange passes them: the credential and the member (embed/embed-session.ts).
+				...(metadata?.embedCredentialId && {
+					embedCredentialId: metadata.embedCredentialId,
+					embedEmployeeId: metadata.embedEmployeeId,
+					...(metadata.embedOrigin && { embedOrigin: metadata.embedOrigin }),
+					...(metadata.embedClientId && { embedClientId: metadata.embedClientId }),
+					...(metadata.embedGrantId && { embedGrantId: metadata.embedGrantId })
+				})
 			};
 
 			// Generate the JWT access token using the payload
@@ -2421,6 +2474,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
@@ -2469,6 +2523,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
@@ -2598,7 +2653,7 @@ export class AuthService extends SocialAuthService {
 		userId: ID,
 		metadata?: IAccessTokenMetadata
 	): Promise<Partial<IUserSessionClaims>> {
-		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp;
+		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp || !!metadata?.embedCredentialId;
 		if (isDelegated) {
 			return {};
 		}
@@ -3207,7 +3262,10 @@ export class AuthService extends SocialAuthService {
 					)
 					.where(`${alias}.tenantId`, tenantId)
 					.andWhere(`${alias}.isActive`, true)
-					.andWhere(`${alias}.isArchived`, false);
+					.andWhere(`${alias}.isArchived`, false)
+					// Raw knex skips MikroORM's soft-delete filter: a deleted team (one of a soft-deleted
+					// organization included) is left out here as the TypeORM query builder leaves it out.
+					.whereNull(`${alias}.deletedAt`);
 
 				// Sub Query: only assigned teams for specific organizations
 				const orgSubQuery = knex('user_organization')
@@ -3219,6 +3277,12 @@ export class AuthService extends SocialAuthService {
 					.distinct();
 
 				sq = sq.whereIn(`${alias}.organizationId`, orgSubQuery);
+
+				// Only teams of an organization that is not soft deleted, whatever the state of the team's own row
+				sq = sq.whereIn(
+					`${alias}.organizationId`,
+					knex('organization').select('organization.id').whereNull('organization.deletedAt')
+				);
 
 				// Sub Query: only assigned teams for a specific employee
 				const teamSubQuery = knex('organization_team_employee')
@@ -3275,6 +3339,16 @@ export class AuthService extends SocialAuthService {
 				// Sub Query to get only assigned teams for specific organizations
 				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 					return p(`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
+				});
+
+				// Only teams of an organization that is not soft deleted, whatever the state of the team's own row
+				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+					const liveOrganizations = cb
+						.subQuery()
+						.select(p('"organization"."id"'))
+						.from('organization', 'organization')
+						.where(p('"organization"."deletedAt" IS NULL'));
+					return p(`"${query.alias}"."organizationId" IN ` + liveOrganizations.getQuery());
 				});
 
 				// Sub Query to get only assigned teams for a specific employee for specific tenant

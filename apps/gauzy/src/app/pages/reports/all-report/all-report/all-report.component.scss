@@ -1,4 +1,5 @@
 @use 'themes' as *;
+@use 'gauzy/_gauzy-overrides' as *;
 
 // ── Where the hairlines on this page come from ──────────────────────────────
 // Both edges below — the card's own ring and the preview tile's inset one —
@@ -32,10 +33,276 @@ $description-line-height: 1.25rem;
   // Category separation is now the larger step of the two.
   gap: 2rem;
   padding: 1.5rem;
+  // The filter row wraps by this area's width, not the viewport's; see
+  // `.report-toolbar`.
+  container: report-page / inline-size;
 }
 
 nb-card-body {
   border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+}
+
+// ── Filters ─────────────────────────────────────────────────────────────────
+// The same controls as the time-tracking filter bar (`ga-gauzy-filters`, the
+// Source / Activity Level / Log Type row): 2rem tall, borderless, drawn by the
+// shared inset hairline on the card surface, the small control radius, 0.75rem
+// text in the select's own colour, a 1rem lead-in and ~170px per select. The
+// search box takes the very same box so the row reads as one set of controls.
+// The selects count reports in their open list only; the trigger names the
+// choice (see `nb-select-label` in the template).
+
+// The first category's heading on the left, the filters on the right. The
+// row stands in for that section's own heading, so it sits the heading's
+// 0.875rem above the cards rather than the page's 2rem between categories.
+//
+// One line on a desktop: the heading, the count, "Clear filters", the search
+// and both selects never wrap. When the line runs short the search box and
+// then the selects give up width; the heading and the count never do. The row
+// breaks only when the REPORT AREA is too narrow — measured by the container
+// queries at the end of this block, not the viewport, so a side panel such as
+// the chat that squeezes the page on a wide screen wraps it too.
+// The small control radius, scaled from the theme radius (0.5rem → 0.375rem).
+$report-control-radius: calc(var(--border-radius) * 0.75);
+
+.report-toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+  margin-bottom: calc(0.875rem - 2rem);
+
+  // Same height as the controls, so the heading text and the controls share
+  // one centre line.
+  .report-category-name {
+    flex: 0 0 auto;
+    min-height: 2rem;
+    white-space: nowrap;
+  }
+}
+
+.report-filters {
+  --report-control-height: 2rem;
+  --report-text-muted: var(--text-hint-color);
+
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  min-width: 0;
+
+  ::ng-deep {
+    @include nb-select-overrides(2rem, $report-control-radius, $default-box-shadow);
+  }
+}
+
+// One box for the search input and the select triggers.
+%report-control {
+  height: var(--report-control-height);
+  min-height: var(--report-control-height);
+  border: none;
+  border-radius: $report-control-radius;
+  box-shadow: $default-box-shadow;
+  // Nebular paints its own outline-select background and text colour from a
+  // longer selector (`nb-select.appearance-outline.status-basic …`); the
+  // filter bar this copies wins the same way.
+  background-color: var(--gauzy-card-1) !important;
+  color: var(--select-outline-basic-text-color) !important;
+  font-size: var(--gauzy-table-header-font-size);
+  line-height: var(--gauzy-table-header-line-height);
+}
+
+.report-search {
+  position: relative;
+  flex: 0 1 15rem;
+  min-width: 7rem;
+
+  > nb-icon {
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    color: var(--report-text-muted);
+    pointer-events: none;
+  }
+
+  input[nbInput] {
+    @extend %report-control;
+
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    padding-block: 0;
+    padding-inline: 2.125rem 2rem;
+
+    &::placeholder {
+      color: var(--select-outline-basic-placeholder-text-color);
+    }
+
+    &:focus {
+      box-shadow: inset 0 0 0 1px var(--color-primary-default);
+    }
+  }
+}
+
+.report-search-clear {
+  position: absolute;
+  inset-inline-end: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0 !important;
+  border-radius: $report-control-radius;
+  color: var(--report-text-muted);
+
+  nb-icon {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    color: var(--text-basic-color);
+  }
+}
+
+.report-category-filter,
+.report-menu-filter {
+  flex: 0 1 170px;
+  width: 170px;
+  min-width: 7.5rem;
+
+  ::ng-deep .select-button {
+    @extend %report-control;
+
+    min-width: 0;
+    padding: 3px 2rem 3px 1rem !important;
+    font-weight: var(--select-medium-placeholder-text-font-weight);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  ::ng-deep .select-button span {
+    overflow: hidden;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.report-option-count {
+  margin-inline-start: 0.25rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.report-clear-filters {
+  order: -1;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: var(--report-control-height) !important;
+  min-height: var(--report-control-height) !important;
+  padding-inline: 0.5rem !important;
+  border-radius: $report-control-radius;
+  font-size: var(--gauzy-table-header-font-size) !important;
+  font-weight: 400;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--report-text-muted);
+
+  nb-icon {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    color: var(--text-basic-color);
+  }
+}
+
+// The group is right-aligned, so anything that comes and goes sits at its
+// start: the count first, then "Clear filters", and the search and the two
+// selects never move when a filter is set or cleared.
+.report-count {
+  order: -2;
+  flex: 0 0 auto;
+  margin-inline-end: 0.25rem;
+  font-size: var(--gauzy-table-header-font-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--report-text-muted);
+  white-space: nowrap;
+}
+
+.sr-only-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.report-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--text-hint-color);
+  }
+}
+
+// Everything on one line needs ~52rem: the longest heading, the count and
+// "Clear filters", plus the search and both selects at their minimum widths.
+@container report-page (max-width: 52rem) {
+  .report-toolbar,
+  .report-filters {
+    flex-wrap: wrap;
+  }
+
+  .report-filters {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+}
+
+@container report-page (max-width: 40rem) {
+  .report-search {
+    flex: 1 1 100%;
+  }
+
+  .report-category-filter,
+  .report-menu-filter {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+@container report-page (max-width: 30rem) {
+  .report-count {
+    flex: 1 1 100%;
+    order: 0;
+    margin-inline-end: 0;
+  }
 }
 
 // ── Category ────────────────────────────────────────────────────────────────
@@ -256,5 +523,16 @@ nb-card-body {
     align-items: flex-end;
     padding: 0.625rem;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.65));
+  }
+}
+
+// The two selects' option lists render in the overlay, outside this page, and
+// gauzy-filters' rule for `gauzy-filters-options` only loads while that
+// component is on screen: the same readable width and one line per option.
+::ng-deep .cdk-overlay-pane nb-option-list.gauzy-filters-options {
+  min-width: 12rem;
+
+  nb-option {
+    white-space: nowrap;
   }
 }

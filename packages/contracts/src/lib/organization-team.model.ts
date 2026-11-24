@@ -9,6 +9,7 @@ import { CrudActionEnum } from './organization.model';
 import { IOrganizationProject, IOrganizationProjectCreateInput } from './organization-projects.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { IComment } from './comment.model';
+import { ITeamNotificationDefaults } from './employee-notification-setting.model';
 
 export interface IRelationalOrganizationTeam {
 	organizationTeam?: IOrganizationTeam;
@@ -28,6 +29,8 @@ interface IBaseTeamProperties extends IBasePerTenantAndOrganizationEntityModel, 
 	public?: boolean;
 	profile_link?: string;
 	defaultProjectId?: ID | null;
+	/** The defaults of the team's members' notifications (see `ITeamNotificationDefaults`); none when unset. */
+	notificationDefaults?: ITeamNotificationDefaults | null;
 }
 
 // Interface for team members and related entities

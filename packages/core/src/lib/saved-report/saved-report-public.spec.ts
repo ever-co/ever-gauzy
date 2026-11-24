@@ -2,10 +2,12 @@ import { IReportDayGroupByDate, SAVED_REPORT_NO_CLIENT } from '@gauzy/contracts'
 import {
 	ISavedReportRate,
 	keepPickedClients,
+	labelIdsOf,
 	memberIdsOf,
 	projectIdsOf,
 	publicDaysOf,
-	publicTotalsOf
+	publicTotalsOf,
+	savedReportLabelKeyOf
 } from './saved-report-public';
 
 const CLIENT_A = 'c1000000-0000-4000-8000-00000000000a';
@@ -258,9 +260,171 @@ describe('amounts in currencies without two decimals', () => {
 	});
 });
 
+describe('a member whose rate changed after the time was logged', () => {
+	const USD_ORGANIZATION = { organizationCurrency: 'USD', defaultRate: null };
+
+	/** Marie bills 60 EUR today; Paul bills 50 USD. */
+	const todayRates = new Map<string, ISavedReportRate>([
+		[MARIE, { billRateValue: 60, billRateCurrency: 'EUR' }],
+		[PAUL, { billRateValue: 50, billRateCurrency: 'USD' }]
+	]);
+
+	/**
+	 * The day as the daily report answers it now: each row states the rate that prices its entry. Marie's 3 hours were
+	 * logged when she billed 40 EUR, the rate her log stores; Paul's log stores none, so his row states his rate of
+	 * today, in the organization's currency.
+	 */
+	function loggedAtStoredRates(): IReportDayGroupByDate {
+		const logged = day();
+		const [marieRow] = logged.logs[0].employeeLogs[0].tasks;
+		logged.logs[0].employeeLogs[0].tasks = [{ ...marieRow, billRateValue: 40, billRateCurrency: 'EUR' }];
+		const [paulRow] = logged.logs[1].employeeLogs[0].tasks;
+		logged.logs[1].employeeLogs[0].tasks = [{ ...paulRow, billRateValue: 50, billRateCurrency: null }];
+		return logged;
+	}
+
+	/** What the report page shows for the same rows: each row at the rate it states, the organization's currency when it states none. */
+	function reportPageAmountsOf(days: IReportDayGroupByDate[]) {
+		const byCurrency = new Map<string, number>();
+		for (const reportDay of days) {
+			for (const projectLog of reportDay.logs) {
+				for (const memberLog of projectLog.employeeLogs) {
+					for (const row of memberLog.tasks) {
+						const currency = row.billRateCurrency || 'USD';
+						const amount = ((row.duration ?? 0) / 3600) * Number(row.billRateValue);
+						byCurrency.set(currency, (byCurrency.get(currency) ?? 0) + amount);
+					}
+				}
+			}
+		}
+		return [...byCurrency.entries()].map(([currency, amount]) => ({ currency, amount }));
+	}
+
+	it('prices each entry at the rate its log stores, so the link shows the amount the report page shows', () => {
+		const logged = loggedAtStoredRates();
+
+		const days = publicDaysOf([logged], todayRates, USD_ORGANIZATION);
+
+		expect(days[0].logs[0].employeeLogs[0].tasks[0]).toMatchObject({ billRateValue: 40, billRateCurrency: 'EUR' });
+		expect(days[0].logs[1].employeeLogs[0].tasks[0]).toMatchObject({ billRateValue: 50, billRateCurrency: 'USD' });
+		expect(days[0].logs[0].employeeLogs[0].amount).toBe(120);
+		expect(publicTotalsOf(days, true).amounts).toEqual(reportPageAmountsOf([logged]));
+		expect(publicTotalsOf(days, true).amounts).toEqual([
+			{ currency: 'EUR', amount: 120 },
+			{ currency: 'USD', amount: 125 }
+		]);
+	});
+
+	it('prices a day that straddles the rate change entry by entry', () => {
+		const logged = loggedAtStoredRates();
+		const marie = logged.logs[0].employeeLogs[0];
+		const [row] = marie.tasks;
+		marie.tasks = [
+			{ ...row, duration: 3600, billRateValue: 40, billRateCurrency: 'EUR' },
+			{ ...row, duration: 2 * 3600, billRateValue: 60, billRateCurrency: 'EUR' }
+		];
+
+		const days = publicDaysOf([logged], todayRates, USD_ORGANIZATION);
+
+		expect(days[0].logs[0].employeeLogs[0].amount).toBe(160);
+		expect(publicTotalsOf(days, true).amounts).toEqual(reportPageAmountsOf([logged]));
+	});
+
+	it('states each currency of a member whose entries are priced in two, and never adds them', () => {
+		const logged = loggedAtStoredRates();
+		const marie = logged.logs[0].employeeLogs[0];
+		const [row] = marie.tasks;
+		marie.tasks = [
+			{ ...row, duration: 3600, billRateValue: 40, billRateCurrency: 'EUR' },
+			{ ...row, duration: 2 * 3600, billRateValue: 70, billRateCurrency: 'USD' }
+		];
+
+		const days = publicDaysOf([logged], todayRates, USD_ORGANIZATION);
+
+		expect(days[0].logs[0].employeeLogs[0].amounts).toEqual([
+			{ currency: 'EUR', amount: 40 },
+			{ currency: 'USD', amount: 140 }
+		]);
+		expect(days[0].logs[0].employeeLogs[0].amount).toBeNull();
+		expect(publicTotalsOf(days, true).amounts).toEqual([
+			{ currency: 'EUR', amount: 40 },
+			{ currency: 'USD', amount: 265 }
+		]);
+	});
+
+	it("prices an entry without a rate at the organization's default, as the report page and the budgets do", () => {
+		const logged = loggedAtStoredRates();
+		logged.logs[1].employeeLogs[0].tasks[0].billRateValue = 0;
+
+		const days = publicDaysOf([logged], todayRates, {
+			organizationCurrency: 'USD',
+			defaultRate: { value: 30, currency: 'USD' }
+		});
+
+		expect(days[0].logs[1].employeeLogs[0].tasks[0]).toMatchObject({ billRateValue: 30, billRateCurrency: 'USD' });
+		expect(publicTotalsOf(days, true).amounts).toEqual([
+			{ currency: 'EUR', amount: 120 },
+			{ currency: 'USD', amount: 75 }
+		]);
+	});
+
+	it('states no rate on any entry when amounts are left out', () => {
+		const keys = keysOf(publicDaysOf([loggedAtStoredRates()], null, USD_ORGANIZATION));
+
+		for (const key of ['billRateValue', 'billRateCurrency', 'amount', 'amounts']) {
+			expect(keys.has(key)).toBe(false);
+		}
+	});
+});
+
 describe('memberIdsOf and projectIdsOf', () => {
 	it('name each member and project of the report once', () => {
 		expect(memberIdsOf([day(), day()])).toEqual([MARIE, PAUL]);
 		expect(projectIdsOf([day(), day()])).toEqual([WEBSITE, MEETINGS]);
+	});
+});
+
+describe('the labels of entries (ever-co/ever-gauzy#12029)', () => {
+	const DESIGN = 'd1000000-0000-4000-8000-00000000000a';
+	const URGENT = 'd1000000-0000-4000-8000-00000000000b';
+	const FOREIGN = 'd1000000-0000-4000-8000-00000000000c';
+
+	/** The day, with Marie's entry filed under three labels (one the report may not show) and Paul's under none. */
+	function labelledDay(): IReportDayGroupByDate {
+		const labelled = day();
+		labelled.logs[0].employeeLogs[0].tasks[0].tags = [
+			{ id: DESIGN, name: 'Design', color: '#ff0000' },
+			{ id: FOREIGN, name: 'Their secret project', color: '#00ff00' },
+			{ id: URGENT.toUpperCase(), name: 'Urgent', color: '#ffff00' }
+		];
+		labelled.logs[1].employeeLogs[0].tasks[0].tags = [];
+		return labelled;
+	}
+
+	it("states each entry's labels the report may show, as a chip shows them, when the report groups by label", () => {
+		const shown = new Set([DESIGN, URGENT].map(savedReportLabelKeyOf));
+
+		const [publicDay] = publicDaysOf([labelledDay()], null, undefined, shown);
+
+		expect(publicDay.logs[0].employeeLogs[0].tasks[0].tags).toEqual([
+			{ id: DESIGN, name: 'Design', color: '#ff0000' },
+			{ id: URGENT.toUpperCase(), name: 'Urgent', color: '#ffff00' }
+		]);
+		expect(publicDay.logs[1].employeeLogs[0].tasks[0].tags).toEqual([]);
+	});
+
+	it('states no labels for any other grouping, as before', () => {
+		const [publicDay] = publicDaysOf([labelledDay()], null);
+
+		expect(keysOf(publicDay).has('tags')).toBe(false);
+		expect(JSON.stringify(publicDay)).not.toContain('Design');
+	});
+
+	it('names each label of the entries once, whatever the case of its id', () => {
+		const twice = labelledDay();
+		twice.logs[1].employeeLogs[0].tasks[0].tags = [{ id: DESIGN.toUpperCase(), name: 'Design', color: '#ff0000' }];
+
+		expect(labelIdsOf([twice, labelledDay()])).toEqual([DESIGN, FOREIGN, URGENT.toUpperCase()]);
+		expect(labelIdsOf([day()])).toEqual([]);
 	});
 });

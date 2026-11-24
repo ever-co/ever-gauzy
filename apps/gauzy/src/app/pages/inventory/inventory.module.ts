@@ -38,7 +38,8 @@ import {
 	SelectAssetModule,
 	SharedModule,
 	TagsColorInputModule,
-	FavoriteToggleModule
+	FavoriteToggleModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { TranslatePipe } from '@ngx-translate/core';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
@@ -85,6 +86,7 @@ const NB_MODULES = [
 	],
 	imports: [
 		FavoriteToggleModule,
+		RecordViewModule,
 		CardGridModule,
 		CurrencyModule,
 		ImageAssetModule,

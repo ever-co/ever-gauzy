@@ -16,6 +16,9 @@ import { Store } from '../../services/store/store.service';
 import { UserApiTokenService } from '../../services/user-api-token/user-api-token.service';
 import { mayOpenContactAddForm } from '../../utils/contact-permissions.util';
 
+/** How many favorites the sidebar lists before linking to the Favorites page. */
+export const SIDEBAR_FAVORITES_LIMIT = 7;
+
 @UntilDestroy()
 @Directive({
 	selector: '[gaBaseNavMenu]',
@@ -199,19 +202,37 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	}
 
 	/**
-	 * Returns the favorites menu section.
+	 * Returns the favorites menu section: the newest favorites, and past that a link to the Favorites page,
+	 * which lists them all.
 	 */
 	private _getFavoritesMenu(): NavMenuSectionItem[] {
+		const total = this._favoriteItems.length;
+		const items = this._favoriteItems.slice(0, SIDEBAR_FAVORITES_LIMIT);
+
+		if (total > SIDEBAR_FAVORITES_LIMIT) {
+			items.push({
+				id: 'favorites-view-all',
+				title: 'View all',
+				icon: 'fas fa-ellipsis-h',
+				link: '/pages/favorites',
+				class: 'view-all',
+				data: {
+					translationKey: 'FAVORITES.VIEW_ALL',
+					count: total
+				}
+			});
+		}
+
 		return [
 			{
 				id: 'favorites',
 				title: 'Favorites',
 				icon: 'far fa-star',
-				hidden: this._favoriteItems.length === 0,
+				hidden: total === 0,
 				data: {
 					translationKey: 'MENU.FAVORITES'
 				},
-				items: this._favoriteItems
+				items
 			}
 		];
 	}
