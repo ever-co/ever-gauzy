@@ -51,15 +51,13 @@
 							(deleteRecurringExpense)="
 								deleteEmployeeRecurringExpense(i)
 							"
-              (fetchRecurringExpenseHistory)="fetchHistory(i)"
-              [fetchedHistories]="fetchedHistories[i]"
+              (fetchRecurringExpenseHistory)="fetchHistory(expense)"
               [recurringExpense]="expense"
               [selectedOrganization]="organization"
 							[selected]="
 								selectedRecurringExpense?.data?.id ===
 								expense.id
 							"
-              [showHistory]="showHistory"
             ></ga-recurring-expense-block>
           }
         </div>
