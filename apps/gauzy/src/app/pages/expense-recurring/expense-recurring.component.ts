@@ -24,11 +24,9 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	IRecordViewScope,
-	IRecordViewSection,
 	RecurringExpenseDeleteConfirmationComponent,
 	RecurringExpenseMutationComponent
 } from '@gauzy/ui-core/shared';
-import { buildOrganizationRecurringExpenseViewSections } from './recurring-expense-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,11 +51,10 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 	};
 
 	/*
-	 * Read-only View: a recurring expense is a small record, so it opens in the
-	 * right-side drawer rather than on a page of its own.
+	 * Read-only View: the recurring expense opens in the right-side drawer, as
+	 * the quick look its own page shows; the drawer's expand icon leads there.
 	 */
 	viewedRecurringExpense: IOrganizationRecurringExpense;
-	viewSections: IRecordViewSection[] = [];
 	/** The organization the drawer reads the expense's history and month in. */
 	viewScope: IRecordViewScope = null;
 
@@ -197,7 +194,6 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 			return;
 		}
 
-		this.viewSections = buildOrganizationRecurringExpenseViewSections(expense, (key) => this.getTranslation(key));
 		// As the list reads: the selected organization, in the signed-in user's tenant.
 		this.viewScope = this.organization
 			? { organizationId: this.organization.id, tenantId: this.organization.tenantId ?? this.store.user?.tenantId }
