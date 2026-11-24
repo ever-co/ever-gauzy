@@ -23,6 +23,7 @@ import {
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
+	IRecordViewScope,
 	IRecordViewSection,
 	RecurringExpenseDeleteConfirmationComponent,
 	RecurringExpenseMutationComponent
@@ -57,6 +58,8 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 	 */
 	viewedRecurringExpense: IOrganizationRecurringExpense;
 	viewSections: IRecordViewSection[] = [];
+	/** The organization the drawer reads the expense's history and month in. */
+	viewScope: IRecordViewScope = null;
 
 	showHistory: boolean = false;
 
@@ -195,6 +198,10 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 		}
 
 		this.viewSections = buildOrganizationRecurringExpenseViewSections(expense, (key) => this.getTranslation(key));
+		// As the list reads: the selected organization, in the signed-in user's tenant.
+		this.viewScope = this.organization
+			? { organizationId: this.organization.id, tenantId: this.organization.tenantId ?? this.store.user?.tenantId }
+			: null;
 		this.viewedRecurringExpense = expense;
 	}
 
