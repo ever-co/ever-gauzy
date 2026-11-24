@@ -1,20 +1,144 @@
-@use 'gauzy/_gauzy-dialogs';
+@use 'themes' as *;
+@use 'gauzy/_gauzy-overrides' as *;
 
-nb-card-body {
-  width: 500px;
-  // The fixed width is a preferred size; without this the dialog overflowed the
-  // overlay on narrow viewports instead of shrinking with it.
-  max-width: 100%;
-}
+// The app's plain dialog frame: Nebular's own card padding, a small title in the text colour, a round ghost close
+// button and a right-aligned footer. The inputs and labels keep the app's form look (`dialog()`), without the
+// purple title and the orange Cancel of `gauzy/_gauzy-dialogs`.
 
 :host {
+  @include dialog(var(--gauzy-card-1, var(--card-background-color)), var(--gauzy-sidebar-background-4));
 
   nb-card,
   nb-card-body {
-    // Fallback because `gauzy-card-1` is not registered by material-light /
-    // material-dark: a `var()` with nothing to resolve to invalidates the whole
-    // declaration, and a background-color that falls back to its initial value
-    // is transparent, so the dialog showed the page through it.
+    // Fallback because `gauzy-card-1` is not registered by material-light / material-dark: a `var()` with nothing to
+    // resolve to invalidates the whole declaration, and the dialog showed the page through it.
     background-color: var(--gauzy-card-1, var(--card-background-color));
   }
+}
+
+.mutation {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  margin: 0;
+}
+
+.mutation__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mutation__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: nb-theme(text-basic-color);
+}
+
+.mutation__close {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: nb-theme(text-hint-color);
+  cursor: pointer;
+
+  &:hover {
+    background-color: nb-theme(color-basic-transparent-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-500);
+    outline-offset: 2px;
+  }
+
+  nb-icon {
+    font-size: 1.25rem;
+  }
+}
+
+.mutation__body {
+  overflow-y: auto;
+}
+
+// One field under the other, an even gap between them.
+.mutation__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mutation__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+
+  &[hidden] {
+    display: none;
+  }
+
+  // The labels come with the app's form spacing; the field's gap takes its place.
+  > .label,
+  > label {
+    margin: 0;
+  }
+}
+
+// The value and its currency side by side, one under the other on a narrow screen.
+.mutation__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+
+  @media (max-width: 30rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// The currency field brings its own label and spacing: matched to the value field beside it.
+.mutation__row ga-currency ::ng-deep {
+  .form-group {
+    margin-bottom: 0;
+  }
+
+  .label {
+    margin-bottom: 0.375rem;
+  }
+}
+
+// The checkbox reads as an option, not a heading.
+.mutation__field--check {
+  margin-top: -0.25rem;
+}
+
+.mutation__check-label {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: nb-theme(text-basic-color);
+}
+
+.mutation__notice:empty {
+  display: none;
+}
+
+.mutation__notice nb-alert {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.mutation__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
