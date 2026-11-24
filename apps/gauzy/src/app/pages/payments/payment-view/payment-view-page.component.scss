@@ -1,0 +1,191 @@
+// The payment page's own pieces; the layout, panels, figures and record sections are the project quick look's page.
+
+$hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+/* ── Header: the actions beside the back button ── */
+
+.payment-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+
+  [nbButton] {
+    height: 1.75rem;
+  }
+}
+
+/* ── Headline ── */
+
+// A step larger than the drawer's logo, as the expense page's. Scoped as the project header's own `.project-logo`
+// rule is, which would otherwise keep it at 2rem.
+.project-view-header .payment-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+}
+
+.payment-title {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+// The amount is the figure the payment is about: it leads, a step larger than the others.
+.payment-fact-amount dd {
+  gap: 0.125rem;
+}
+
+.payment-amount {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5rem;
+  color: var(--gauzy-text-color-1);
+}
+
+/* ── Monthly payments chart ── */
+
+// The chart's range filter, at the recurring expense page's size: the global input floor would draw it 46px tall
+// and stretch the panel's header.
+.payment-chart-range {
+  flex: 0 0 auto;
+  min-width: 9rem;
+
+  // Matched to Nebular's own `nb-select.appearance-outline.size-small` so this rule outranks it.
+  &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+    min-height: 1.75rem !important;
+    height: 1.75rem;
+    padding: 0 1.75rem 0 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+  }
+}
+
+/* ── Invoice ── */
+
+.payment-open-invoice {
+  flex: 0 0 auto;
+  height: 1.75rem;
+  text-transform: none;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+// The invoice's figures, no frames: all five on one row while they fit, so none is left alone on a second one.
+.payment-invoice-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+
+  .project-fact dd {
+    gap: 0.25rem;
+  }
+}
+
+// The Details panel's header, at the height of the invoice panels' (title and caption), so their hairlines line up.
+:host(.is-page) ::ng-deep ngx-record-view .record-panel-header {
+  min-height: 3.5rem;
+}
+
+/* ── The invoice's payments: a plain table, flush with its panel, hairlines between the rows ── */
+
+.payment-table-scroll {
+  overflow-x: auto;
+}
+
+.payment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid $hairline;
+    text-align: start;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  // The outer cells line up with the panel's title.
+  th:first-child,
+  td:first-child {
+    padding-inline-start: 1rem;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-inline-end: 1rem;
+  }
+
+  th {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--gauzy-text-color-2);
+  }
+
+  td {
+    color: var(--gauzy-text-color-1);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .is-amount {
+    text-align: end;
+    font-weight: 600;
+  }
+
+  // This payment: a quiet wash across the panel's width, no colour of its own.
+  tr.is-current td {
+    background-color: var(--gauzy-hover-tint);
+  }
+}
+
+.payment-row-note {
+  margin-inline-start: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--gauzy-text-color-2);
+}
+
+.payment-row-link {
+  color: var(--gauzy-action-info-text);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+/* ── Narrow pages ── */
+
+@media screen and (max-width: 40rem) {
+  // The actions share a line with the back button and the page's name: Edit keeps its icon.
+  .payment-page-action-label {
+    display: none;
+  }
+
+  .payment-table {
+    th,
+    td {
+      padding-inline: 0.5rem;
+    }
+  }
+}
