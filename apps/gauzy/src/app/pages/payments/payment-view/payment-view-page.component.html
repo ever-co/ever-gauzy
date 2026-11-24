@@ -1,5 +1,5 @@
 <!-- A payment's own page, laid out as the recurring expense page: the actions beside the back button; the headline
-     across the top; the contact's payments by month, the invoice it pays and that invoice's payments in the wide column;
+     across the top; the invoice it pays, that invoice's payments and the contact's payments by month in the wide column;
      the details, its share of the month's payments and the stamps in the side one. -->
 <ngx-record-view-page heading="PAYMENTS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
 	@if (payment) {
@@ -138,56 +138,6 @@
 			</div>
 
 			<div class="project-view-col project-view-col--main">
-				<!-- One bar per month of the payments from the same contact, ending with this payment's month. -->
-				@if (payment.paymentDate) {
-					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-						<header class="panel-header">
-							<div class="panel-heading">
-								<h5 class="panel-title panel-title--icon">
-									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
-									{{ 'PAYMENT_VIEW.MONTHLY_PAYMENTS' | translate }}
-								</h5>
-								<span class="panel-caption">
-									@if (charts.contact) {
-										{{
-											'PAYMENT_VIEW.MONTHLY_PAYMENTS_CONTACT_CAPTION'
-												| translate : { contact: charts.contact, count: chartMonths, currency: payment.currency }
-										}}
-									} @else {
-										{{ 'PAYMENT_VIEW.MONTHLY_PAYMENTS_CAPTION' | translate : { count: chartMonths, currency: payment.currency } }}
-									}
-								</span>
-							</div>
-							@if (!charts.failed) {
-								<nb-select
-									class="payment-chart-range"
-									size="small"
-									status="basic"
-									[selected]="chartMonths"
-									(selectedChange)="setChartMonths($event)"
-									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
-								>
-									@for (months of chartMonthOptions; track months) {
-										<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
-									}
-								</nb-select>
-							}
-						</header>
-						<div class="panel-body project-chart-body">
-							@if (charts.failed) {
-								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
-							} @else if (charts.monthBars.length) {
-								<ga-expense-bar-chart
-									[formatValue]="formatAmount"
-									[highlightLabel]="'PAYMENT_VIEW.THIS_PAYMENT_MONTH' | translate"
-									[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
-									[bars]="charts.monthBars"
-								></ga-expense-bar-chart>
-							}
-						</div>
-					</section>
-				}
-
 				@if (invoiceSummary; as summary) {
 					<!-- The invoice it pays: what it asks for, what is paid of it and what is still due. -->
 					<section class="panel project-view-panel">
@@ -326,6 +276,56 @@
 										</tbody>
 									</table>
 								</div>
+							}
+						</div>
+					</section>
+				}
+
+				<!-- One bar per month of the payments from the same contact, ending with this payment's month. -->
+				@if (payment.paymentDate) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'PAYMENT_VIEW.MONTHLY_PAYMENTS' | translate }}
+								</h5>
+								<span class="panel-caption">
+									@if (charts.contact) {
+										{{
+											'PAYMENT_VIEW.MONTHLY_PAYMENTS_CONTACT_CAPTION'
+												| translate : { contact: charts.contact, count: chartMonths, currency: payment.currency }
+										}}
+									} @else {
+										{{ 'PAYMENT_VIEW.MONTHLY_PAYMENTS_CAPTION' | translate : { count: chartMonths, currency: payment.currency } }}
+									}
+								</span>
+							</div>
+							@if (!charts.failed) {
+								<nb-select
+									class="payment-chart-range"
+									size="small"
+									status="basic"
+									[selected]="chartMonths"
+									(selectedChange)="setChartMonths($event)"
+									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+								>
+									@for (months of chartMonthOptions; track months) {
+										<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+									}
+								</nb-select>
+							}
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.monthBars.length) {
+								<ga-expense-bar-chart
+									[formatValue]="formatAmount"
+									[highlightLabel]="'PAYMENT_VIEW.THIS_PAYMENT_MONTH' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+									[bars]="charts.monthBars"
+								></ga-expense-bar-chart>
 							}
 						</div>
 					</section>
