@@ -853,6 +853,7 @@
 		"DELETE_ONLY_THIS": "仅删除这个",
 		"DELETE_THIS_FUTURE": "删除这个和未来。",
 		"DELETE_ALL_ENTRIES": "删除所有条目",
+		"TYPE_NAME_TO_CONFIRM": "请输入名称以确认：",
 		"CONFIRM": "确认",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "您确定要重新发送邀请给",
 		"OK": "好的",

@@ -853,6 +853,7 @@
 		"DELETE_ONLY_THIS": "Excluir somente este",
 		"DELETE_THIS_FUTURE": "Excluir este e os futuros",
 		"DELETE_ALL_ENTRIES": "Excluir todas as entradas",
+		"TYPE_NAME_TO_CONFIRM": "Para confirmar, digite o nome:",
 		"CONFIRM": "Confirmar",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Tem certeza de que deseja reenviar o convite para",
 		"OK": "OK",

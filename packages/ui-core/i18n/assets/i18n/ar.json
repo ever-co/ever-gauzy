@@ -796,6 +796,7 @@
 		"DELETE_ONLY_THIS": "فقط احذف هذا",
 		"DELETE_THIS_FUTURE": "حذف هذا والمستقبل",
 		"DELETE_ALL_ENTRIES": "حذف جميع الإدخالات",
+		"TYPE_NAME_TO_CONFIRM": "للتأكيد، اكتب الاسم:",
 		"CONFIRM": "تأكيد",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "هل أنت متأكد أنك تريد إعادة إرسال الدعوة إلى",
 		"OK": "حسنًا",

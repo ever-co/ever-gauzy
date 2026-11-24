@@ -798,6 +798,7 @@
 		"DELETE_ONLY_THIS": "Supprimez seulement ceci",
 		"DELETE_THIS_FUTURE": "Supprimez ceci et les suivants",
 		"DELETE_ALL_ENTRIES": "Supprimer toutes les entrées",
+		"TYPE_NAME_TO_CONFIRM": "Pour confirmer, saisissez le nom :",
 		"CONFIRM": "Confirmer",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Es-tu sûr(e) de vouloir renvoyer l'invitation à",
 		"OK": "D'accord",
