@@ -799,6 +799,7 @@
 		"TYPE_NAME_TO_CONFIRM": "للتأكيد، اكتب الاسم:",
 		"HISTORY_SUMMARY": "{{ count }} فترات منذ {{ month }}",
 		"HISTORY_SUMMARY_ONE": "فترة واحدة منذ {{ month }}",
+		"CURRENT_PERIOD": "الحالية",
 		"CONFIRM": "تأكيد",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "هل أنت متأكد أنك تريد إعادة إرسال الدعوة إلى",
 		"OK": "حسنًا",

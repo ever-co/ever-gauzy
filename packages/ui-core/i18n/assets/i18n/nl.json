@@ -800,6 +800,7 @@
 		"TYPE_NAME_TO_CONFIRM": "Typ ter bevestiging de naam:",
 		"HISTORY_SUMMARY": "{{ count }} perioden sinds {{ month }}",
 		"HISTORY_SUMMARY_ONE": "1 periode sinds {{ month }}",
+		"CURRENT_PERIOD": "Huidig",
 		"CONFIRM": "Bevestigen",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Weet u zeker dat u de uitnodiging opnieuw wilt verzenden naar",
 		"OK": "OK",

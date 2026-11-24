@@ -856,6 +856,7 @@
 		"TYPE_NAME_TO_CONFIRM": "请输入名称以确认：",
 		"HISTORY_SUMMARY": "自 {{ month }} 起共 {{ count }} 个期间",
 		"HISTORY_SUMMARY_ONE": "自 {{ month }} 起共 1 个期间",
+		"CURRENT_PERIOD": "当前",
 		"CONFIRM": "确认",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "您确定要重新发送邀请给",
 		"OK": "好的",

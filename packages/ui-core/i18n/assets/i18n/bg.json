@@ -827,6 +827,7 @@
 		"TYPE_NAME_TO_CONFIRM": "За потвърждение въведете името:",
 		"HISTORY_SUMMARY": "{{ count }} периода от {{ month }}",
 		"HISTORY_SUMMARY_ONE": "1 период от {{ month }}",
+		"CURRENT_PERIOD": "Текущ",
 		"CONFIRM": "Потвърди",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Сигурни ли сте, че искате да изпратите отново поканата",
 		"OK": "Добре",

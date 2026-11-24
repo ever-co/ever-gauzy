@@ -804,6 +804,7 @@
 		"TYPE_NAME_TO_CONFIRM": "לאישור, הקלידו את השם:",
 		"HISTORY_SUMMARY": "{{ count }} תקופות מאז {{ month }}",
 		"HISTORY_SUMMARY_ONE": "תקופה אחת מאז {{ month }}",
+		"CURRENT_PERIOD": "נוכחית",
 		"CONFIRM": "אשר",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 		"OK": "OK",

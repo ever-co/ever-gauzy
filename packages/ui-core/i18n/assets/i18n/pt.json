@@ -856,6 +856,7 @@
 		"TYPE_NAME_TO_CONFIRM": "Para confirmar, digite o nome:",
 		"HISTORY_SUMMARY": "{{ count }} períodos desde {{ month }}",
 		"HISTORY_SUMMARY_ONE": "1 período desde {{ month }}",
+		"CURRENT_PERIOD": "Atual",
 		"CONFIRM": "Confirmar",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Tem certeza de que deseja reenviar o convite para",
 		"OK": "OK",
