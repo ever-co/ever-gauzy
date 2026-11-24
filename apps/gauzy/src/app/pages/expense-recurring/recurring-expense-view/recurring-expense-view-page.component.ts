@@ -16,6 +16,7 @@ import {
 import { ErrorHandlingService, OrganizationRecurringExpenseService, Store, ToastrService, monthNames } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
+	DeleteConfirmationComponent,
 	IRecordViewScope,
 	IRecordViewSection,
 	RecordViewPageState,
@@ -224,14 +225,16 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	}
 
 	/**
-	 * Asks which months to delete — this month only, this month on, or all — as the list does. "This month" is
-	 * today's month, kept within the expense's own months. When nothing of this period is left, the page goes back
-	 * to the list.
+	 * Asks which months to delete — this month only, this month on, or all — as the list does, then asks once more
+	 * before deleting. "This month" is today's month, kept within the expense's own months. When nothing of this
+	 * period is left, the page goes back to the list.
 	 */
 	async delete(): Promise<void> {
 		const expense = this.expense;
 		if (!expense || this.busy) return;
 		const month = this.deletionMonth(expense);
+		// The expense's name as the page shows it, named in the last confirmation.
+		const name = this.headline?.title || recurringExpenseCategoryName(expense.categoryName, (key) => this.getTranslation(key));
 		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
 			this.dialogService
 				.open(RecurringExpenseDeleteConfirmationComponent, {
@@ -248,6 +251,16 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 				.onClose.pipe(first())
 		);
 		if (!result) return;
+		// A second, plain "are you sure" before anything is deleted: the months dialog only picks what to delete. It
+		// names the expense, so the viewer sees which one goes, e.g. `Organization Recurring Expense "Salary"`.
+		const confirmed = await firstValueFrom(
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: { recordType: `${this.getTranslation('ORGANIZATIONS_PAGE.RECURRING_EXPENSE')} "${name}"` }
+				})
+				.onClose.pipe(first())
+		);
+		if (!confirmed || this.expense?.id !== expense.id) return;
 		this.setBusy(true);
 		try {
 			await this.organizationRecurringExpenseService.delete(expense.id, {
