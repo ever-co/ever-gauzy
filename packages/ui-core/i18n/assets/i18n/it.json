@@ -8215,7 +8215,13 @@
 		"HISTORY": "Cronologia dell'importo",
 		"HISTORY_CAPTION": "Ogni modifica dell'importo avvia un nuovo periodo",
 		"HISTORY_FAILED": "Impossibile caricare la cronologia",
-		"THIS_PERIOD": "Questo periodo"
+		"THIS_PERIOD": "Questo periodo",
+		"MONTHLY_COST": "Costo mensile",
+		"MONTHLY_COST_CAPTION": "Ultimi {{ count }} mesi · {{ currency }}",
+		"OTHER_PERIODS": "Altri periodi",
+		"SHARE": "Quota dei costi ricorrenti",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Altre spese ricorrenti"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Dettagli",

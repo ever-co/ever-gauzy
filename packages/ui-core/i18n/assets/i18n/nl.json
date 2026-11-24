@@ -8215,7 +8215,13 @@
 		"HISTORY": "Bedraggeschiedenis",
 		"HISTORY_CAPTION": "Elke wijziging van het bedrag start een nieuwe periode",
 		"HISTORY_FAILED": "De geschiedenis kon niet worden geladen",
-		"THIS_PERIOD": "Deze periode"
+		"THIS_PERIOD": "Deze periode",
+		"MONTHLY_COST": "Maandelijkse kosten",
+		"MONTHLY_COST_CAPTION": "Laatste {{ count }} maanden · {{ currency }}",
+		"OTHER_PERIODS": "Andere perioden",
+		"SHARE": "Aandeel in terugkerende kosten",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Andere terugkerende uitgaven"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Details",

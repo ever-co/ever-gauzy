@@ -8231,7 +8231,13 @@
 		"HISTORY": "История суммы",
 		"HISTORY_CAPTION": "Каждое изменение суммы начинает новый период",
 		"HISTORY_FAILED": "Не удалось загрузить историю",
-		"THIS_PERIOD": "Этот период"
+		"THIS_PERIOD": "Этот период",
+		"MONTHLY_COST": "Ежемесячные расходы",
+		"MONTHLY_COST_CAPTION": "Последние {{ count }} мес. · {{ currency }}",
+		"OTHER_PERIODS": "Другие периоды",
+		"SHARE": "Доля в регулярных расходах",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Другие регулярные расходы"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Подробности",

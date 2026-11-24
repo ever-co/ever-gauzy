@@ -8207,7 +8207,13 @@
 		"HISTORY": "سجل المبلغ",
 		"HISTORY_CAPTION": "كل تغيير في المبلغ يبدأ فترة جديدة",
 		"HISTORY_FAILED": "تعذر تحميل السجل",
-		"THIS_PERIOD": "هذه الفترة"
+		"THIS_PERIOD": "هذه الفترة",
+		"MONTHLY_COST": "التكلفة الشهرية",
+		"MONTHLY_COST_CAPTION": "آخر {{ count }} أشهر · {{ currency }}",
+		"OTHER_PERIODS": "فترات أخرى",
+		"SHARE": "الحصة من التكاليف المتكررة",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "مصروفات متكررة أخرى"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "التفاصيل",

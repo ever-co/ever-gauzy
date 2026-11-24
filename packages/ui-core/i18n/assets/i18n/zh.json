@@ -9539,7 +9539,13 @@
 		"HISTORY": "金额历史",
 		"HISTORY_CAPTION": "每次更改金额都会开始一个新的期间",
 		"HISTORY_FAILED": "无法加载历史记录",
-		"THIS_PERIOD": "本期间"
+		"THIS_PERIOD": "本期间",
+		"MONTHLY_COST": "每月费用",
+		"MONTHLY_COST_CAPTION": "最近 {{ count }} 个月 · {{ currency }}",
+		"OTHER_PERIODS": "其他期间",
+		"SHARE": "占定期费用的比例",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "其他定期费用"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "详情",

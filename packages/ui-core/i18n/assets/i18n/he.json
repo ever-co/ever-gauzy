@@ -8223,7 +8223,13 @@
 		"HISTORY": "היסטוריית הסכום",
 		"HISTORY_CAPTION": "כל שינוי בסכום מתחיל תקופה חדשה",
 		"HISTORY_FAILED": "לא ניתן היה לטעון את ההיסטוריה",
-		"THIS_PERIOD": "תקופה זו"
+		"THIS_PERIOD": "תקופה זו",
+		"MONTHLY_COST": "עלות חודשית",
+		"MONTHLY_COST_CAPTION": "{{ count }} החודשים האחרונים · {{ currency }}",
+		"OTHER_PERIODS": "תקופות אחרות",
+		"SHARE": "חלק מהעלויות החוזרות",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "הוצאות חוזרות אחרות"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "פרטים",

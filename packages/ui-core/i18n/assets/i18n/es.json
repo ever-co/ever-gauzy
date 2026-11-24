@@ -8217,7 +8217,13 @@
 		"HISTORY": "Historial del importe",
 		"HISTORY_CAPTION": "Cada cambio del importe inicia un nuevo período",
 		"HISTORY_FAILED": "No se pudo cargar el historial",
-		"THIS_PERIOD": "Este período"
+		"THIS_PERIOD": "Este período",
+		"MONTHLY_COST": "Costo mensual",
+		"MONTHLY_COST_CAPTION": "Últimos {{ count }} meses · {{ currency }}",
+		"OTHER_PERIODS": "Otros períodos",
+		"SHARE": "Parte de los costos recurrentes",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Otros gastos recurrentes"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Detalles",

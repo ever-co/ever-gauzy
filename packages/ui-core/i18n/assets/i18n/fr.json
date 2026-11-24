@@ -8212,7 +8212,13 @@
 		"HISTORY": "Historique du montant",
 		"HISTORY_CAPTION": "Chaque modification du montant ouvre une nouvelle période",
 		"HISTORY_FAILED": "L'historique n'a pas pu être chargé",
-		"THIS_PERIOD": "Cette période"
+		"THIS_PERIOD": "Cette période",
+		"MONTHLY_COST": "Coût mensuel",
+		"MONTHLY_COST_CAPTION": "{{ count }} derniers mois · {{ currency }}",
+		"OTHER_PERIODS": "Autres périodes",
+		"SHARE": "Part des coûts récurrents",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Autres dépenses récurrentes"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Détails",

@@ -9543,7 +9543,13 @@
 		"HISTORY": "Histórico do valor",
 		"HISTORY_CAPTION": "Cada alteração do valor inicia um novo período",
 		"HISTORY_FAILED": "Não foi possível carregar o histórico",
-		"THIS_PERIOD": "Este período"
+		"THIS_PERIOD": "Este período",
+		"MONTHLY_COST": "Custo mensal",
+		"MONTHLY_COST_CAPTION": "Últimos {{ count }} meses · {{ currency }}",
+		"OTHER_PERIODS": "Outros períodos",
+		"SHARE": "Parcela dos custos recorrentes",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Outras despesas recorrentes"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Detalhes",

@@ -8258,7 +8258,13 @@
 		"HISTORY": "История на сумата",
 		"HISTORY_CAPTION": "Всяка промяна на сумата започва нов период",
 		"HISTORY_FAILED": "Историята не можа да бъде заредена",
-		"THIS_PERIOD": "Този период"
+		"THIS_PERIOD": "Този период",
+		"MONTHLY_COST": "Месечен разход",
+		"MONTHLY_COST_CAPTION": "Последните {{ count }} месеца · {{ currency }}",
+		"OTHER_PERIODS": "Други периоди",
+		"SHARE": "Дял от повтарящите се разходи",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Други повтарящи се разходи"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Подробности",

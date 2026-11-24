@@ -8214,7 +8214,13 @@
 		"HISTORY": "Historia kwoty",
 		"HISTORY_CAPTION": "Każda zmiana kwoty rozpoczyna nowy okres",
 		"HISTORY_FAILED": "Nie udało się wczytać historii",
-		"THIS_PERIOD": "Ten okres"
+		"THIS_PERIOD": "Ten okres",
+		"MONTHLY_COST": "Koszt miesięczny",
+		"MONTHLY_COST_CAPTION": "Ostatnie {{ count }} mies. · {{ currency }}",
+		"OTHER_PERIODS": "Inne okresy",
+		"SHARE": "Udział w kosztach cyklicznych",
+		"SHARE_CAPTION": "{{ month }} · {{ currency }}",
+		"OTHER_RECURRING": "Inne wydatki cykliczne"
 	},
 	"INCOME_VIEW": {
 		"DETAILS": "Szczegóły",
