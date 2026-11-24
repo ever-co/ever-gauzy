@@ -834,15 +834,28 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 				unlinked = true;
 			});
 			let waited = false;
+			// cspell:words PROCESSLIST
+			// Whether the database shows the unlink's UPDATE waiting. On MySQL, information_schema.INNODB_TRX needs the
+			// PROCESS privilege, which a user granted only its own schema (as in CI) does not have. SHOW FULL PROCESSLIST
+			// lists that user's own sessions without it, and the unlink's UPDATE still running there is the wait.
+			const unlinkWaiting = async (): Promise<boolean> => {
+				if (d === 'postgres') {
+					const [row] = (await dataSource.query(
+						`SELECT COUNT(*) AS n FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE 'UPDATE%ever_connect_link%'`
+					)) as Array<Record<string, unknown>>;
+					return Number(row?.['n'] ?? 0) > 0;
+				}
+				const sessions = (await dataSource.query('SHOW FULL PROCESSLIST')) as Array<Record<string, unknown>>;
+				return sessions.some(
+					(session) =>
+						session['Command'] === 'Query' &&
+						/^UPDATE\b[\s\S]*ever_connect_link/i.test(String(session['Info'] ?? ''))
+				);
+			};
 			try {
 				// Until the database shows the unlink's UPDATE waiting on a lock (at most 10 s), then a little longer.
-				const waitingSql =
-					d === 'postgres'
-						? `SELECT COUNT(*) AS n FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE 'UPDATE%ever_connect_link%'`
-						: `SELECT COUNT(*) AS n FROM information_schema.INNODB_TRX WHERE trx_state = 'LOCK WAIT'`;
 				for (let tries = 0; tries < 100 && !unlinked; tries++) {
-					const [row] = (await dataSource.query(waitingSql)) as Array<Record<string, unknown>>;
-					if (Number(row?.['n'] ?? row?.['N'] ?? 0) > 0) {
+					if (await unlinkWaiting()) {
 						await new Promise((resolve) => setTimeout(resolve, 200));
 						waited = !unlinked;
 						break;
