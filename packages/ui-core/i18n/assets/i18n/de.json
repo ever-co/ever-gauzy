@@ -798,6 +798,8 @@
 		"DELETE_THIS_FUTURE": "Lösche dies und zukünftige.",
 		"DELETE_ALL_ENTRIES": "Löschen Sie alle Einträge",
 		"TYPE_NAME_TO_CONFIRM": "Zur Bestätigung den Namen eingeben:",
+		"HISTORY_SUMMARY": "{{ count }} Zeiträume seit {{ month }}",
+		"HISTORY_SUMMARY_ONE": "1 Zeitraum seit {{ month }}",
 		"CONFIRM": "Bestätigen",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Bist du sicher, dass du die Einladung erneut senden möchtest?",
 		"OK": "OK",

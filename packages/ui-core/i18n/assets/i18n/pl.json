@@ -797,6 +797,8 @@
 		"DELETE_THIS_FUTURE": "Usuń to oraz przyszłe",
 		"DELETE_ALL_ENTRIES": "Usuń wszystkie wpisy",
 		"TYPE_NAME_TO_CONFIRM": "Aby potwierdzić, wpisz nazwę:",
+		"HISTORY_SUMMARY": "Okresy: {{ count }} od {{ month }}",
+		"HISTORY_SUMMARY_ONE": "1 okres od {{ month }}",
 		"CONFIRM": "Potwierdź",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Jesteś pewien/a, że chcesz ponownie wysłać zaproszenie do",
 		"OK": "OK",

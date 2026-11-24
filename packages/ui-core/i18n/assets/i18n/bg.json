@@ -825,6 +825,8 @@
 		"DELETE_THIS_FUTURE": "Изтрий този и бъдещи",
 		"DELETE_ALL_ENTRIES": "Изтрий всички записи",
 		"TYPE_NAME_TO_CONFIRM": "За потвърждение въведете името:",
+		"HISTORY_SUMMARY": "{{ count }} периода от {{ month }}",
+		"HISTORY_SUMMARY_ONE": "1 период от {{ month }}",
 		"CONFIRM": "Потвърди",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Сигурни ли сте, че искате да изпратите отново поканата",
 		"OK": "Добре",

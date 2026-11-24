@@ -854,6 +854,8 @@
 		"DELETE_THIS_FUTURE": "Delete this and future",
 		"DELETE_ALL_ENTRIES": "Delete all entries",
 		"TYPE_NAME_TO_CONFIRM": "To confirm, type the name:",
+		"HISTORY_SUMMARY": "{{ count }} periods since {{ month }}",
+		"HISTORY_SUMMARY_ONE": "1 period since {{ month }}",
 		"CONFIRM": "Confirm",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 		"OK": "OK",

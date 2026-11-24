@@ -696,6 +696,8 @@
 		"DELETE_THIS_FUTURE": "crwdns2473:0crwdne2473:0",
 		"DELETE_ALL_ENTRIES": "crwdns2475:0crwdne2475:0",
 		"TYPE_NAME_TO_CONFIRM": "To confirm, type the name:",
+		"HISTORY_SUMMARY": "{{ count }} periods since {{ month }}",
+		"HISTORY_SUMMARY_ONE": "1 period since {{ month }}",
 		"CONFIRM": "crwdns2539:0crwdne2539:0",
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "crwdns2541:0crwdne2541:0",
 		"OK": "crwdns2543:0crwdne2543:0",
