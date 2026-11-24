@@ -14,10 +14,12 @@ import {
 	RecordViewModule,
 	RecurringExpenseBlockModule,
 	SmartDataViewLayoutModule,
-	SharedModule
+	SharedModule,
+	TableComponentsModule
 } from '@gauzy/ui-core/shared';
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
+import { RecurringExpenseViewPageComponent } from './recurring-expense-view/recurring-expense-view-page.component';
 
 @NgModule({
 	imports: [
@@ -34,8 +36,10 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		TranslatePipe,
 		RecurringExpenseBlockModule,
 		RecordViewModule,
-		SmartDataViewLayoutModule
+		SmartDataViewLayoutModule,
+		// The page's amounts, drawn as the grids draw them
+		TableComponentsModule
 	],
-	declarations: [ExpenseRecurringComponent]
+	declarations: [ExpenseRecurringComponent, RecurringExpenseViewPageComponent]
 })
 export class ExpenseRecurringModule {}
