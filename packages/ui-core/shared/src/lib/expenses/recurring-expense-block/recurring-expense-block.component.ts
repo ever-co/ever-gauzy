@@ -67,15 +67,10 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent imp
 		this.deleteRecurringExpense.emit();
 	}
 
+	/** Asks the list for the expense's history, which it opens in a dialog; the menu closes behind it. */
 	emitFetchHistory() {
-		if (!this.showHistory) {
-			this.fetchRecurringExpenseHistory.emit();
-			this.showHistory = true;
-			this.showMenu = true;
-		} else {
-			this.showHistory = false;
-			this.showMenu = false;
-		}
+		this.showMenu = false;
+		this.fetchRecurringExpenseHistory.emit();
 	}
 
 	getStartDate() {
