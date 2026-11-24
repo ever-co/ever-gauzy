@@ -35,11 +35,12 @@ import {
 	recurringExpenseCategoryName,
 	recurringExpenseFocusMonth,
 	recurringExpenseMonthBars,
+	recurringExpenseMonthShare,
 	recurringExpenseMonthsCharged,
 	recurringExpenseStateOf
 } from '../recurring-expense-record-view';
 import { formatExpenseMoney } from '../../expenses/expense-record-view';
-import { IExpenseChartBar } from '../../expenses/expense-view/expense-view-charts';
+import { IExpenseChartBar, IExpenseMonthShare } from '../../expenses/expense-view/expense-view-charts';
 
 /** The tone each state is drawn in, as the project and expense pages colour their status. */
 const STATE_TONE: Record<RecurringExpenseState, string> = {
@@ -69,6 +70,17 @@ export interface IRecurringExpensePeriod {
 	isCurrent: boolean;
 }
 
+/** The share chart: this expense against the organization's other recurring expenses in one month. */
+export interface IRecurringExpenseShare {
+	loading: boolean;
+	failed: boolean;
+	share: IExpenseMonthShare | null;
+	/** The month compared, e.g. "November 2026". */
+	month: string | null;
+}
+
+const NO_SHARE: IRecurringExpenseShare = { loading: false, failed: false, share: null, month: null };
+
 /**
  * An organization recurring expense on its own full-width page, `/pages/accounting/expense-recurring/view/:id`:
  * where the recurring expenses drawer's "expand to full width" icon leads.
@@ -76,7 +88,7 @@ export interface IRecurringExpensePeriod {
  * Laid out as the expense page: the actions — Edit, Copy link and Delete — beside the back button; the headline —
  * the category, where it stands and how often it repeats, then the monthly amount, the start, the end and what it
  * has cost so far as figures; in the wide column, its cost month by month and the history of its amount; and in the
- * side column, the details and the stamps.
+ * side column, the details, its share of the month's recurring costs, then the stamps.
  *
  * The page belongs to the organization selected in the header: a recurring expense of another organization reads
  * "not found", and switching the organization reloads the page, discarding any load in flight.
@@ -112,6 +124,8 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	/** The chart's span in months: its range filter. */
 	costMonths = RECURRING_COST_CHART_MONTHS;
 	readonly costMonthOptions = RECURRING_COST_CHART_MONTH_OPTIONS;
+	/** This expense against the organization's other recurring expenses, in the month the page is about. */
+	share: IRecurringExpenseShare = NO_SHARE;
 	/** Formats a chart's amount in the expense's currency. */
 	readonly formatAmount = (value: number): string =>
 		formatExpenseMoney(value, this.expense?.currency, this.translateService.getCurrentLang() || undefined);
@@ -131,6 +145,8 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	private loadSequence = 0;
 	/** The same for the history's read, which answers after the expense's. */
 	private periodsSequence = 0;
+	/** The same for the share chart's read. */
+	private shareSequence = 0;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -181,11 +197,13 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		}
 		const sequence = ++this.loadSequence;
 		this.periodsSequence++;
+		this.shareSequence++;
 		// Nothing of the previous expense stays on screen while this one loads or if it fails.
 		this.expense = null;
 		this.headline = null;
 		this.periods = [];
 		this.costBars = [];
+		this.share = NO_SHARE;
 		this.state = 'loading';
 		this.cdr.markForCheck();
 		try {
@@ -365,6 +383,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		this.expense = expense;
 		this.describe();
 		void this.loadPeriods(expense);
+		void this.loadShare(expense);
 	}
 
 	/** Reads the other periods of the same recurring expense. A failed read leaves the rest of the page as it is. */
@@ -393,6 +412,42 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		}
 	}
 
+	/**
+	 * Reads the organization's recurring expenses in the month the page is about (today's, kept within the
+	 * expense's months) with the read the recurring expenses list makes. A failed read leaves the rest of the page
+	 * as it is; the chart's panel says so.
+	 */
+	private async loadShare(expense: IOrganizationRecurringExpense): Promise<void> {
+		const scope = this.scope();
+		if (!scope) return;
+		const sequence = ++this.shareSequence;
+		const month = recurringExpenseFocusMonth(expense);
+		this.share = { ...NO_SHARE, loading: true };
+		try {
+			const { items = [] } = await this.organizationRecurringExpenseService.getAllByMonth({
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId,
+				startDate: month.clone().startOf('month').toDate(),
+				endDate: month.clone().endOf('month').toDate()
+			});
+			if (sequence !== this.shareSequence) return;
+			this.share = {
+				loading: false,
+				failed: false,
+				share: recurringExpenseMonthShare(expense, items),
+				month: this.focusMonthName(expense)
+			};
+		} catch {
+			if (sequence === this.shareSequence) {
+				this.share = { ...NO_SHARE, failed: true };
+			}
+		} finally {
+			if (sequence === this.shareSequence) {
+				this.cdr.markForCheck();
+			}
+		}
+	}
+
 	/** Draws the monthly cost chart from the periods read, in the viewer's language. */
 	private describeCostBars(): void {
 		const expense = this.expense;
@@ -403,6 +458,12 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		const periods = this.periods.length ? this.periods.map((period) => period.expense) : [expense];
 		const locale = this.translateService.getCurrentLang() || 'en';
 		this.costBars = recurringExpenseMonthBars(periods, expense, this.costMonths, locale);
+	}
+
+	/** The month the share chart compares, in the viewer's language, e.g. "November 2026". */
+	private focusMonthName(expense: IOrganizationRecurringExpense): string {
+		const locale = this.translateService.getCurrentLang() || 'en';
+		return recurringExpenseFocusMonth(expense).locale(locale).format('MMMM YYYY');
 	}
 
 	/** Works out the headline and the sections from the expense, in the viewer's language. */
@@ -426,6 +487,9 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		};
 
 		this.describeCostBars();
+		if (this.share.month) {
+			this.share = { ...this.share, month: this.focusMonthName(expense) };
+		}
 
 		// The drawer's fields, every one of them, under the panel's title.
 		this.detailsSections = buildOrganizationRecurringExpenseViewSections(expense, translate).map((section) => ({

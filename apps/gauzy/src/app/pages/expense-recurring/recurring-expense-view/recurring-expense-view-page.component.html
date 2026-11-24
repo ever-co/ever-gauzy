@@ -218,9 +218,44 @@
 				</section>
 			</div>
 
-			<!-- The facts: every field of the recurring expense, then its stamps. -->
+			<!-- The facts: every field of the recurring expense, its share of the month's recurring costs, then its stamps. -->
 			<div class="project-view-col project-view-col--side">
 				<ngx-record-view [record]="expense" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+
+				<!-- This expense against the organization's other recurring expenses in the same month. -->
+				@if (share.loading || share.failed || share.share) {
+					<section class="panel project-view-panel" [nbSpinner]="share.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="pie-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'RECURRING_EXPENSE_VIEW.SHARE' | translate }}
+								</h5>
+								@if (share.month) {
+									<span class="panel-caption">
+										{{ 'RECURRING_EXPENSE_VIEW.SHARE_CAPTION' | translate : { month: share.month, currency: expense.currency } }}
+									</span>
+								}
+							</div>
+						</header>
+						<div class="panel-body">
+							@if (share.failed) {
+								<div class="state state--compact">
+									<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+									<p>{{ 'EXPENSE_VIEW.CHART_FAILED' | translate }}</p>
+								</div>
+							} @else if (share.share) {
+								<ga-expense-share-chart
+									[formatValue]="formatAmount"
+									[amountLabel]="'EXPENSE_VIEW.THIS_EXPENSE' | translate"
+									[restLabel]="'RECURRING_EXPENSE_VIEW.OTHER_RECURRING' | translate"
+									[totalLabel]="'EXPENSE_VIEW.MONTH_TOTAL' | translate"
+									[share]="share.share"
+								></ga-expense-share-chart>
+							}
+						</div>
+					</section>
+				}
 
 				<ngx-record-view [record]="expense" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 			</div>
