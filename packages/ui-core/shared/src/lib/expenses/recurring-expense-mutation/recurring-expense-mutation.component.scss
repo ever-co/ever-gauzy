@@ -34,7 +34,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1.25rem;
-  color: nb-theme(text-basic-color);
+  color: var(--gauzy-text-color-1, var(--text-basic-color));
 }
 
 .mutation__close {
@@ -48,15 +48,15 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: nb-theme(text-hint-color);
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
   cursor: pointer;
 
   &:hover {
-    background-color: nb-theme(color-basic-transparent-hover);
+    background-color: var(--color-basic-transparent-hover);
   }
 
   &:focus-visible {
-    outline: 2px solid nb-theme(color-primary-500);
+    outline: 2px solid var(--color-primary-500);
     outline-offset: 2px;
   }
 
@@ -124,7 +124,7 @@
 .mutation__check-label {
   font-size: 0.8125rem;
   font-weight: 400;
-  color: nb-theme(text-basic-color);
+  color: var(--gauzy-text-color-1, var(--text-basic-color));
 }
 
 .mutation__notice:empty {
