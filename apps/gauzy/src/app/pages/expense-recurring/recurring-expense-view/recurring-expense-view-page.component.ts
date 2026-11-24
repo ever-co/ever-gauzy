@@ -233,12 +233,14 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		const expense = this.expense;
 		if (!expense || this.busy) return;
 		const month = this.deletionMonth(expense);
-		// The expense's name as the page shows it, named in the last confirmation.
+		// The expense's name as the page shows it: typed back in the dialog before Ok is enabled, and named again
+		// in the last confirmation.
 		const name = this.headline?.title || recurringExpenseCategoryName(expense.categoryName, (key) => this.getTranslation(key));
 		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
 			this.dialogService
 				.open(RecurringExpenseDeleteConfirmationComponent, {
 					context: {
+						confirmName: name,
 						recordType: 'Organization recurring expense',
 						start: `${monthNames[expense.startMonth]}, ${expense.startYear}`,
 						current: `${monthNames[month.month()]}, ${month.year()}`,
