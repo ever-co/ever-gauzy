@@ -206,7 +206,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 						end:
 							expense.endMonth !== null && expense.endMonth !== undefined && expense.endYear
 								? `${monthNames[expense.endMonth]}, ${expense.endYear}`
-								: 'end'
+								: this.getTranslation('RECURRING_EXPENSE_VIEW.NO_END_DATE')
 					}
 				})
 				.onClose.pipe(first())
