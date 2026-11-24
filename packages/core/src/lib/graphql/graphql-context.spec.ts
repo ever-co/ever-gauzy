@@ -1,6 +1,6 @@
 import { RequestContext } from '../core/context/request-context';
 import { RelationLoaderRegistry } from './batch/relation-loader.registry';
-import { createGraphqlRequestContext } from './graphql-context';
+import { createGraphqlRequestContext, renewRelationLoaders } from './graphql-context';
 
 /**
  * The context of a GraphQL operation is where the operation's scope is exposed to resolvers, so these
@@ -110,5 +110,80 @@ describe('createGraphqlRequestContext', () => {
 
 		expect(first.loaders).toBeInstanceOf(RelationLoaderRegistry);
 		expect(first.loaders).not.toBe(second.loaders);
+	});
+});
+
+/**
+ * A subscription is one operation whose stream graphql-js executes event after event with one context, so the transport
+ * hands that context a fresh registry before each event (`renewRelationLoadersPerPull`,
+ * `renewRelationLoadersPerFilter`). These cases are about what the hand-over does to the context and to the registry it
+ * replaces.
+ */
+describe('renewRelationLoaders', () => {
+	/** What Apollo does to the factory's result before every operation (`cloneObject`). */
+	const cloneLikeApollo = <T extends object>(object: T): T =>
+		Object.assign(Object.create(Object.getPrototypeOf(object)), object);
+
+	it('hands the context an empty registry with the defaults of the one it replaces', async () => {
+		const batches: number[][] = [];
+		const context = createGraphqlRequestContext({ loaders: new RelationLoaderRegistry({ maxBatchSize: 1 }) });
+		const previous = context.loaders;
+		const batch = async (keys: readonly number[]) => {
+			batches.push([...keys]);
+			return keys.map((key) => `v${key}`);
+		};
+		await previous.for('relation:key', batch).load(1);
+
+		const renewed = renewRelationLoaders(context);
+
+		expect(renewed).toBeInstanceOf(RelationLoaderRegistry);
+		expect(context.loaders).toBe(renewed);
+		expect(renewed).not.toBe(previous);
+		expect(renewed?.size).toBe(0);
+
+		// The cached key is read again, and the batch size of the registry it replaces still applies.
+		await expect(context.loaders.for('relation:key', batch).loadMany([1, 2])).resolves.toEqual(['v1', 'v2']);
+		expect(batches).toEqual([[1], [1], [2]]);
+	});
+
+	it('leaves the replaced registry working: a batch in flight settles there, not in the new one', async () => {
+		let answer: (values: string[]) => void = () => undefined;
+		const context = createGraphqlRequestContext();
+		const previous = context.loaders;
+		const late = previous
+			.for<string, string>('relation:key', () => new Promise<string[]>((resolve) => (answer = resolve)))
+			.load('k');
+		await Promise.resolve();
+
+		renewRelationLoaders(context);
+		answer(['before']);
+
+		// Nothing waiting on the earlier registry is failed, and what it answers is not what the next event reads.
+		await expect(late).resolves.toBe('before');
+		expect(previous.stats.loaders).toBe(1);
+		expect(context.loaders.has('relation:key')).toBe(false);
+		await expect(
+			context.loaders.for<string, string>('relation:key', async (keys) => keys.map(() => 'after')).load('k')
+		).resolves.toBe('after');
+	});
+
+	it('renews the copy Apollo hands an operation, not the object it was copied from', () => {
+		const original = createGraphqlRequestContext();
+		const copy = cloneLikeApollo(original);
+
+		const renewed = renewRelationLoaders(copy);
+
+		expect(copy.loaders).toBe(renewed);
+		expect(original.loaders).not.toBe(renewed);
+	});
+
+	it('leaves a context the factory did not build as it is', () => {
+		const loaders = new RelationLoaderRegistry();
+		const context = { loaders };
+
+		expect(renewRelationLoaders(context)).toBeUndefined();
+		expect(context.loaders).toBe(loaders);
+		expect(renewRelationLoaders(undefined)).toBeUndefined();
+		expect(renewRelationLoaders(null)).toBeUndefined();
 	});
 });

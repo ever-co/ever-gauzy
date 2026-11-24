@@ -36,7 +36,11 @@ export interface GraphqlRequestContext {
 export interface CreateGraphqlRequestContextOptions {
 	/** The HTTP request the operation arrived on. */
 	readonly req?: unknown;
-	/** A registry to use instead of a fresh one, for a test or a caller that shares one deliberately. */
+	/**
+	 * A registry to use instead of a fresh one, for a test or a caller that shares one deliberately. On a subscription
+	 * it serves the call that opens the stream; each event is resolved with a successor of it ({@link
+	 * renewRelationLoaders}).
+	 */
 	readonly loaders?: RelationLoaderRegistry;
 	/**
 	 * Headers to read the channel from, when the request does not carry them — a subscription's
@@ -58,7 +62,9 @@ export interface CreateGraphqlRequestContextOptions {
  *
  * Every operation gets its own loader registry, so a value batched and cached for one caller is
  * invisible to the next request. Sharing a registry across requests is the one mistake this factory
- * exists to make impossible in the ordinary path: the driver calls it per operation.
+ * exists to make impossible in the ordinary path: the driver calls it per operation. A subscription,
+ * one operation that delivers many events, goes one step further: each of its events is resolved with
+ * a registry of its own ({@link renewRelationLoaders}).
  *
  * 🛑 **The credential decides the scope; a header never does.** This used to resolve
  * `tenantId: options.tenantId ?? readHeader(headers, 'tenant-id') ?? resolveRequestTenantId()`, with the
@@ -96,6 +102,36 @@ export function createGraphqlRequestContext(
 }
 
 /**
+ * Hands an operation's context the relation loaders of its next event.
+ *
+ * A subscription is one operation, and graphql-js executes every event of its stream with the context the stream was
+ * opened with — this one, built once by {@link createGraphqlRequestContext}. Its loaders cache by key, as they must
+ * within one execution, so without this a relation an event selected (an operation's `steps`) was answered for every
+ * later event of the stream from what the first one loaded, however the rows had changed since. The subscription
+ * transport calls this before each event of a stream is read and resolved (`renewRelationLoadersPerPull`) and before
+ * each candidate a `@Subscription` filter is asked about (`renewRelationLoadersPerFilter`), so one event's selections
+ * still share one batch, and the next event reads its relations afresh, as the next HTTP request does.
+ *
+ * The new registry is the current one's {@link RelationLoaderRegistry.successor}: empty, with the same defaults —
+ * including those of a registry a caller supplied through `loaders`. The previous registry is dropped, not released, so
+ * a batch an earlier event still has in flight settles into a cache nothing reads any more rather than into this one.
+ *
+ * Only a context this file built is renewed; anything else is left as it is.
+ *
+ * @param context The operation's context, as graphql-js hands it to resolvers.
+ * @returns The new registry, or undefined when the context is not one this file built.
+ */
+export function renewRelationLoaders(context: unknown): RelationLoaderRegistry | undefined {
+	if (!(context instanceof OperationContext)) {
+		return undefined;
+	}
+
+	context.loaders = context.loaders.successor();
+
+	return context.loaders;
+}
+
+/**
  * The context object itself.
  *
  * A class rather than a literal because the scope has to be read late, and the getters that read it
@@ -107,7 +143,12 @@ export function createGraphqlRequestContext(
  */
 class OperationContext implements GraphqlRequestContext {
 	readonly req?: unknown;
-	readonly loaders: RelationLoaderRegistry;
+	/**
+	 * The relation loaders of the execution in progress. Deliberately assignable on this class, and only so that
+	 * {@link renewRelationLoaders} can replace it between two events of a subscription stream; resolvers see the
+	 * context through {@link GraphqlRequestContext}, where it stays `readonly`.
+	 */
+	loaders: RelationLoaderRegistry;
 	readonly traceId?: string;
 	readonly channelId?: string;
 	/** A tenant the caller of the factory resolved itself, which wins over the credential lookup. */
