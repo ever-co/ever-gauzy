@@ -165,13 +165,3 @@ export const EMPLOYEE_RECURRING_EXPENSE_RECORD_VIEW: IRecordViewRouteData<IEmplo
 	sections: (expense, injector) => buildEmployeeRecurringExpenseViewSections(expense, translatorOf(injector)),
 	subtitle: (expense) => (expense.employee as any)?.user?.name ?? (expense.employee as any)?.fullName
 };
-
-/** `/pages/accounting/expense-recurring/view/:id` — one organization recurring expense, full width. */
-export const ORGANIZATION_RECURRING_EXPENSE_RECORD_VIEW: IRecordViewRouteData<IOrganizationRecurringExpense> = {
-	heading: 'ORGANIZATIONS_PAGE.RECURRING_EXPENSE',
-	backLink: ORGANIZATION_RECURRING_EXPENSES_LIST_LINK,
-	load: async (id: string, injector: Injector, scope: IRecordViewScope) =>
-		loadOrganizationRecurringExpense(injector.get(OrganizationRecurringExpenseService), id, scope),
-	sections: (expense, injector) => buildOrganizationRecurringExpenseViewSections(expense, translatorOf(injector)),
-	subtitle: (expense, injector) => recurringExpenseCategoryName(expense.categoryName, translatorOf(injector))
-};
