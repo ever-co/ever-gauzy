@@ -8218,6 +8218,20 @@
 		"RECEIPT_UPLOADING": "Загрузка…",
 		"RECEIPT_UPLOAD_FAILED": "Не удалось загрузить чек. Попробуйте другое изображение."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Активен",
+		"UPCOMING": "Предстоящий",
+		"ENDED": "Завершён",
+		"MONTHLY": "Ежемесячно",
+		"AMOUNT_PER_MONTH": "Сумма в месяц",
+		"NO_END_DATE": "Без даты окончания",
+		"TOTAL_SO_FAR": "Всего на сегодня",
+		"MONTHS_CHARGED": "Начислено месяцев: {{ count }}",
+		"HISTORY": "История суммы",
+		"HISTORY_CAPTION": "Каждое изменение суммы начинает новый период",
+		"HISTORY_FAILED": "Не удалось загрузить историю",
+		"THIS_PERIOD": "Этот период"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Подробности",
 		"DESCRIPTION": "Заметки и теги",

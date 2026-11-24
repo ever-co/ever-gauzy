@@ -9526,6 +9526,20 @@
 		"RECEIPT_UPLOADING": "正在上传…",
 		"RECEIPT_UPLOAD_FAILED": "无法上传收据。请尝试其他图片。"
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "进行中",
+		"UPCOMING": "即将开始",
+		"ENDED": "已结束",
+		"MONTHLY": "每月",
+		"AMOUNT_PER_MONTH": "每月金额",
+		"NO_END_DATE": "无结束日期",
+		"TOTAL_SO_FAR": "迄今总计",
+		"MONTHS_CHARGED": "已计费月数：{{ count }}",
+		"HISTORY": "金额历史",
+		"HISTORY_CAPTION": "每次更改金额都会开始一个新的期间",
+		"HISTORY_FAILED": "无法加载历史记录",
+		"THIS_PERIOD": "本期间"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "详情",
 		"DESCRIPTION": "备注和标签",

@@ -8204,6 +8204,20 @@
 		"RECEIPT_UPLOADING": "Subiendo…",
 		"RECEIPT_UPLOAD_FAILED": "No se pudo subir el recibo. Prueba con otra imagen."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Activo",
+		"UPCOMING": "Próximo",
+		"ENDED": "Finalizado",
+		"MONTHLY": "Mensual",
+		"AMOUNT_PER_MONTH": "Importe por mes",
+		"NO_END_DATE": "Sin fecha de finalización",
+		"TOTAL_SO_FAR": "Total hasta ahora",
+		"MONTHS_CHARGED": "Meses cobrados: {{ count }}",
+		"HISTORY": "Historial del importe",
+		"HISTORY_CAPTION": "Cada cambio del importe inicia un nuevo período",
+		"HISTORY_FAILED": "No se pudo cargar el historial",
+		"THIS_PERIOD": "Este período"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Detalles",
 		"DESCRIPTION": "Notas y etiquetas",

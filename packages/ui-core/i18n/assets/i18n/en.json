@@ -9530,6 +9530,20 @@
 		"RECEIPT_UPLOADING": "Uploading…",
 		"RECEIPT_UPLOAD_FAILED": "The receipt could not be uploaded. Try another image."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Active",
+		"UPCOMING": "Upcoming",
+		"ENDED": "Ended",
+		"MONTHLY": "Monthly",
+		"AMOUNT_PER_MONTH": "Amount per month",
+		"NO_END_DATE": "No end date",
+		"TOTAL_SO_FAR": "Total so far",
+		"MONTHS_CHARGED": "Months charged: {{ count }}",
+		"HISTORY": "Amount history",
+		"HISTORY_CAPTION": "Each change to the amount starts a new period",
+		"HISTORY_FAILED": "The history could not be loaded",
+		"THIS_PERIOD": "This period"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Details",
 		"DESCRIPTION": "Notes & tags",

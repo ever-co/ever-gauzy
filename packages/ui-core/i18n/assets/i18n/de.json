@@ -8198,6 +8198,20 @@
 		"RECEIPT_UPLOADING": "Wird hochgeladen…",
 		"RECEIPT_UPLOAD_FAILED": "Der Beleg konnte nicht hochgeladen werden. Versuchen Sie ein anderes Bild."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Aktiv",
+		"UPCOMING": "Bevorstehend",
+		"ENDED": "Beendet",
+		"MONTHLY": "Monatlich",
+		"AMOUNT_PER_MONTH": "Betrag pro Monat",
+		"NO_END_DATE": "Kein Enddatum",
+		"TOTAL_SO_FAR": "Bisher insgesamt",
+		"MONTHS_CHARGED": "Berechnete Monate: {{ count }}",
+		"HISTORY": "Betragsverlauf",
+		"HISTORY_CAPTION": "Jede Änderung des Betrags beginnt einen neuen Zeitraum",
+		"HISTORY_FAILED": "Der Verlauf konnte nicht geladen werden",
+		"THIS_PERIOD": "Dieser Zeitraum"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Details",
 		"DESCRIPTION": "Notizen & Tags",

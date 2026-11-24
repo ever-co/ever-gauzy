@@ -8202,6 +8202,20 @@
 		"RECEIPT_UPLOADING": "Uploaden…",
 		"RECEIPT_UPLOAD_FAILED": "De bon kon niet worden geüpload. Probeer een andere afbeelding."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Actief",
+		"UPCOMING": "Gepland",
+		"ENDED": "Beëindigd",
+		"MONTHLY": "Maandelijks",
+		"AMOUNT_PER_MONTH": "Bedrag per maand",
+		"NO_END_DATE": "Geen einddatum",
+		"TOTAL_SO_FAR": "Totaal tot nu toe",
+		"MONTHS_CHARGED": "Berekende maanden: {{ count }}",
+		"HISTORY": "Bedraggeschiedenis",
+		"HISTORY_CAPTION": "Elke wijziging van het bedrag start een nieuwe periode",
+		"HISTORY_FAILED": "De geschiedenis kon niet worden geladen",
+		"THIS_PERIOD": "Deze periode"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Details",
 		"DESCRIPTION": "Notities en tags",

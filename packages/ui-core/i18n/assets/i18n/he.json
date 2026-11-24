@@ -8210,6 +8210,20 @@
 		"RECEIPT_UPLOADING": "מעלה…",
 		"RECEIPT_UPLOAD_FAILED": "לא ניתן היה להעלות את הקבלה. נסו תמונה אחרת."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "פעיל",
+		"UPCOMING": "עתידי",
+		"ENDED": "הסתיים",
+		"MONTHLY": "חודשי",
+		"AMOUNT_PER_MONTH": "סכום לחודש",
+		"NO_END_DATE": "ללא תאריך סיום",
+		"TOTAL_SO_FAR": "סה״כ עד כה",
+		"MONTHS_CHARGED": "חודשים שחויבו: {{ count }}",
+		"HISTORY": "היסטוריית הסכום",
+		"HISTORY_CAPTION": "כל שינוי בסכום מתחיל תקופה חדשה",
+		"HISTORY_FAILED": "לא ניתן היה לטעון את ההיסטוריה",
+		"THIS_PERIOD": "תקופה זו"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "פרטים",
 		"DESCRIPTION": "הערות ותגיות",

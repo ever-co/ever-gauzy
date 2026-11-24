@@ -8194,6 +8194,20 @@
 		"RECEIPT_UPLOADING": "جارٍ الرفع…",
 		"RECEIPT_UPLOAD_FAILED": "تعذّر رفع الإيصال. جرّب صورة أخرى."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "نشط",
+		"UPCOMING": "قادم",
+		"ENDED": "منتهي",
+		"MONTHLY": "شهري",
+		"AMOUNT_PER_MONTH": "المبلغ شهريًا",
+		"NO_END_DATE": "بدون تاريخ انتهاء",
+		"TOTAL_SO_FAR": "الإجمالي حتى الآن",
+		"MONTHS_CHARGED": "الأشهر المحتسبة: {{ count }}",
+		"HISTORY": "سجل المبلغ",
+		"HISTORY_CAPTION": "كل تغيير في المبلغ يبدأ فترة جديدة",
+		"HISTORY_FAILED": "تعذر تحميل السجل",
+		"THIS_PERIOD": "هذه الفترة"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "التفاصيل",
 		"DESCRIPTION": "الملاحظات والوسوم",

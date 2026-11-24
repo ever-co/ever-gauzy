@@ -8245,6 +8245,20 @@
 		"RECEIPT_UPLOADING": "Качване…",
 		"RECEIPT_UPLOAD_FAILED": "Касовата бележка не можа да бъде качена. Опитайте с друго изображение."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Активен",
+		"UPCOMING": "Предстоящ",
+		"ENDED": "Приключил",
+		"MONTHLY": "Месечно",
+		"AMOUNT_PER_MONTH": "Сума на месец",
+		"NO_END_DATE": "Без крайна дата",
+		"TOTAL_SO_FAR": "Общо досега",
+		"MONTHS_CHARGED": "Начислени месеци: {{ count }}",
+		"HISTORY": "История на сумата",
+		"HISTORY_CAPTION": "Всяка промяна на сумата започва нов период",
+		"HISTORY_FAILED": "Историята не можа да бъде заредена",
+		"THIS_PERIOD": "Този период"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Подробности",
 		"DESCRIPTION": "Бележки и етикети",

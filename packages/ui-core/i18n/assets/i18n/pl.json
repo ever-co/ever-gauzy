@@ -8201,6 +8201,20 @@
 		"RECEIPT_UPLOADING": "Przesyłanie…",
 		"RECEIPT_UPLOAD_FAILED": "Nie udało się przesłać paragonu. Spróbuj innego obrazu."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Aktywny",
+		"UPCOMING": "Nadchodzący",
+		"ENDED": "Zakończony",
+		"MONTHLY": "Miesięcznie",
+		"AMOUNT_PER_MONTH": "Kwota miesięczna",
+		"NO_END_DATE": "Brak daty zakończenia",
+		"TOTAL_SO_FAR": "Łącznie do tej pory",
+		"MONTHS_CHARGED": "Naliczone miesiące: {{ count }}",
+		"HISTORY": "Historia kwoty",
+		"HISTORY_CAPTION": "Każda zmiana kwoty rozpoczyna nowy okres",
+		"HISTORY_FAILED": "Nie udało się wczytać historii",
+		"THIS_PERIOD": "Ten okres"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Szczegóły",
 		"DESCRIPTION": "Notatki i tagi",

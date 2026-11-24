@@ -8199,6 +8199,20 @@
 		"RECEIPT_UPLOADING": "Téléversement…",
 		"RECEIPT_UPLOAD_FAILED": "Le reçu n’a pas pu être téléversé. Essayez une autre image."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Actif",
+		"UPCOMING": "À venir",
+		"ENDED": "Terminé",
+		"MONTHLY": "Mensuel",
+		"AMOUNT_PER_MONTH": "Montant par mois",
+		"NO_END_DATE": "Pas de date de fin",
+		"TOTAL_SO_FAR": "Total à ce jour",
+		"MONTHS_CHARGED": "Mois facturés : {{ count }}",
+		"HISTORY": "Historique du montant",
+		"HISTORY_CAPTION": "Chaque modification du montant ouvre une nouvelle période",
+		"HISTORY_FAILED": "L'historique n'a pas pu être chargé",
+		"THIS_PERIOD": "Cette période"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Détails",
 		"DESCRIPTION": "Notes et étiquettes",

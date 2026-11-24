@@ -8202,6 +8202,20 @@
 		"RECEIPT_UPLOADING": "Caricamento…",
 		"RECEIPT_UPLOAD_FAILED": "Impossibile caricare la ricevuta. Prova con un'altra immagine."
 	},
+	"RECURRING_EXPENSE_VIEW": {
+		"ACTIVE": "Attiva",
+		"UPCOMING": "In arrivo",
+		"ENDED": "Terminata",
+		"MONTHLY": "Mensile",
+		"AMOUNT_PER_MONTH": "Importo mensile",
+		"NO_END_DATE": "Nessuna data di fine",
+		"TOTAL_SO_FAR": "Totale finora",
+		"MONTHS_CHARGED": "Mesi addebitati: {{ count }}",
+		"HISTORY": "Cronologia dell'importo",
+		"HISTORY_CAPTION": "Ogni modifica dell'importo avvia un nuovo periodo",
+		"HISTORY_FAILED": "Impossibile caricare la cronologia",
+		"THIS_PERIOD": "Questo periodo"
+	},
 	"INCOME_VIEW": {
 		"DETAILS": "Dettagli",
 		"DESCRIPTION": "Note e tag",
