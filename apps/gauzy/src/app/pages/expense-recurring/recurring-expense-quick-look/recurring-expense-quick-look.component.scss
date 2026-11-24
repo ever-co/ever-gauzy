@@ -37,6 +37,11 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   line-height: 1.5rem;
 }
 
+// In the drawer the four figures sit two by two: three to a row would leave the fourth alone on its line.
+:host(:not(.is-page)) .project-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 // The monthly amount is the figure the expense is about: it leads, a step larger than the others.
 .recurring-fact-amount dd {
   gap: 0.125rem;
@@ -121,6 +126,14 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   tr.is-current td {
     background-color: var(--gauzy-hover-tint);
     font-weight: 600;
+  }
+}
+
+// The drawer is narrow: the table keeps to it.
+:host(:not(.is-page)) .recurring-periods {
+  th,
+  td {
+    padding-inline: 0.5rem;
   }
 }
 
