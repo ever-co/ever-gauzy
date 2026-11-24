@@ -32,7 +32,7 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   font-weight: 600;
 }
 
-.history-dialog__name {
+.history-dialog__summary {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -75,7 +75,7 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
   th,
   td {
-    padding: 0.5rem 0;
+    padding: 0.625rem 0;
     border-bottom: 1px solid $hairline;
     text-align: start;
     white-space: nowrap;
@@ -90,6 +90,12 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   td {
     font-weight: 400;
     color: nb-theme(text-basic-color);
+    vertical-align: top;
+  }
+
+  // The period that covers today: its text a step heavier, nothing coloured.
+  tr.is-current td {
+    font-weight: 500;
   }
 
   tbody tr:last-child td {
@@ -99,6 +105,23 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   .is-amount {
     text-align: end;
   }
+}
+
+.history-dialog__period {
+  display: block;
+}
+
+.history-dialog__muted {
+  color: nb-theme(text-hint-color);
+}
+
+// "Current", under the period it marks: small grey text, no chip.
+.history-dialog__current {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: nb-theme(text-hint-color);
 }
 
 .history-dialog__footer {
