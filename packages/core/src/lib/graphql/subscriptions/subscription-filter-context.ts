@@ -57,6 +57,9 @@ export function renewRelationLoadersPerFilter<F extends SubscriptionFilter>(filt
 	}
 
 	return function (this: unknown, ...args: Parameters<F>) {
+		// The context is the third argument: Apollo's driver calls a filter as `(payload, variables, context)`
+		// (`subscriptionWithFilter` in `@nestjs/apollo`), the shape `SubscriptionFilter` declares. Anything else in
+		// that position is not a context the platform built, and `renewRelationLoaders` leaves it as it is.
 		renewRelationLoaders(args[2]);
 		return filter.apply(this, args);
 	} as F;

@@ -144,8 +144,9 @@ export function renewRelationLoaders(context: unknown): RelationLoaderRegistry |
 class OperationContext implements GraphqlRequestContext {
 	readonly req?: unknown;
 	/**
-	 * The relation loaders of the execution in progress. Replaced only by {@link renewRelationLoaders}, between two
-	 * events of a subscription stream; a resolver reads it, as the interface's `readonly` says.
+	 * The relation loaders of the execution in progress. Deliberately assignable on this class, and only so that
+	 * {@link renewRelationLoaders} can replace it between two events of a subscription stream; resolvers see the
+	 * context through {@link GraphqlRequestContext}, where it stays `readonly`.
 	 */
 	loaders: RelationLoaderRegistry;
 	readonly traceId?: string;
