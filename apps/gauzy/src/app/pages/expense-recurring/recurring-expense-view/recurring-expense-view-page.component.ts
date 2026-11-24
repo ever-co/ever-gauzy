@@ -26,15 +26,20 @@ import {
 } from '@gauzy/ui-core/shared';
 import {
 	ORGANIZATION_RECURRING_EXPENSES_LIST_LINK,
+	RECURRING_COST_CHART_MONTHS,
+	RECURRING_COST_CHART_MONTH_OPTIONS,
 	RecurringExpenseState,
 	buildOrganizationRecurringExpenseViewSections,
 	loadOrganizationRecurringExpense,
 	loadOrganizationRecurringExpensePeriods,
 	recurringExpenseCategoryName,
 	recurringExpenseFocusMonth,
+	recurringExpenseMonthBars,
 	recurringExpenseMonthsCharged,
 	recurringExpenseStateOf
 } from '../recurring-expense-record-view';
+import { formatExpenseMoney } from '../../expenses/expense-record-view';
+import { IExpenseChartBar } from '../../expenses/expense-view/expense-view-charts';
 
 /** The tone each state is drawn in, as the project and expense pages colour their status. */
 const STATE_TONE: Record<RecurringExpenseState, string> = {
@@ -70,8 +75,8 @@ export interface IRecurringExpensePeriod {
  *
  * Laid out as the expense page: the actions — Edit, Copy link and Delete — beside the back button; the headline —
  * the category, where it stands and how often it repeats, then the monthly amount, the start, the end and what it
- * has cost so far as figures; the history of its amount in the wide column; and the details and stamps in the side
- * column.
+ * has cost so far as figures; in the wide column, its cost month by month and the history of its amount; and in the
+ * side column, the details and the stamps.
  *
  * The page belongs to the organization selected in the header: a recurring expense of another organization reads
  * "not found", and switching the organization reloads the page, discarding any load in flight.
@@ -101,6 +106,15 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	periods: IRecurringExpensePeriod[] = [];
 	periodsLoading = false;
 	periodsFailed = false;
+
+	/** The monthly cost chart: one bar per month, drawn from the periods. */
+	costBars: IExpenseChartBar[] = [];
+	/** The chart's span in months: its range filter. */
+	costMonths = RECURRING_COST_CHART_MONTHS;
+	readonly costMonthOptions = RECURRING_COST_CHART_MONTH_OPTIONS;
+	/** Formats a chart's amount in the expense's currency. */
+	readonly formatAmount = (value: number): string =>
+		formatExpenseMoney(value, this.expense?.currency, this.translateService.getCurrentLang() || undefined);
 
 	/** Every field of the expense, at the top of the side column. */
 	detailsSections: IRecordViewSection[] = [];
@@ -171,6 +185,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		this.expense = null;
 		this.headline = null;
 		this.periods = [];
+		this.costBars = [];
 		this.state = 'loading';
 		this.cdr.markForCheck();
 		try {
@@ -307,6 +322,12 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 		}
 	}
 
+	/** Sets the monthly cost chart's span; the periods already read are drawn again, nothing is read. */
+	setCostMonths(months: number): void {
+		this.costMonths = months;
+		this.describeCostBars();
+	}
+
 	/** The link of a period of the history: its own page. */
 	periodLink(period: IRecurringExpensePeriod): string[] {
 		return [ORGANIZATION_RECURRING_EXPENSES_LIST_LINK, 'view', period.expense.id];
@@ -359,6 +380,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 			if (sequence !== this.periodsSequence) return;
 			const list = periods.some((period) => period.id === expense.id) ? periods : [...periods, expense];
 			this.periods = list.map((period) => ({ expense: period, isCurrent: period.id === expense.id }));
+			this.describeCostBars();
 		} catch {
 			if (sequence === this.periodsSequence) {
 				this.periodsFailed = true;
@@ -369,6 +391,18 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 				this.cdr.markForCheck();
 			}
 		}
+	}
+
+	/** Draws the monthly cost chart from the periods read, in the viewer's language. */
+	private describeCostBars(): void {
+		const expense = this.expense;
+		if (!expense) {
+			this.costBars = [];
+			return;
+		}
+		const periods = this.periods.length ? this.periods.map((period) => period.expense) : [expense];
+		const locale = this.translateService.getCurrentLang() || 'en';
+		this.costBars = recurringExpenseMonthBars(periods, expense, this.costMonths, locale);
 	}
 
 	/** Works out the headline and the sections from the expense, in the viewer's language. */
@@ -390,6 +424,8 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 			totalCharged: monthsCharged * (Number(expense.value) || 0),
 			since: expense.startDate ? moment(expense.startDate).locale(locale).fromNow() : null
 		};
+
+		this.describeCostBars();
 
 		// The drawer's fields, every one of them, under the panel's title.
 		this.detailsSections = buildOrganizationRecurringExpenseViewSections(expense, translate).map((section) => ({
