@@ -169,7 +169,14 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 			input.value = this.codeChars[index] ?? '';
 			return;
 		}
-		const typed = this._sanitize(input.value);
+		let typed = this._sanitize(input.value);
+
+		// A character typed into a box that still holds one (the caret sat beside
+		// it rather than over it): keep the new character, not the old one.
+		const previous = this.codeChars[index];
+		if (typed.length === 2 && previous && typed.includes(previous)) {
+			typed = typed[0] === previous ? typed[1] : typed[0];
+		}
 
 		if (typed.length > 1) {
 			// A full code (autofill) starts at the first box; anything shorter
@@ -282,9 +289,16 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 		this._codeBoxes?.forEach((box, i) => (box.nativeElement.value = this.codeChars[i] ?? ''));
 	}
 
+	/**
+	 * Focus a box and select its character, so the next keystroke replaces it.
+	 * Selecting here too (not only on `focus`) matters when focus stays in the
+	 * same box — the last one after a full entry — where no focus event fires.
+	 */
 	private _focusBox(index: number): void {
 		const clamped = Math.max(0, Math.min(index, this.codeLength - 1));
-		this._codeBoxes?.get(clamped)?.nativeElement.focus();
+		const box = this._codeBoxes?.get(clamped)?.nativeElement;
+		box?.focus();
+		box?.select();
 	}
 
 	private _updateEmailHints(value: string | null | undefined): void {
