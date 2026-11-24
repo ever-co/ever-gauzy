@@ -107,8 +107,8 @@ interface ActionOrigin {
  *
  * Laid out as the recurring expense page: the actions — Edit, Copy link, the favorite star and Delete — beside the
  * back button; the headline across the top (who paid, its status, method and project, then the amount, the date,
- * the invoice and who recorded it as figures); the contact's payments month by month, the invoice it pays and every
- * payment of that invoice in the wide column; the details, its share of the month's payments and the stamps in the
+ * the invoice and who recorded it as figures); the invoice it pays, every payment of that invoice and the contact's
+ * payments month by month in the wide column; the details, its share of the month's payments and the stamps in the
  * side one.
  *
  * The page belongs to the organization selected in the header: a payment of another organization reads "not found",
