@@ -1,4 +1,5 @@
 import { ChangeDetectorRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { NbDialogService } from '@nebular/theme';
 import { Observable, of, throwError } from 'rxjs';
 import { IChangelog, IChangelogFindInput } from '@gauzy/contracts';
@@ -287,5 +288,65 @@ describe('ChangelogAdminComponent', () => {
 
 		expect(component.canAdd).toBe(false);
 		expect(dialogService.open).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * The page as rendered. An entry's learn-more link is shown as its address, for the operator to read and copy, and
+ * never as a link the page itself points at: the entries are installation data (the seeded ones point at the
+ * product's documentation), and the egress audit allows no link to an Ever host that its baseline does not record
+ * for this route.
+ */
+describe('ChangelogAdminComponent (rendered)', () => {
+	const address = 'https://docs.example.test/features/time-tracking';
+	const entries: IChangelog[] = [
+		{
+			id: 'news-1',
+			title: 'Dark mode',
+			date: new Date('2026-08-01T00:00:00.000Z'),
+			platform: 'gauzy',
+			learnMoreUrl: `${address}#news`
+		},
+		{ id: 'feature-1', title: 'Time tracking', isFeature: true, platform: 'gauzy', learnMoreUrl: address }
+	];
+
+	/** Every attribute value of the page that names the entries' documentation host. */
+	const attributesNaming = (root: HTMLElement, host: string): string[] =>
+		Array.from(root.querySelectorAll('*')).flatMap((element) =>
+			Array.from(element.attributes)
+				.filter(({ value }) => value.includes(host))
+				.map(({ name, value }) => `${element.tagName.toLowerCase()}[${name}]=${value}`)
+		);
+
+	it("shows each entry's learn-more link as text, and points nowhere outside the page", async () => {
+		await TestBed.configureTestingModule({
+			imports: [ChangelogAdminComponent],
+			providers: [
+				{
+					provide: ChangelogService,
+					useValue: {
+						find: jest.fn(({ isFeature }: IChangelogFindInput) => {
+							const items = entries.filter((entry) => !!entry.isFeature === !!isFeature);
+							return of({ items, total: items.length });
+						})
+					}
+				},
+				{ provide: NbDialogService, useValue: { open: jest.fn() } },
+				{ provide: ToastrService, useValue: { success: jest.fn(), danger: jest.fn() } },
+				{ provide: ErrorHandlingService, useValue: { handleError: jest.fn() } }
+			]
+		}).compileComponents();
+
+		const fixture = TestBed.createComponent(ChangelogAdminComponent);
+		fixture.detectChanges();
+		await fixture.componentInstance.load();
+		fixture.changeDetectorRef.markForCheck();
+		fixture.detectChanges();
+		const page: HTMLElement = fixture.nativeElement;
+
+		expect(page.textContent).toContain('Dark mode');
+		expect(attributesNaming(page, 'docs.example.test')).toEqual([]);
+		expect(page.textContent).toContain(`${address}#news`);
+		expect(page.textContent).toContain(address);
 	});
 });
