@@ -5,6 +5,7 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -14,10 +15,15 @@ import {
 	RecordViewModule,
 	RecurringExpenseBlockModule,
 	SmartDataViewLayoutModule,
-	SharedModule
+	SharedModule,
+	TableComponentsModule
 } from '@gauzy/ui-core/shared';
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
+import { RecurringExpenseViewPageComponent } from './recurring-expense-view/recurring-expense-view-page.component';
+import { RecurringExpenseQuickLookComponent } from './recurring-expense-quick-look/recurring-expense-quick-look.component';
+import { ExpenseBarChartComponent } from '../expenses/expense-view/expense-charts/expense-bar-chart.component';
+import { ExpenseShareChartComponent } from '../expenses/expense-view/expense-charts/expense-share-chart.component';
 
 @NgModule({
 	imports: [
@@ -27,6 +33,7 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
@@ -34,8 +41,13 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		TranslatePipe,
 		RecurringExpenseBlockModule,
 		RecordViewModule,
-		SmartDataViewLayoutModule
+		SmartDataViewLayoutModule,
+		// The page's amounts, drawn as the grids draw them
+		TableComponentsModule,
+		// The page's charts, the expense page's own
+		ExpenseBarChartComponent,
+		ExpenseShareChartComponent
 	],
-	declarations: [ExpenseRecurringComponent]
+	declarations: [ExpenseRecurringComponent, RecurringExpenseViewPageComponent, RecurringExpenseQuickLookComponent]
 })
 export class ExpenseRecurringModule {}

@@ -37,6 +37,24 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 		            - {{ end }})</nb-radio
 		            >
 		          </nb-radio-group>
+		          @if (confirmName) {
+		            <div class="confirm-name">
+		              <label class="confirm-name-label" for="recurring-expense-confirm-name">
+		                {{ 'POP_UPS.TYPE_NAME_TO_CONFIRM' | translate }} <strong>{{ confirmName }}</strong>
+		              </label>
+		              <input
+		                id="recurring-expense-confirm-name"
+		                nbInput
+		                fullWidth
+		                fieldSize="small"
+		                type="text"
+		                autocomplete="off"
+		                [placeholder]="confirmName"
+		                [(ngModel)]="typedName"
+		                (keydown.enter)="canDelete && delete()"
+		              />
+		            </div>
+		          }
 		        </nb-card-body>
 		        <nb-card-footer>
 		          <button
@@ -52,7 +70,7 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 		            (click)="delete()"
 		            status="danger"
 		            nbButton
-		            [disabled]="!selectedOption"
+		            [disabled]="!canDelete"
 		            >
 		            {{ 'BUTTONS.OK' | translate }}
 		          </button>
@@ -69,6 +87,12 @@ export class RecurringExpenseDeleteConfirmationComponent {
 	current: string;
 	end: string;
 	selectedOption: RecurringExpenseDeletionEnum;
+	/**
+	 * The expense's name. When given, the viewer has to type it before Ok is enabled, so the wrong expense is not
+	 * deleted by mistake. Case and surrounding spaces do not matter.
+	 */
+	confirmName: string;
+	typedName = '';
 
 	constructor(
 		protected dialogRef: NbDialogRef<RecurringExpenseDeleteConfirmationComponent>
@@ -78,7 +102,21 @@ export class RecurringExpenseDeleteConfirmationComponent {
 		this.dialogRef.close();
 	}
 
+	/** A deletion is chosen and, when a name is asked for, the name typed matches it. */
+	get canDelete(): boolean {
+		if (!this.selectedOption) {
+			return false;
+		}
+		if (!this.confirmName) {
+			return true;
+		}
+		return (this.typedName || '').trim().localeCompare(this.confirmName.trim(), undefined, { sensitivity: 'accent' }) === 0;
+	}
+
 	delete() {
+		if (!this.canDelete) {
+			return;
+		}
 		this.dialogRef.close(this.selectedOption);
 	}
 }
