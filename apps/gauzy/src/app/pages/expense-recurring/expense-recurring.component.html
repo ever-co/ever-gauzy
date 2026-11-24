@@ -149,6 +149,7 @@
   (closed)="closeView()"
   >
   @if (viewedRecurringExpense) {
-    <ngx-record-view [record]="viewedRecurringExpense" [sections]="viewSections"></ngx-record-view>
+    <!-- The same quick look as the expense's own page, in one column. -->
+    <ga-recurring-expense-quick-look [expense]="viewedRecurringExpense" [scope]="viewScope"></ga-recurring-expense-quick-look>
   }
 </ngx-record-view-drawer>
