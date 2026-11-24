@@ -7603,6 +7603,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Descargar la extensión del navegador"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "¿Quisiste decir {{ email }}?",
+		"CODE_CHARACTER": "Carácter {{ index }} de {{ total }}",
+		"OPEN_INBOX": "Abrir tu bandeja de entrada",
+		"NEED_NEW_WORKSPACE": "¿Necesitas un nuevo espacio de trabajo?",
+		"CREATE_ONE": "Crear uno",
+		"ALREADY_HAVE_WORKSPACE": "¿Ya tienes un espacio de trabajo?",
+		"SIGN_IN_LINK": "Iniciar sesión",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Iniciar sesión en otro espacio de trabajo",
 			"CREATE_NEW_WORKSPACE": "Crear un nuevo espacio de trabajo",

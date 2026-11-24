@@ -6889,6 +6889,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Gam lamed me browser"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Did you mean {{ email }}?",
+		"CODE_CHARACTER": "Character {{ index }} of {{ total }}",
+		"OPEN_INBOX": "Open your inbox",
+		"NEED_NEW_WORKSPACE": "Need a new workspace?",
+		"CREATE_ONE": "Create one",
+		"ALREADY_HAVE_WORKSPACE": "Already have a workspace?",
+		"SIGN_IN_LINK": "Sign in",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "crwdns11058:0crwdne11058:0",
 			"CREATE_NEW_WORKSPACE": "crwdns11060:0crwdne11060:0",

@@ -7599,6 +7599,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "تنزيل إضافة المتصفح"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "هل تقصد {{ email }}؟",
+		"CODE_CHARACTER": "الحرف {{ index }} من {{ total }}",
+		"OPEN_INBOX": "افتح بريدك الوارد",
+		"NEED_NEW_WORKSPACE": "تحتاج إلى مساحة عمل جديدة؟",
+		"CREATE_ONE": "أنشئ واحدة",
+		"ALREADY_HAVE_WORKSPACE": "لديك مساحة عمل بالفعل؟",
+		"SIGN_IN_LINK": "تسجيل الدخول",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "تسجيل الدخول إلى مساحة عمل أخرى",
 			"CREATE_NEW_WORKSPACE": "أنشئ مساحة عمل جديدة",

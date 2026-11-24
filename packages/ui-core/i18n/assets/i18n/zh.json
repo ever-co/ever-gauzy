@@ -8290,6 +8290,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "下载浏览器扩展"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "您是指 {{ email }} 吗？",
+		"CODE_CHARACTER": "第 {{ index }} 个字符，共 {{ total }} 个",
+		"OPEN_INBOX": "打开收件箱",
+		"NEED_NEW_WORKSPACE": "需要新的工作空间？",
+		"CREATE_ONE": "创建一个",
+		"ALREADY_HAVE_WORKSPACE": "已有工作空间？",
+		"SIGN_IN_LINK": "登录",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "在另一个工作区登录",
 			"CREATE_NEW_WORKSPACE": "创建一个新的工作空间",

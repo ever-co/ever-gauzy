@@ -7597,6 +7597,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Browser-Erweiterung herunterladen"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Meinten Sie {{ email }}?",
+		"CODE_CHARACTER": "Zeichen {{ index }} von {{ total }}",
+		"OPEN_INBOX": "Posteingang öffnen",
+		"NEED_NEW_WORKSPACE": "Brauchen Sie einen neuen Arbeitsbereich?",
+		"CREATE_ONE": "Jetzt erstellen",
+		"ALREADY_HAVE_WORKSPACE": "Sie haben bereits einen Arbeitsbereich?",
+		"SIGN_IN_LINK": "Anmelden",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Melden Sie sich in einem anderen Arbeitsbereich an",
 			"CREATE_NEW_WORKSPACE": "Erstelle einen neuen Arbeitsbereich",

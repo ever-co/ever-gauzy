@@ -7644,6 +7644,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Изтегляне на разширението за браузър"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Имахте предвид {{ email }}?",
+		"CODE_CHARACTER": "Символ {{ index }} от {{ total }}",
+		"OPEN_INBOX": "Отворете входящата си поща",
+		"NEED_NEW_WORKSPACE": "Нуждаете се от ново работно пространство?",
+		"CREATE_ONE": "Създайте",
+		"ALREADY_HAVE_WORKSPACE": "Вече имате работно пространство?",
+		"SIGN_IN_LINK": "Вход",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
