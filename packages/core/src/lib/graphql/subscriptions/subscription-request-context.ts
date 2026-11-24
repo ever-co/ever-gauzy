@@ -5,6 +5,7 @@ import type { Request } from 'express';
 import { runInMikroOrmContext } from '../../core/context/mikro-orm-context';
 import { RequestContext } from '../../core/context/request-context';
 import { getORMType, MultiORMEnum } from '../../core/utils';
+import { renewRelationLoaders } from '../graphql-context';
 import { SubscriptionSessionUser, subscriptionSessionOf } from './subscription-session';
 
 /**
@@ -51,6 +52,16 @@ import { SubscriptionSessionUser, subscriptionSessionOf } from './subscription-s
  * ({@link runInOperationRequestContext}), and each pull of a stream — one event's filter, its `resolve` and the
  * fields selected under it — a fresh fork of that one, so a stream that stays open for hours does not answer every
  * event from one identity map filled by the events before it. Under TypeORM no context is opened and nothing changes.
+ *
+ * 🛑 **…and, under either ORM, every event of a stream resolved its relations from the first event's cache.** The
+ * GraphQL context is built once per operation, and graphql-js executes every event of a stream with it — so with its
+ * one `RelationLoaderRegistry`, whose loaders cache by key. A relation an event selected (an operation's `steps` on
+ * `operationStepChanged`) was answered for every later event of the stream from what the first one loaded, however the
+ * rows had changed since; a MikroORM fork resets an identity map, not those loaders. Each pull of a stream now resolves
+ * its event with a registry of its own ({@link renewRelationLoadersPerPull}), and so does each candidate a
+ * `@Subscription` filter is asked about (`renewRelationLoadersPerFilter`): one event's selections still share one
+ * batch, and the next event reads afresh, as the next HTTP request does. A query or a mutation on the socket keeps one
+ * registry for its whole execution, as on HTTP.
  */
 
 /**
@@ -93,6 +104,9 @@ export function subscribeInRequestContext(args: ExecutionArgs, orm?: MikroORM | 
  * fork the bootstrap opens for an HTTP request on the same endpoint — whether it carries a request or not, and each
  * pull of the stream it opens runs on a fresh fork of that one ({@link forkMikroOrmContextPerPull}).
  *
+ * Under either ORM, each pull of the stream it opens resolves its event with relation loaders of its own
+ * ({@link renewRelationLoadersPerPull}).
+ *
  * @param args The execution arguments.
  * @param operation The operation.
  * @param orm The MikroORM instance of this process, when it has one.
@@ -104,10 +118,18 @@ export async function runInOperationRequestContext(
 	orm?: MikroORM | null
 ): Promise<OperationResult> {
 	const req = operationRequest(args);
+	// Whatever the ORM, and with a request or without: each event of a stream is resolved with loaders of its own.
+	const open = async (): Promise<OperationResult> => {
+		const result = await operation();
+
+		return isAsyncIterable<ExecutionResult>(result)
+			? renewRelationLoadersPerPull(result, args?.contextValue)
+			: result;
+	};
 
 	if (!req) {
 		return runInMikroOrmContext(orm, async () => {
-			const result = await operation();
+			const result = await open();
 
 			if (!isAsyncIterable<ExecutionResult>(result)) {
 				return result;
@@ -115,7 +137,7 @@ export async function runInOperationRequestContext(
 
 			// Bound to the operation's fork under DB_ORM=mikro-orm, as a stream with a request is, so each pull forks
 			// that one — with whatever filter parameters or schema it was given — rather than the global EntityManager.
-			// Under TypeORM the stream is handed back as it is, unbound, as it was.
+			// Under TypeORM the stream is handed back unbound, as it was: renewing its loaders needs no context.
 			const forked = forkMikroOrmContextPerPull(result, orm);
 
 			return forked === result ? result : bindToCurrentContext(forked);
@@ -123,7 +145,7 @@ export async function runInOperationRequestContext(
 	}
 
 	return RequestContext.runWithRequest(req, () =>
-		runInMikroOrmContext(orm, () => openInRequestContext(req, operation, orm))
+		runInMikroOrmContext(orm, () => openInRequestContext(req, open, orm))
 	);
 }
 
@@ -178,11 +200,12 @@ async function openInRequestContext(
  * the map does not grow for as long as the stream is open. `return` and `throw` only end the stream and read nothing,
  * so they are passed on as they are.
  *
- * What the fork does not cover: the GraphQL context's relation loaders (`RelationLoaderRegistry`) are built once per
- * stream and cache what they load, so a relation an earlier event loaded can be answered from that cache: the fork
- * resets the identity map, not those loaders. Apollo may also evaluate the `filter` of several candidate events within
- * one pull; each evaluation forks the pull's fork afresh (`MikroOrmAwareApolloDriver`, the driver `GraphqlModule`
- * serves with), so a rejected candidate leaves nothing in an identity map for the next.
+ * What the fork does not cover: the GraphQL context's relation loaders (`RelationLoaderRegistry`), which cache what
+ * they load; the fork resets the identity map, not those loaders. They are renewed for each pull, under either ORM, by
+ * {@link renewRelationLoadersPerPull}, which the stream is wrapped in before it gets here. Apollo may also evaluate the
+ * `filter` of several candidate events within one pull; each evaluation forks the pull's fork afresh
+ * (`MikroOrmAwareApolloDriver`, the driver `GraphqlModule` serves with), so a rejected candidate leaves nothing in an
+ * identity map for the next.
  *
  * Under TypeORM, or without the instance, the stream is handed back as it is.
  *
@@ -211,6 +234,46 @@ export function forkMikroOrmContextPerPull<T>(stream: AsyncIterable<T>, orm?: Mi
 	};
 
 	return forked;
+}
+
+/**
+ * Resolves each event of a stream with relation loaders of its own, under either ORM.
+ *
+ * graphql-js executes every event of a subscription with the context the stream was opened with, and that context's
+ * `RelationLoaderRegistry` caches by key: without this, a relation the first event loaded was the answer for every
+ * later event of the stream. Before each pull the context is handed a fresh registry ({@link renewRelationLoaders}).
+ * One event is read and resolved — its filter, its `resolve` and every field selected under it — inside one pull, and
+ * `graphql-ws` pulls one event at a time, so the selections of one event still share one batch and one cache, and the
+ * next event starts with an empty one. A candidate a `@Subscription` filter rejects inside a pull is handed a registry
+ * of its own as well (`renewRelationLoadersPerFilter`, in the platform's Apollo driver).
+ *
+ * `return` and `throw` only end the stream and resolve nothing, so they are passed on as they are. A context the
+ * platform's factory did not build is never touched, and its stream behaves exactly as it did.
+ *
+ * @param stream The stream graphql-js opened: each value it yields is one executed event.
+ * @param context The operation's context, as graphql-js hands it to every event's resolvers.
+ * @returns The stream, each pull resolved with loaders of its own.
+ */
+export function renewRelationLoadersPerPull<T>(stream: AsyncIterable<T>, context: unknown): AsyncIterable<T> {
+	const iterator = stream[Symbol.asyncIterator]();
+
+	const renewed: AsyncIterableIterator<T> = {
+		next: (...args: [] | [unknown]) => {
+			renewRelationLoaders(context);
+			return iterator.next(...args);
+		},
+		return: (value?: unknown): Promise<IteratorResult<T>> =>
+			typeof iterator.return === 'function'
+				? iterator.return(value)
+				: Promise.resolve({ value: undefined, done: true } as IteratorResult<T>),
+		throw: (error?: unknown): Promise<IteratorResult<T>> =>
+			typeof iterator.throw === 'function' ? iterator.throw(error) : Promise.reject(error),
+		[Symbol.asyncIterator]() {
+			return renewed;
+		}
+	};
+
+	return renewed;
 }
 
 /**
