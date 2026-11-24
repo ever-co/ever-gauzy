@@ -1,5 +1,3 @@
-@use 'themes' as *;
-
 .svg-wrapper {
   display: flex;
   justify-content: space-between;
@@ -34,13 +32,13 @@
 
     &:hover {
       background-color: var(--gauzy-hover-tint);
-      color: nb-theme(text-basic-color);
+      color: var(--text-basic-color);
     }
 
     &:focus-visible {
-      outline: 2px solid nb-theme(color-primary-default);
+      outline: 2px solid var(--color-primary-default);
       outline-offset: 1px;
-      color: nb-theme(text-basic-color);
+      color: var(--text-basic-color);
     }
 
     nb-icon {
@@ -63,7 +61,7 @@
       font-weight: 600;
       line-height: 1.75rem;
       letter-spacing: -0.01em;
-      color: nb-theme(text-basic-color);
+      color: var(--text-basic-color);
     }
 
     .sub-title {
