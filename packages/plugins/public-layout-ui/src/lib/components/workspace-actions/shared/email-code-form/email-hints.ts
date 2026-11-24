@@ -1,3 +1,4 @@
+// cspell:words googlemail protonmail webmail ymail gmial
 /**
  * Small, dependency-free helpers behind two hints on the email/code form:
  * a "did you mean …?" correction for a mistyped address, and a shortcut that
@@ -33,8 +34,21 @@ const KNOWN_DOMAINS: readonly string[] = [
 	'pm.me',
 	'gmx.com',
 	'mail.com',
+	'email.com',
 	'zoho.com'
 ];
+
+/**
+ * Endings that are a slip of `.com`. Any other ending on a provider's own name is one of its real
+ * regional domains (`hotmail.ca`, `outlook.cz`, `protonmail.ch`), never a typo.
+ */
+const COM_TYPOS: ReadonlySet<string> = new Set(['co', 'cm', 'om', 'con', 'cmo', 'cpm', 'vom', 'xom', 'comm', 'coom']);
+
+/** The name before the last dot, and the ending after it. */
+function splitTld(domain: string): { name: string; tld: string } {
+	const dot = domain.lastIndexOf('.');
+	return { name: domain.slice(0, dot), tld: domain.slice(dot + 1) };
+}
 
 /** Web inboxes of the providers above, keyed by mail domain. */
 const WEB_INBOX_URLS: Readonly<Record<string, string>> = {
@@ -96,9 +110,13 @@ export function suggestEmailCorrection(email: string | null | undefined): string
 		return null;
 	}
 
+	const typed = splitTld(parts.domain);
 	let best: string | null = null;
 	let bestDistance = Infinity;
 	for (const candidate of TYPO_TARGET_DOMAINS) {
+		if (typed.name === splitTld(candidate).name && !COM_TYPOS.has(typed.tld)) {
+			continue;
+		}
 		// One typo for the shorter names, two for the long ones.
 		const tolerance = candidate.length >= 10 ? 2 : 1;
 		const distance = typoDistance(parts.domain, candidate);
@@ -113,5 +131,5 @@ export function suggestEmailCorrection(email: string | null | undefined): string
 /** The web inbox for the address's provider, or null for any other domain. */
 export function webInboxUrl(email: string | null | undefined): string | null {
 	const parts = splitEmail(email);
-	return parts ? WEB_INBOX_URLS[parts.domain] ?? null : null;
+	return parts ? (WEB_INBOX_URLS[parts.domain] ?? null) : null;
 }

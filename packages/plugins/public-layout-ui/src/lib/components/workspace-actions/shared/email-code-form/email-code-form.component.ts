@@ -50,7 +50,7 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 	@Input() showEditEmailButton = true;
 	@Input() descriptionText = 'WORKSPACES.FIND.DESCRIPTION_TITLE';
 	@Input() successSentCodeTitle = 'WORKSPACES.CREATE.SUCCESS_SENT_CODE_TITLE';
-	@Input() successSentCodeSubTitle = 'WORKSPACES.CREATE.SUCCESS_SENT_CODE_SUB_TITLE';
+	@Input() successSentCodeSubTitle = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_SUB_TITLE';
 
 	@Output() readonly sendCode = new EventEmitter<void>();
 	@Output() readonly resendCode = new EventEmitter<void>();
@@ -161,7 +161,7 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 		this.email.markAsTouched();
 	}
 
-	/** A character typed (or a whole code autofilled) into box `index`. */
+	/** A character typed (or a whole code auto-filled) into box `index`. */
 	onCodeInput(index: number, event: Event): void {
 		const input = event.target as HTMLInputElement;
 		if (this.isLoading) {
@@ -277,7 +277,9 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 	}
 
 	private _syncCodeFromControl(value: string | null | undefined): void {
-		const chars = this._sanitize(value || '').slice(0, this.codeLength).split('');
+		const chars = this._sanitize(value || '')
+			.slice(0, this.codeLength)
+			.split('');
 		this.codeChars = this._emptyCode().map((_, i) => chars[i] ?? '');
 		if (!chars.length) {
 			this._autoSubmittedCode = null;

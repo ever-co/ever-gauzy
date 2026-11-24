@@ -1,3 +1,4 @@
+// cspell:words gmai
 import { suggestEmailCorrection, webInboxUrl } from './email-hints';
 
 describe('suggestEmailCorrection', () => {
@@ -21,6 +22,13 @@ describe('suggestEmailCorrection', () => {
 
 	it.each(['jane@acme.com', 'jane@ever.co', 'jane@life.com', 'jane@company.io'])(
 		'does not "correct" the company domain in %s',
+		(email) => {
+			expect(suggestEmailCorrection(email)).toBeNull();
+		}
+	);
+
+	it.each(['jane@protonmail.ch', 'jane@hotmail.ca', 'jane@outlook.cz', 'jane@email.com'])(
+		'leaves the real regional or sibling domain in %s alone',
 		(email) => {
 			expect(suggestEmailCorrection(email)).toBeNull();
 		}
