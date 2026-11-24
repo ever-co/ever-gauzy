@@ -5,6 +5,7 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -20,6 +21,8 @@ import {
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
 import { RecurringExpenseViewPageComponent } from './recurring-expense-view/recurring-expense-view-page.component';
+import { ExpenseBarChartComponent } from '../expenses/expense-view/expense-charts/expense-bar-chart.component';
+import { ExpenseShareChartComponent } from '../expenses/expense-view/expense-charts/expense-share-chart.component';
 
 @NgModule({
 	imports: [
@@ -29,6 +32,7 @@ import { RecurringExpenseViewPageComponent } from './recurring-expense-view/recu
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
@@ -38,7 +42,10 @@ import { RecurringExpenseViewPageComponent } from './recurring-expense-view/recu
 		RecordViewModule,
 		SmartDataViewLayoutModule,
 		// The page's amounts, drawn as the grids draw them
-		TableComponentsModule
+		TableComponentsModule,
+		// The page's charts, the expense page's own
+		ExpenseBarChartComponent,
+		ExpenseShareChartComponent
 	],
 	declarations: [ExpenseRecurringComponent, RecurringExpenseViewPageComponent]
 })
