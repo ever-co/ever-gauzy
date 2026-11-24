@@ -31,6 +31,7 @@ import {
 	loadOrganizationRecurringExpense,
 	loadOrganizationRecurringExpensePeriods,
 	recurringExpenseCategoryName,
+	recurringExpenseFocusMonth,
 	recurringExpenseMonthsCharged,
 	recurringExpenseStateOf
 } from '../recurring-expense-record-view';
@@ -226,13 +227,13 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 
 	/**
 	 * Asks which months to delete — this month only, this month on, or all — as the list does, then asks once more
-	 * before deleting. "This month" is today's month, kept within the expense's own months. When nothing of this
-	 * period is left, the page goes back to the list.
+	 * before deleting. "This month" is the focus month: today's, kept within the expense's own months. When nothing
+	 * of this period is left, the page goes back to the list.
 	 */
 	async delete(): Promise<void> {
 		const expense = this.expense;
 		if (!expense || this.busy) return;
-		const month = this.deletionMonth(expense);
+		const month = recurringExpenseFocusMonth(expense);
 		// The expense's name as the page shows it: typed back in the dialog before Ok is enabled, and named again
 		// in the last confirmation.
 		const name = this.headline?.title || recurringExpenseCategoryName(expense.categoryName, (key) => this.getTranslation(key));
@@ -406,22 +407,6 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 				]
 			}
 		];
-	}
-
-	/** Today's month, kept within the expense's months: the "this month" of the delete dialog. */
-	private deletionMonth(expense: IOrganizationRecurringExpense): moment.Moment {
-		const today = moment().startOf('month');
-		const start = moment(expense.startDate).startOf('month');
-		if (today.isBefore(start)) {
-			return start;
-		}
-		if (expense.endDate) {
-			const end = moment(expense.endDate).startOf('month');
-			if (today.isAfter(end)) {
-				return end;
-			}
-		}
-		return today;
 	}
 
 	/** The organization the page reads in: the one selected in the header. */
