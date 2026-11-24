@@ -70,10 +70,4 @@
 			</div>
 		</div>
 	</div>
-	@if (showHistory && selected) {
-	<div class="setting-table">
-		<ga-recurring-expense-history [recordsData]="fetchedHistories" (closeHistory)="this.showHistory = false">
-		</ga-recurring-expense-history>
-	</div>
-	}
 </div>

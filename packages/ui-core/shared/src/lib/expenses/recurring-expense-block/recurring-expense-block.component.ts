@@ -31,9 +31,6 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent imp
 	selected?: boolean = false;
 
 	@Input()
-	fetchedHistories: IRecurringExpenseModel[];
-
-	@Input()
 	selectedOrganization: IOrganization;
 
 	@Output()
@@ -46,9 +43,6 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent imp
 	fetchRecurringExpenseHistory = new EventEmitter<void>();
 
 	showMenu = false;
-
-	@Input()
-	showHistory = false;
 	currentEmployee: IEmployee;
 
 	constructor(readonly translateService: TranslateService) {
