@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { EmployeeRecurringExpenseService, OrganizationRecurringExpenseService } from '@gauzy/ui-core/core';
 import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IExpenseChartBar, IExpenseMonthShare } from '../expenses/expense-view/expense-view-charts';
 
 /** Default categories are stored as enum keys — shown translated, exactly as the block rows do. */
 export function recurringExpenseCategoryName(categoryName: string, translate: (key: string) => string): string {
@@ -142,6 +143,85 @@ export function recurringExpenseMonthsCharged(
 	const last = expense.endDate ? moment.min(moment(expense.endDate).startOf('month'), now) : now;
 	const months = last.diff(start, 'months') + 1;
 	return months > 0 ? months : 0;
+}
+
+/**
+ * The month the page is about: today's month, kept within the expense's own months — its first month before it
+ * starts, its last once it has ended. The month the charts end on, and the "this month" of the delete dialog.
+ */
+export function recurringExpenseFocusMonth(
+	expense: Pick<IOrganizationRecurringExpense, 'startDate' | 'endDate'>,
+	today: Date = new Date()
+): moment.Moment {
+	const month = moment(today).startOf('month');
+	if (expense.startDate) {
+		const start = moment(expense.startDate).startOf('month');
+		if (month.isBefore(start)) {
+			return start;
+		}
+	}
+	if (expense.endDate) {
+		const end = moment(expense.endDate).startOf('month');
+		if (month.isAfter(end)) {
+			return end;
+		}
+	}
+	return month;
+}
+
+/** The spans the monthly cost chart's range filter offers, in months, and the one it opens with. */
+export const RECURRING_COST_CHART_MONTH_OPTIONS = [6, 12, 24];
+export const RECURRING_COST_CHART_MONTHS = 12;
+
+/**
+ * The monthly cost chart's bars: the `months` months ending with the focus month, each the amount the expense
+ * charged that month — the period that covers it, none when no period does. The months of the page's own period
+ * are highlighted.
+ */
+export function recurringExpenseMonthBars(
+	periods: IOrganizationRecurringExpense[],
+	current: IOrganizationRecurringExpense,
+	months: number,
+	locale = 'en',
+	today: Date = new Date()
+): IExpenseChartBar[] {
+	const last = recurringExpenseFocusMonth(current, today);
+	const covers = (period: IOrganizationRecurringExpense, month: moment.Moment) =>
+		!!period.startDate &&
+		!moment(period.startDate).startOf('month').isAfter(month) &&
+		(!period.endDate || !moment(period.endDate).startOf('month').isBefore(month));
+	const bars: IExpenseChartBar[] = [];
+	for (let i = months - 1; i >= 0; i--) {
+		const month = last.clone().subtract(i, 'months').locale(locale);
+		const period = periods.find((candidate) => covers(candidate, month));
+		bars.push({
+			label: month.format('MMM'),
+			title: month.format('MMMM YYYY'),
+			value: period ? Number(period.value) || 0 : 0,
+			highlight: covers(current, month)
+		});
+	}
+	return bars;
+}
+
+/**
+ * The expense against the organization's other recurring expenses in the same month, in its currency: the rows
+ * the month's read answers, which include the expense itself. None when the month has nothing to compare.
+ */
+export function recurringExpenseMonthShare(
+	expense: IOrganizationRecurringExpense,
+	monthExpenses: IOrganizationRecurringExpense[]
+): IExpenseMonthShare | null {
+	const sameCurrency = monthExpenses.filter((item) => !item.currency || !expense.currency || item.currency === expense.currency);
+	const amount = Number(expense.value) || 0;
+	const others = sameCurrency
+		.filter((item) => item.id !== expense.id)
+		.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+	const total = amount + others;
+	if (total <= 0) {
+		return null;
+	}
+	return { amount, rest: others, total, percent: Math.round((amount / total) * 1000) / 10 };
 }
 
 /** `/pages/employees/recurring-expenses/view/:id` — one employee recurring expense, full width. */
