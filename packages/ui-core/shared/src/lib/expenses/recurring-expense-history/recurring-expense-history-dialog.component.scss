@@ -1,0 +1,107 @@
+@use 'themes' as *;
+
+// The frame of the app's plain dialogs: Nebular's own card padding, a small title, a round ghost close button and a
+// right-aligned footer. Inside, a plain table with hairlines between the periods.
+
+$hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+.history-dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  margin: 0;
+  // Fallback because `gauzy-card-1` is not registered by material-light / material-dark.
+  background-color: var(--gauzy-card-1, var(--card-background-color));
+}
+
+.history-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.history-dialog__heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.history-dialog__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.history-dialog__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: nb-theme(text-hint-color);
+}
+
+.history-dialog__close {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: nb-theme(text-hint-color);
+  cursor: pointer;
+
+  &:hover {
+    background-color: nb-theme(color-basic-transparent-hover);
+  }
+
+  nb-icon {
+    font-size: 1.25rem;
+  }
+}
+
+.history-dialog__body {
+  overflow-y: auto;
+}
+
+.history-dialog__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid $hairline;
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: nb-theme(text-hint-color);
+  }
+
+  td {
+    font-weight: 400;
+    color: nb-theme(text-basic-color);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .is-amount {
+    text-align: end;
+  }
+}
+
+.history-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+}
