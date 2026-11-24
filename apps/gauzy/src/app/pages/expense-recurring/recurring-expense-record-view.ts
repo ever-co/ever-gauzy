@@ -136,23 +136,37 @@ type RecurringExpenseMonths = Pick<
 const isSet = (value: unknown): boolean => value !== null && value !== undefined && value !== '';
 
 /**
- * The expense's first month, from the month and year it is stored with: the ones the list shows and the API edits
- * and deletes by. `startDate` is an instant, which reads as the month before west of the time zone it was saved in
- * (a period the API starts on the 1st at 00:00 UTC is the 31st of the month before in New York).
+ * A month the expense is stored with (`startYear`/`startMonth`, or the end pair): the month the list shows and the
+ * API edits and deletes by, 0-based as JavaScript counts months, as the API and the form store it. Its date is an
+ * instant, which reads as the month before west of the time zone it was saved in (a period the API starts on the 1st
+ * at 00:00 UTC is the 31st of the month before in New York). So the stored month wins when it is the date's month
+ * here, or when the date is the stored month's first day in some time zone (UTC-12 to UTC+14). A stored month that
+ * is neither is not trusted, and the date is read instead: the random seed stores `startMonth` one-based
+ * (`getMonth() + 1`), on a date anywhere in the month.
  */
-export function recurringExpenseStartMonth(expense: RecurringExpenseMonths): moment.Moment | null {
-	if (isSet(expense.startYear) && isSet(expense.startMonth)) {
-		return moment([Number(expense.startYear), Number(expense.startMonth), 1]);
+function storedMonth(year: unknown, month: unknown, date: Date | string | null | undefined): moment.Moment | null {
+	const stored = isSet(year) && isSet(month) ? moment([Number(year), Number(month), 1]) : null;
+	if (!date) {
+		return stored;
 	}
-	return expense.startDate ? moment(expense.startDate).startOf('month') : null;
+	const local = moment(date).startOf('month');
+	if (!stored || stored.isSame(local, 'month')) {
+		return stored ?? local;
+	}
+	const hour = 60 * 60 * 1000;
+	const firstDayUtc = Date.UTC(stored.year(), stored.month(), 1);
+	const at = new Date(date).getTime();
+	return at >= firstDayUtc - 14 * hour && at <= firstDayUtc + 12 * hour ? stored : local;
+}
+
+/** The expense's first month ({@link storedMonth}); `null` when it has none. */
+export function recurringExpenseStartMonth(expense: RecurringExpenseMonths): moment.Moment | null {
+	return storedMonth(expense.startYear, expense.startMonth, expense.startDate);
 }
 
 /** The expense's last month, read as its first month is; `null` when it has no end. */
 export function recurringExpenseEndMonth(expense: RecurringExpenseMonths): moment.Moment | null {
-	if (isSet(expense.endYear) && isSet(expense.endMonth)) {
-		return moment([Number(expense.endYear), Number(expense.endMonth), 1]);
-	}
-	return expense.endDate ? moment(expense.endDate).startOf('month') : null;
+	return storedMonth(expense.endYear, expense.endMonth, expense.endDate);
 }
 
 /**
