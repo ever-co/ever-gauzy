@@ -144,17 +144,20 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	async edit(): Promise<void> {
 		const expense = this.expense;
 		if (!expense || this.busy) return;
+		const origin = this.actionOrigin();
 		const dialog = this.dialogService.open(RecurringExpenseMutationComponent, {
 			context: { recurringExpense: expense, componentType: ComponentType.ORGANIZATION }
 		});
 		const edited = await firstValueFrom(dialog.onClose.pipe(first()));
-		if (!edited || this.expense?.id !== expense.id) return;
+		if (!edited || !this.isStillOn(origin)) return;
 		this.setBusy(true);
 		try {
 			const saved = await this.organizationRecurringExpenseService.update(expense.id, edited);
 			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.UPDATE_RECURRING_EXPENSE', {
-				name: this.organization?.name
+				name: origin.organizationName
 			});
+			// The viewer moved to another expense or organization while it saved: the page is theirs now.
+			if (!this.isStillOn(origin)) return;
 			if (saved?.id && saved.id !== expense.id) {
 				await this.router.navigate([ORGANIZATION_RECURRING_EXPENSES_LIST_LINK, 'view', saved.id]);
 			} else {
@@ -175,6 +178,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	async delete(): Promise<void> {
 		const expense = this.expense;
 		if (!expense || this.busy) return;
+		const origin = this.actionOrigin();
 		const month = recurringExpenseFocusMonth(expense);
 		// The expense's name as the page shows it: typed back in the dialog before Ok is enabled, and named again
 		// in the last confirmation.
@@ -197,7 +201,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 				})
 				.onClose.pipe(first())
 		);
-		if (!result) return;
+		if (!result || !this.isStillOn(origin)) return;
 		// A second, plain "are you sure" before anything is deleted: the months dialog only picks what to delete. It
 		// names the expense, so the viewer sees which one goes, e.g. `Organization Recurring Expense "Salary"`.
 		const confirmed = await firstValueFrom(
@@ -207,7 +211,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 				})
 				.onClose.pipe(first())
 		);
-		if (!confirmed || this.expense?.id !== expense.id) return;
+		if (!confirmed || !this.isStillOn(origin)) return;
 		this.setBusy(true);
 		try {
 			await this.organizationRecurringExpenseService.delete(expense.id, {
@@ -216,13 +220,18 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 				year: month.year()
 			});
 			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.DELETE_RECURRING_EXPENSE', {
-				name: this.organization?.name
+				name: origin.organizationName
 			});
+			// The viewer moved to another expense or organization while it deleted: the page is theirs now.
+			if (!this.isStillOn(origin)) return;
 			const left =
 				result === RecurringExpenseDeletionEnum.ALL
 					? null
-					: await loadOrganizationRecurringExpense(this.organizationRecurringExpenseService, expense.id, this.viewScope);
+					: await loadOrganizationRecurringExpense(this.organizationRecurringExpenseService, expense.id, origin.scope);
+			if (!this.isStillOn(origin)) return;
 			if (left) {
+				// Taken as a load of its own: a load still in flight for this page is older than this answer.
+				this.loadSequence++;
 				this.expense = left;
 				this.cdr.markForCheck();
 			} else {
@@ -253,6 +262,25 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	}
 
 	/* ── Reading ── */
+
+	/**
+	 * Where an action started: the expense the URL named and the organization selected. An edit or a delete
+	 * answers after its dialogs and its save; by then the viewer may have followed a history link or switched the
+	 * organization, and the page they moved to must not be replaced or redirected by the older action.
+	 */
+	private actionOrigin(): { expenseId: string; organizationId: string; organizationName: string; scope: IRecordViewScope } {
+		return {
+			expenseId: this.expenseId,
+			organizationId: this.organization?.id,
+			organizationName: this.organization?.name,
+			scope: this.viewScope
+		};
+	}
+
+	/** The page still shows the expense and the organization the action started on. */
+	private isStillOn(origin: { expenseId: string; organizationId: string }): boolean {
+		return this.expenseId === origin.expenseId && this.organization?.id === origin.organizationId;
+	}
 
 	private setBusy(busy: boolean): void {
 		this.busy = busy;
