@@ -64,11 +64,13 @@ export interface IRecurringExpenseShare {
 	loading: boolean;
 	failed: boolean;
 	share: IExpenseMonthShare | null;
-	/** The month compared, e.g. "November 2026". */
+	/** The month the share was read for: its caption names it, whatever the date or the language is later. */
+	monthDate: moment.Moment | null;
+	/** That month in the viewer's language, e.g. "November 2026". */
 	month: string | null;
 }
 
-const NO_SHARE: IRecurringExpenseShare = { loading: false, failed: false, share: null, month: null };
+const NO_SHARE: IRecurringExpenseShare = { loading: false, failed: false, share: null, monthDate: null, month: null };
 
 /**
  * One organization recurring expense, read-only: the headline — the category, where it stands and how often it
@@ -226,11 +228,13 @@ export class RecurringExpenseQuickLookComponent extends TranslationBaseComponent
 				endDate: month.clone().endOf('month').toDate()
 			});
 			if (sequence !== this.shareSequence) return;
+			// Captioned with the month it was read for, not the month it is when it answers.
 			this.share = {
 				loading: false,
 				failed: false,
 				share: recurringExpenseMonthShare(expense, items),
-				month: this.focusMonthName(expense)
+				monthDate: month,
+				month: this.monthName(month)
 			};
 		} catch {
 			if (sequence === this.shareSequence) {
@@ -255,10 +259,10 @@ export class RecurringExpenseQuickLookComponent extends TranslationBaseComponent
 		this.costBars = recurringExpenseMonthBars(periods, expense, this.costMonths, locale);
 	}
 
-	/** The month the share chart compares, in the viewer's language, e.g. "November 2026". */
-	private focusMonthName(expense: IOrganizationRecurringExpense): string {
+	/** A month in the viewer's language, e.g. "November 2026". */
+	private monthName(month: moment.Moment): string {
 		const locale = this.translateService.getCurrentLang() || 'en';
-		return recurringExpenseFocusMonth(expense).locale(locale).format('MMMM YYYY');
+		return month.clone().locale(locale).format('MMMM YYYY');
 	}
 
 	/** Works out the headline and the sections from the expense, in the viewer's language. */
@@ -285,8 +289,9 @@ export class RecurringExpenseQuickLookComponent extends TranslationBaseComponent
 		};
 
 		this.describeCostBars();
-		if (this.share.month) {
-			this.share = { ...this.share, month: this.focusMonthName(expense) };
+		// A new language renames the month the share was read for; it does not move the share to another month.
+		if (this.share.monthDate) {
+			this.share = { ...this.share, month: this.monthName(this.share.monthDate) };
 		}
 
 		// The drawer's fields, every one of them, under the panel's title.
