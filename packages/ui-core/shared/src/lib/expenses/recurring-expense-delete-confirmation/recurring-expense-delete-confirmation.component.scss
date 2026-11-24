@@ -7,6 +7,13 @@
         // the declaration and left this confirmation dialog transparent.
         background-color: var(--gauzy-card-1, var(--card-background-color));
     }
+
+    // The choices read as plain text: a step smaller than the theme's radio label, at normal weight.
+    ::ng-deep nb-radio .text {
+        font-size: 0.8125rem;
+        font-weight: 400;
+        line-height: 1.25rem;
+    }
 }
 
 // The name to type before Ok is enabled: a muted label, then the input, under the choices.
@@ -17,11 +24,12 @@
 .confirm-name-label {
     display: block;
     margin-bottom: 0.5rem;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
+    font-weight: 400;
     color: var(--text-hint-color);
 
     strong {
         color: var(--text-basic-color);
-        font-weight: 600;
+        font-weight: 500;
     }
 }
