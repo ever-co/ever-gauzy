@@ -30,6 +30,7 @@ import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
 import { useChatTranslate } from '../use-chat-translate';
 import { ChatMessageList } from './ChatMessageList';
+import type { MessageFeedback } from './MessageActions';
 import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
@@ -505,6 +506,28 @@ export function AiChatPanel() {
 		[attachments, input, isBusy, sendMessage]
 	);
 
+	/** Run a reply again — the latest one, which is the only one that offers it. */
+	const handleRegenerate = useCallback(
+		(messageId: string) => {
+			if (isBusy) return;
+			void regenerate({ messageId });
+		},
+		[isBusy, regenerate]
+	);
+
+	// Ratings live in the session so they survive Maximize / Restore; nothing stores them yet.
+	const [feedback, setFeedbackState] = useState<Record<string, MessageFeedback>>(session.feedback);
+	const handleFeedback = useCallback(
+		(messageId: string, value: MessageFeedback | undefined) => {
+			const next = { ...session.feedback };
+			if (value) next[messageId] = value;
+			else delete next[messageId];
+			session.feedback = next;
+			setFeedbackState(next);
+		},
+		[session]
+	);
+
 	const handleNewChat = useCallback(() => {
 		void stop();
 		setMessages([]);
@@ -923,6 +946,21 @@ export function AiChatPanel() {
 				}
 
 				${chatMarkdownCss}
+
+				/* Reply actions (Copy, Read aloud, ratings, Regenerate): quiet until pointed at. */
+				.gz-ai-chat-action {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-action:hover:not(:disabled) {
+					background-color: color-mix(in srgb, currentColor 12%, transparent) !important;
+					color: ${chatTheme.textPrimary} !important;
+				}
+				.gz-ai-chat-action[aria-pressed='true'] { color: ${chatTheme.textPrimary} !important; }
+				.gz-ai-chat-action:disabled { opacity: 0.4; cursor: default !important; }
+				.gz-ai-chat-action:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 1px;
+				}
 
 				/* Tool steps. The row is the expander, so the label carries the affordance:
 				   underlined on hover, like every other link here. */
@@ -1428,6 +1466,9 @@ export function AiChatPanel() {
 						onPreviewAttachment={handlePreviewAttachment}
 						resolveAttachmentFile={resolveAttachmentFile}
 						translate={t}
+						onRegenerate={handleRegenerate}
+						feedback={feedback}
+						onFeedback={handleFeedback}
 					/>
 				) : (
 					<ChatWelcome translate={t} />
