@@ -175,6 +175,11 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 								})
 							);
 
+							// The creator made this assignment: they stay subscribed, but are not notified of it
+							if (employee.id === user?.employeeId) {
+								return;
+							}
+
 							this.employeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
