@@ -16,6 +16,15 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   }
 }
 
+// Previous and next, side by side as one control.
+.payment-page-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding-inline-end: 0.375rem;
+  border-inline-end: 1px solid $hairline;
+}
+
 /* ── Headline ── */
 
 // A step larger than the drawer's logo, as the expense page's. Scoped as the project header's own `.project-logo`
@@ -49,6 +58,11 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   color: var(--gauzy-text-color-1);
 }
 
+// The date carries its full form as a tooltip.
+.payment-date {
+  cursor: default;
+}
+
 /* ── Monthly payments chart ── */
 
 // The chart's range filter, at the recurring expense page's size: the global input floor would draw it 46px tall
@@ -70,8 +84,15 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
 /* ── Invoice ── */
 
-.payment-open-invoice {
+// Record payment and Open invoice, at the end of the panel's header.
+.payment-panel-actions {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.payment-panel-action {
   height: 1.75rem;
   text-transform: none;
 
@@ -80,6 +101,41 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     height: 0.875rem;
     font-size: 0.875rem;
   }
+}
+
+// How much of the invoice is paid: a thin bar under the figures, its share written beside it.
+.payment-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+}
+
+.payment-progress-track {
+  flex: 1 1 auto;
+  height: 0.25rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--gauzy-chart-profit);
+  }
+
+  &.is-done span {
+    background-color: var(--gauzy-chart-revenue);
+  }
+}
+
+.payment-progress-label {
+  flex: 0 0 auto;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
 }
 
 // The invoice's figures, no frames: all five on one row while they fit, so none is left alone on a second one.
@@ -171,6 +227,194 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   &:hover,
   &:focus-visible {
     text-decoration: underline;
+  }
+}
+
+/* ── The invoice's activity: a plain list, hairlines between the changes ── */
+
+.payment-activity {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.625rem 1rem;
+
+    & + li {
+      border-top: 1px solid $hairline;
+    }
+  }
+}
+
+.payment-activity-action {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.payment-activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+
+  > * + *::before {
+    content: '·';
+    margin-inline-end: 0.375rem;
+  }
+}
+
+/* ── Placeholders while the page's parts are read ── */
+
+.payment-skeleton {
+  display: inline-block;
+  height: 0.625rem;
+  border-radius: 0.25rem;
+  background-color: var(--gauzy-hover-tint);
+  vertical-align: middle;
+  animation: payment-skeleton-pulse 1.4s ease-in-out infinite;
+
+  &--date {
+    width: 4.5rem;
+  }
+
+  &--text {
+    width: 5.5rem;
+  }
+
+  &--amount {
+    width: 3.5rem;
+  }
+
+  &--line {
+    display: block;
+    width: 80%;
+  }
+
+  &--ring {
+    flex: 0 0 auto;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+  }
+}
+
+@keyframes payment-skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .payment-skeleton {
+    animation: none;
+  }
+}
+
+.payment-table tr.is-placeholder td {
+  padding-block: 0.75rem;
+}
+
+// The bar chart's outline: grey bars along the chart's floor.
+.payment-skeleton-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 100%;
+  padding: 0.5rem 0.25rem 0;
+
+  .payment-skeleton {
+    display: block;
+    flex: 1 1 0;
+    border-radius: 0.25rem 0.25rem 0 0;
+  }
+}
+
+// The share chart's outline: a ring and its three lines.
+.payment-skeleton-share {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.payment-skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+
+  .payment-skeleton {
+    display: block;
+  }
+}
+
+.payment-activity .payment-skeleton--line + .payment-skeleton {
+  margin-top: 0.375rem;
+}
+
+/* ── Print: the page as a receipt ── */
+
+// Printed from the Print button or the browser's own menu, the page carries the body class the component sets: the
+// app around the page is hidden and the page takes the sheet's width.
+@media print {
+  ::ng-deep body.payment-printing {
+    nb-layout-header,
+    nb-sidebar,
+    nb-layout-footer {
+      display: none !important;
+    }
+
+    nb-layout .layout,
+    nb-layout .layout-container,
+    nb-layout .content,
+    nb-layout .columns,
+    nb-layout-column,
+    nb-layout .scrollable-container {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+  }
+
+  // Dark text on the white sheet, whatever the theme.
+  :host {
+    --gauzy-text-color-1: #1a1a1f;
+    --gauzy-text-color-2: #5c5c66;
+    --gauzy-hover-tint: rgba(0, 0, 0, 0.05);
+    --gauzy-overlay-border-color: rgba(0, 0, 0, 0.16);
+    color: #1a1a1f;
+    background: #fff;
+  }
+
+  .payment-screen-only {
+    display: none !important;
+  }
+
+  // One column: the payment and its invoice, then the details and the stamps.
+  :host(.is-page) .project-view-top {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'headline'
+      'main'
+      'side';
+  }
+
+  .project-view-panel {
+    break-inside: avoid;
+  }
+
+  .payment-progress-track span,
+  .payment-table tr.is-current td {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
 
