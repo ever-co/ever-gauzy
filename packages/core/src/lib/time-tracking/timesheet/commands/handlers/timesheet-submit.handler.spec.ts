@@ -25,7 +25,7 @@ describe('TimesheetSubmitHandler', () => {
 		handler.execute(new TimesheetSubmitCommand({ ids, status, organizationId: ORGANIZATION_ID } as any));
 
 	beforeEach(() => {
-		timeSheetService = { find: jest.fn(), update: jest.fn().mockResolvedValue({}) };
+		timeSheetService = { find: jest.fn(), update: jest.fn().mockResolvedValue({ affected: 1 }) };
 		emailService = { timesheetSubmit: jest.fn() };
 		handler = new TimesheetSubmitHandler(timeSheetService as any, emailService as any);
 	});
@@ -41,6 +41,13 @@ describe('TimesheetSubmitHandler', () => {
 			.mockResolvedValueOnce([timesheet('ts-1'), timesheet('ts-2')]); // submitted, after the update
 
 		const result = await run('submit');
+
+		// The pending lookup only reads timesheets that are not submitted yet, inside the organization
+		const [{ where: pendingWhere }] = timeSheetService.find.mock.calls[0];
+		expect(pendingWhere.organizationId).toBe(ORGANIZATION_ID);
+		expect(pendingWhere.id.value).toEqual(IDS);
+		expect(pendingWhere.submittedAt).toBeInstanceOf(FindOperator);
+		expect(pendingWhere.submittedAt.type).toBe('isNull');
 
 		// One guarded write per timesheet, all stamped with the same time
 		expect(timeSheetService.update).toHaveBeenCalledTimes(2);
@@ -82,7 +89,7 @@ describe('TimesheetSubmitHandler', () => {
 			.mockResolvedValueOnce([timesheet('ts-1'), timesheet('ts-2')]);
 		timeSheetService.update.mockImplementation(async (criteria: { id: string }) => {
 			if (criteria.id === 'ts-1') throw new NotFoundException('The requested record was not found');
-			return {};
+			return { affected: 1 };
 		});
 
 		const result = await run('submit');
@@ -101,6 +108,43 @@ describe('TimesheetSubmitHandler', () => {
 		await run('submit', ['ts-1']);
 
 		expect(emailService.timesheetSubmit).not.toHaveBeenCalled();
+	});
+
+	it('does not email a timesheet when the write result reports no affected count', async () => {
+		timeSheetService.find
+			.mockResolvedValueOnce([timesheet('ts-1')])
+			.mockResolvedValueOnce([timesheet('ts-1')]);
+		timeSheetService.update.mockResolvedValue({});
+
+		await run('submit', ['ts-1']);
+
+		expect(emailService.timesheetSubmit).not.toHaveBeenCalled();
+	});
+
+	it('emails once and keeps the first timestamp when two submits overlap on the same timesheet', async () => {
+		// A store that honours the `submittedAt IS NULL` condition of the write, as the database does
+		const store = new Map<string, Date | null>([['ts-1', null]]);
+		timeSheetService.find.mockImplementation(async (options: any) => {
+			const { submittedAt } = options.where;
+			const wantsPending = submittedAt.type === 'isNull';
+			return [...store.entries()]
+				.filter(([, value]) => (value === null) === wantsPending)
+				.map(([id]) => timesheet(id));
+		});
+		timeSheetService.update.mockImplementation(async (criteria: any, payload: any) => {
+			if (store.get(criteria.id) !== null) {
+				return { affected: 0 };
+			}
+			store.set(criteria.id, payload.submittedAt);
+			return { affected: 1 };
+		});
+
+		const [first, second] = await Promise.all([run('submit', ['ts-1']), run('submit', ['ts-1'])]);
+
+		expect(emailService.timesheetSubmit).toHaveBeenCalledTimes(1);
+		expect(first).toHaveLength(1);
+		expect(second).toHaveLength(1);
+		expect(store.get('ts-1')).toBeInstanceOf(Date);
 	});
 
 	it('still surfaces a write failure that is not a lost race', async () => {

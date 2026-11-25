@@ -22,7 +22,9 @@ export class TimesheetSubmitHandler implements ICommandHandler<TimesheetSubmitCo
 				{ id, organizationId, submittedAt: IsNull() },
 				{ submittedAt }
 			);
-			return (result as { affected?: number } | undefined)?.affected !== 0;
+			// One `UPDATE ... WHERE submittedAt IS NULL` statement: the database lets a single caller change the
+			// row, and `affected` says whether that caller was this one (both ORMs report it).
+			return ((result as { affected?: number } | undefined)?.affected ?? 0) > 0;
 		} catch (error) {
 			// `update` by criteria throws when no row matches any more: another submit won the race
 			if (error instanceof NotFoundException) {
