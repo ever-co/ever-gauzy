@@ -412,10 +412,13 @@
 								</span>
 							</div>
 							@if (!charts.failed) {
+								<!-- `reposition`: the list follows the page instead of blocking its scroll, which drew the
+									 page's main scrollbar while the list was open. -->
 								<nb-select
 									class="payment-chart-range"
 									size="small"
 									status="basic"
+									scrollStrategy="reposition"
 									[selected]="chartMonths"
 									(selectedChange)="setChartMonths($event)"
 									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
