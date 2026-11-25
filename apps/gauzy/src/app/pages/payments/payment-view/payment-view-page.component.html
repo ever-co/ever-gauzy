@@ -4,7 +4,7 @@
 <ngx-record-view-page heading="PAYMENTS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
 	@if (payment) {
 		<!-- The page's actions, on one line with its back button. -->
-		<div recordPageActions class="payment-page-actions payment-screen-only">
+		<div recordPageActions class="payment-page-actions">
 			<!-- The payments either side of this one, by payment date. -->
 			<div class="payment-page-step">
 				<button
@@ -215,7 +215,7 @@
 								</h5>
 								<span class="panel-caption">{{ 'PAYMENT_VIEW.INVOICE_CAPTION' | translate }}</span>
 							</div>
-							<div class="payment-panel-actions payment-screen-only">
+							<div class="payment-panel-actions">
 								@if (!summary.paidInFull) {
 									<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_PAYMENT_ADD_EDIT]">
 										<button
@@ -393,7 +393,7 @@
 
 				<!-- One bar per month of the payments from the same contact, ending with this payment's month. -->
 				@if (payment.paymentDate) {
-					<section class="panel project-view-panel payment-screen-only">
+					<section class="panel project-view-panel">
 						<header class="panel-header">
 							<div class="panel-heading">
 								<h5 class="panel-title panel-title--icon">
@@ -455,7 +455,7 @@
 
 				<!-- This payment against every payment received in the same month. -->
 				@if (charts.loading || charts.failed || charts.share) {
-					<section class="panel project-view-panel payment-screen-only">
+					<section class="panel project-view-panel">
 						<header class="panel-header">
 							<div class="panel-heading">
 								<h5 class="panel-title panel-title--icon">
@@ -497,7 +497,7 @@
 				<!-- The invoice's latest changes: who recorded, edited or deleted its payments, and when. -->
 				@if (payment.invoice) {
 					<ng-template [ngxPermissionsOnly]="invoiceActivityPermissions">
-						<section class="panel project-view-panel payment-screen-only">
+						<section class="panel project-view-panel">
 							<header class="panel-header">
 								<div class="panel-heading">
 									<h5 class="panel-title panel-title--icon">
