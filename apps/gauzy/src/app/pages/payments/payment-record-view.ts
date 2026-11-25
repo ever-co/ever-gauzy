@@ -222,6 +222,15 @@ function invoicePaymentStatus(total: number, paid: number, current: string | und
 const roundMoney = (value: number) => Math.round(value * 100) / 100;
 
 /**
+ * Whether a payment counts toward its invoice's paid total: only a payment in the invoice's currency does, since an
+ * amount in another currency cannot be added to it. The payment stays listed with the invoice's payments; it is left
+ * out of what they add up to. Either currency missing counts it, as before currencies were compared.
+ */
+export function countsTowardInvoice(payment: IPayment, invoice: IInvoice): boolean {
+	return !payment.currency || !invoice?.currency || payment.currency === invoice.currency;
+}
+
+/**
  * Saves on the invoice what its payments add up to — `alreadyPaid`, `amountDue`, `paid` and its status — after a
  * payment of it was recorded, edited or deleted, as the invoice's payments page does after each change: the payments
  * endpoint leaves the invoice as it was.
@@ -234,7 +243,11 @@ export async function syncInvoicePaidState(
 ): Promise<void> {
 	const payments = await loadInvoicePayments(paymentService, invoice.id, scope);
 	const total = roundMoney(Number(invoice.totalValue) || 0);
-	const paid = roundMoney(payments.reduce((sum, item) => sum + (Number(item.amount) || 0), 0));
+	const paid = roundMoney(
+		payments
+			.filter((item) => countsTowardInvoice(item, invoice))
+			.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+	);
 	const status = invoicePaymentStatus(total, paid, invoice.status);
 	await invoicesService.updateAction(invoice.id, {
 		alreadyPaid: paid,
