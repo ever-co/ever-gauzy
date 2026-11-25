@@ -1,10 +1,41 @@
 <!-- A payment's own page, laid out as the recurring expense page: the actions beside the back button; the headline
      across the top; the invoice it pays, that invoice's payments and the contact's payments by month in the wide column;
-     the details, its share of the month's payments and the stamps in the side one. -->
+     the details, its share of the month's payments, the invoice's activity and the stamps in the side one. -->
 <ngx-record-view-page heading="PAYMENTS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
 	@if (payment) {
 		<!-- The page's actions, on one line with its back button. -->
-		<div recordPageActions class="payment-page-actions">
+		<div recordPageActions class="payment-page-actions payment-screen-only">
+			<!-- The payments either side of this one, by payment date. -->
+			<div class="payment-page-step">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					[disabled]="!previousPayment"
+					[nbTooltip]="('BUTTONS.PREVIOUS' | translate) + ' (K)'"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.PREVIOUS' | translate"
+					(click)="openPayment(previousPayment)"
+				>
+					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					[disabled]="!nextPayment"
+					[nbTooltip]="('BUTTONS.NEXT' | translate) + ' (J)'"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.NEXT' | translate"
+					(click)="openPayment(nextPayment)"
+				>
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</div>
 			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_PAYMENT_ADD_EDIT]">
 				<button
 					nbButton
@@ -12,12 +43,30 @@
 					status="primary"
 					type="button"
 					[disabled]="busy"
+					[nbTooltip]="('BUTTONS.EDIT' | translate) + ' (E)'"
+					nbTooltipPlacement="top"
 					[attr.aria-label]="'BUTTONS.EDIT' | translate"
 					(click)="edit()"
 				>
 					<nb-icon icon="edit-outline"></nb-icon>
 					<span class="payment-page-action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
 				</button>
+				@if (canSendReceipt) {
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						status="basic"
+						type="button"
+						[disabled]="busy"
+						[nbTooltip]="'BUTTONS.SEND_RECEIPT' | translate"
+						nbTooltipPlacement="top"
+						[attr.aria-label]="'BUTTONS.SEND_RECEIPT' | translate"
+						(click)="sendReceipt()"
+					>
+						<nb-icon icon="email-outline"></nb-icon>
+					</button>
+				}
 			</ng-template>
 			<button
 				nbButton
@@ -25,7 +74,20 @@
 				size="tiny"
 				status="basic"
 				type="button"
-				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				[nbTooltip]="'BUTTONS.PRINT' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.PRINT' | translate"
+				(click)="print()"
+			>
+				<nb-icon icon="printer-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="('BUTTONS.COPY_LINK' | translate) + ' (C)'"
 				nbTooltipPlacement="top"
 				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
 				(click)="copyLink()"
@@ -102,8 +164,12 @@
 						<dt>{{ 'PAYMENTS_PAGE.PAYMENT_DATE' | translate }}</dt>
 						<dd>
 							@if (payment.paymentDate) {
-								{{ payment.paymentDate | dateFormat }}
-								<span class="project-fact-hint">{{ headline.since }}</span>
+								<span class="payment-date" [nbTooltip]="headline.dateTitle" nbTooltipPlacement="top">
+									{{ payment.paymentDate | dateFormat }}
+								</span>
+								@if (headline.timing) {
+									<span class="project-fact-hint" [class.is-overdue]="headline.late">{{ headline.timing }}</span>
+								}
 							} @else {
 								<span class="project-fact-muted">—</span>
 							}
@@ -149,19 +215,38 @@
 								</h5>
 								<span class="panel-caption">{{ 'PAYMENT_VIEW.INVOICE_CAPTION' | translate }}</span>
 							</div>
-							<ng-template [ngxPermissionsOnly]="invoiceViewPermissions">
-								<a
-									nbButton
-									ghost
-									size="tiny"
-									status="basic"
-									class="payment-open-invoice"
-									[routerLink]="[invoiceViewLink, summary.invoice.id]"
-								>
-									{{ 'PAYMENT_VIEW.OPEN_INVOICE' | translate }}
-									<nb-icon icon="arrow-forward-outline"></nb-icon>
-								</a>
-							</ng-template>
+							<div class="payment-panel-actions payment-screen-only">
+								@if (!summary.paidInFull) {
+									<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_PAYMENT_ADD_EDIT]">
+										<button
+											nbButton
+											outline
+											size="tiny"
+											status="basic"
+											type="button"
+											class="payment-panel-action"
+											[disabled]="busy"
+											(click)="recordPayment()"
+										>
+											<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+											{{ 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT' | translate }}
+										</button>
+									</ng-template>
+								}
+								<ng-template [ngxPermissionsOnly]="invoiceViewPermissions">
+									<a
+										nbButton
+										ghost
+										size="tiny"
+										status="basic"
+										class="payment-panel-action"
+										[routerLink]="[invoiceViewLink, summary.invoice.id]"
+									>
+										{{ 'PAYMENT_VIEW.OPEN_INVOICE' | translate }}
+										<nb-icon icon="arrow-forward-outline"></nb-icon>
+									</a>
+								</ng-template>
+							</div>
 						</header>
 						<div class="panel-body">
 							<dl class="payment-invoice-figures">
@@ -210,11 +295,28 @@
 									</dd>
 								</div>
 							</dl>
+
+							<!-- How much of the invoice is paid. -->
+							<div
+								class="payment-progress"
+								role="progressbar"
+								aria-valuemin="0"
+								aria-valuemax="100"
+								[attr.aria-valuenow]="summary.percent"
+								[attr.aria-label]="'PAYMENT_VIEW.PERCENT_PAID' | translate : { percent: summary.percent }"
+							>
+								<div class="payment-progress-track" [class.is-done]="summary.paidInFull">
+									<span [style.width.%]="summary.percent"></span>
+								</div>
+								<span class="payment-progress-label">
+									{{ 'PAYMENT_VIEW.PERCENT_PAID' | translate : { percent: summary.percent } }}
+								</span>
+							</div>
 						</div>
 					</section>
 
 					<!-- Every payment of that invoice, oldest first, this one marked. -->
-					<section class="panel project-view-panel" [nbSpinner]="invoicePaymentsLoading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<section class="panel project-view-panel">
 						<header class="panel-header">
 							<div class="panel-heading">
 								<h5 class="panel-title panel-title--icon">
@@ -232,7 +334,7 @@
 								</div>
 							} @else {
 								<div class="payment-table-scroll">
-									<table class="payment-table">
+									<table class="payment-table" [attr.aria-busy]="invoicePaymentsLoading">
 										<thead>
 											<tr>
 												<th scope="col">{{ 'PAYMENTS_PAGE.PAYMENT_DATE' | translate }}</th>
@@ -273,6 +375,17 @@
 													</td>
 												</tr>
 											}
+											<!-- The invoice's other payments, while they are read. -->
+											@if (invoicePaymentsLoading) {
+												@for (row of [1, 2]; track row) {
+													<tr class="is-placeholder" aria-hidden="true">
+														<td><span class="payment-skeleton payment-skeleton--date"></span></td>
+														<td><span class="payment-skeleton payment-skeleton--text"></span></td>
+														<td><span class="payment-skeleton payment-skeleton--text"></span></td>
+														<td class="is-amount"><span class="payment-skeleton payment-skeleton--amount"></span></td>
+													</tr>
+												}
+											}
 										</tbody>
 									</table>
 								</div>
@@ -283,7 +396,7 @@
 
 				<!-- One bar per month of the payments from the same contact, ending with this payment's month. -->
 				@if (payment.paymentDate) {
-					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<section class="panel project-view-panel payment-screen-only">
 						<header class="panel-header">
 							<div class="panel-heading">
 								<h5 class="panel-title panel-title--icon">
@@ -319,6 +432,13 @@
 						<div class="panel-body project-chart-body">
 							@if (charts.failed) {
 								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.loading) {
+								<!-- Grey bars while the payments are read. -->
+								<div class="payment-skeleton-bars" aria-hidden="true">
+									@for (height of [40, 65, 30, 80, 55, 70, 45, 90, 60, 35, 75, 50]; track $index) {
+										<span class="payment-skeleton" [style.height.%]="height"></span>
+									}
+								</div>
 							} @else if (charts.monthBars.length) {
 								<ga-expense-bar-chart
 									[formatValue]="formatAmount"
@@ -332,13 +452,13 @@
 				}
 			</div>
 
-			<!-- The details, the payment's share of its month's payments, then the stamps. -->
+			<!-- The details, the payment's share of its month's payments, the invoice's activity, then the stamps. -->
 			<div class="project-view-col project-view-col--side">
 				<ngx-record-view [record]="payment" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 
 				<!-- This payment against every payment received in the same month. -->
 				@if (charts.loading || charts.failed || charts.share) {
-					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<section class="panel project-view-panel payment-screen-only">
 						<header class="panel-header">
 							<div class="panel-heading">
 								<h5 class="panel-title panel-title--icon">
@@ -355,6 +475,15 @@
 						<div class="panel-body">
 							@if (charts.failed) {
 								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.loading) {
+								<div class="payment-skeleton-share" aria-hidden="true">
+									<span class="payment-skeleton payment-skeleton--ring"></span>
+									<div class="payment-skeleton-lines">
+										<span class="payment-skeleton payment-skeleton--text"></span>
+										<span class="payment-skeleton payment-skeleton--text"></span>
+										<span class="payment-skeleton payment-skeleton--amount"></span>
+									</div>
+								</div>
 							} @else if (charts.share) {
 								<ga-expense-share-chart
 									[formatValue]="formatAmount"
@@ -366,6 +495,61 @@
 							}
 						</div>
 					</section>
+				}
+
+				<!-- The invoice's latest changes: who recorded, edited or deleted its payments, and when. -->
+				@if (payment.invoice) {
+					<ng-template [ngxPermissionsOnly]="invoiceActivityPermissions">
+						<section class="panel project-view-panel payment-screen-only">
+							<header class="panel-header">
+								<div class="panel-heading">
+									<h5 class="panel-title panel-title--icon">
+										<nb-icon icon="activity-outline" aria-hidden="true"></nb-icon>
+										{{ 'PAYMENT_VIEW.ACTIVITY' | translate }}
+									</h5>
+									<span class="panel-caption">{{ 'PAYMENT_VIEW.ACTIVITY_CAPTION' | translate }}</span>
+								</div>
+							</header>
+							<div class="panel-body panel-body--flush">
+								@if (activity.loading) {
+									<ul class="payment-activity" aria-hidden="true">
+										@for (row of [1, 2, 3]; track row) {
+											<li>
+												<span class="payment-skeleton payment-skeleton--line"></span>
+												<span class="payment-skeleton payment-skeleton--text"></span>
+											</li>
+										}
+									</ul>
+								} @else if (activity.failed) {
+									<div class="state state--compact">
+										<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+										<p>{{ 'PAYMENT_VIEW.ACTIVITY_FAILED' | translate }}</p>
+									</div>
+								} @else if (!activity.items.length) {
+									<div class="state state--compact">
+										<nb-icon icon="activity-outline" aria-hidden="true"></nb-icon>
+										<p>{{ 'PAYMENT_VIEW.ACTIVITY_EMPTY' | translate }}</p>
+									</div>
+								} @else {
+									<ul class="payment-activity">
+										@for (item of activity.items; track item.id) {
+											<li>
+												<span class="payment-activity-action">{{ item.action }}</span>
+												<span class="payment-activity-meta">
+													@if (item.user) {
+														<span>{{ item.user }}</span>
+													}
+													@if (item.when) {
+														<time [nbTooltip]="item.whenTitle" nbTooltipPlacement="top">{{ item.when }}</time>
+													}
+												</span>
+											</li>
+										}
+									</ul>
+								}
+							</div>
+						</section>
+					</ng-template>
 				}
 
 				<ngx-record-view [record]="payment" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
