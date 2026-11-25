@@ -2,6 +2,7 @@ import type { SetStateAction } from 'react';
 import { Chat } from '@ai-sdk/react';
 import type { ChatInit, UIMessage } from 'ai';
 import type { IPreviewableAttachment } from './AttachmentPreview';
+import type { MessageFeedback } from './MessageActions';
 
 /** A mutable box shaped like a React ref, so the panel can use it exactly like `useRef`. */
 interface IBox<T> {
@@ -47,6 +48,8 @@ export interface IAiChatSession {
 	readonly streamErrorRef: IBox<((error: unknown) => void) | null>;
 	/** The unsent draft in the input. */
 	input: string;
+	/** Replies rated this session, by message id (not stored on the server yet). */
+	feedback: Record<string, MessageFeedback>;
 	/** Attachments staged for the next message. */
 	readonly attachments: IBox<IPreviewableAttachment[]>;
 	/**
@@ -106,6 +109,7 @@ export function acquireAiChatSession(
 		toolCallRef,
 		streamErrorRef,
 		input: '',
+		feedback: {},
 		attachments,
 		setAttachments(update) {
 			attachments.current = typeof update === 'function' ? update(attachments.current) : update;
