@@ -399,8 +399,8 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		if (this.invoicePaymentsRead) {
 			const payment = this.payment;
 			await this.invoicePaymentsRead;
-			// The viewer moved to another payment meanwhile: that page prints its own.
-			if (this.payment !== payment) return;
+			// The viewer left the page, or moved to another payment, meanwhile: nothing prints over where they are now.
+			if (this.destroyed || this.payment !== payment) return;
 		}
 		const payment = this.payment;
 		const headline = this.headline;
