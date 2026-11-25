@@ -33,6 +33,7 @@ import { ChatMessageList } from './ChatMessageList';
 import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
+import { ChatHistoryDropdown } from './ChatHistoryDropdown';
 import { DocsAttachPicker } from './DocsAttachPicker';
 import { AttachmentPreview, type IPreviewableAttachment } from './AttachmentPreview';
 import { AttachmentCard } from './AttachmentCard';
@@ -198,6 +199,8 @@ export function AiChatPanel() {
 	// dock, maximize, resize or collapse there, so those controls are dropped.
 	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
 	const rootRef = useRef<HTMLDivElement>(null);
+	/** Holds the History button and, on the full page, its dropdown — the dropdown's "outside". */
+	const historyAnchorRef = useRef<HTMLSpanElement>(null);
 	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
 	useChatTooltips(rootRef);
 
@@ -491,7 +494,10 @@ export function AiChatPanel() {
 			// In attachment order — the same order the preamble lists them, so a card's index on the
 			// sent message finds its own file.
 			if (attachments.some((attachment) => attachment.file)) {
-				pendingSentFilesRef.current = { text: messageText, files: attachments.map((attachment) => attachment.file) };
+				pendingSentFilesRef.current = {
+					text: messageText,
+					files: attachments.map((attachment) => attachment.file)
+				};
 			}
 			setAttachments([]);
 			void sendMessage({ text: messageText });
@@ -594,7 +600,8 @@ export function AiChatPanel() {
 					const rejection = body?.rejected?.[0];
 					if (rejection) {
 						throw new Error(
-							rejection.message || `${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
+							rejection.message ||
+								`${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
 						);
 					}
 					throw new Error(
@@ -762,6 +769,8 @@ export function AiChatPanel() {
 			.catch(() => setHistory([]))
 			.finally(() => setHistoryLoading(false));
 	}, [conversationsUrl, authHeaders]);
+
+	const closeHistory = useCallback(() => setShowHistory(false), []);
 
 	const handleSelectConversation = useCallback(
 		(id: string) => {
@@ -1062,6 +1071,9 @@ export function AiChatPanel() {
 				.gz-ai-chat--full .gz-ai-chat-head {
 					border-bottom-color: transparent !important;
 					padding: 12px 16px 12px 20px !important;
+					/* The History dropdown hangs below the header, over the conversation. */
+					position: relative;
+					z-index: 10;
 				}
 				.gz-ai-chat--full .gz-ai-chat-messages {
 					padding: 24px max(24px, calc((100% - ${FULL_PAGE_COLUMN}px) / 2)) 24px !important;
@@ -1137,30 +1149,48 @@ export function AiChatPanel() {
 				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
 
 				<span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
-					<button
-						type="button"
-						onClick={openHistory}
-						className="gz-ai-chat-head-btn gz-labelled"
-						style={headerBtnLabelledStyle}
-						title={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
-						aria-label={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
-					>
-						<svg
-							width="13"
-							height="13"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							style={{ flexShrink: 0 }}
+					{/* On the full page History is a dropdown anchored here (the button toggles it);
+					    in the narrow docked panel it is the overlay rendered in the body below. */}
+					<span ref={historyAnchorRef} style={{ position: 'relative', display: 'flex' }}>
+						<button
+							type="button"
+							onClick={isMaximized && showHistory ? () => setShowHistory(false) : openHistory}
+							className="gz-ai-chat-head-btn gz-labelled"
+							style={headerBtnLabelledStyle}
+							title={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+							aria-label={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+							aria-haspopup={isMaximized ? 'dialog' : undefined}
+							aria-expanded={isMaximized ? showHistory : undefined}
 						>
-							<circle cx="12" cy="12" r="10" />
-							<polyline points="12 6 12 12 16 14" />
-						</svg>
-						<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.HISTORY', 'History')}</span>
-					</button>
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								style={{ flexShrink: 0 }}
+							>
+								<circle cx="12" cy="12" r="10" />
+								<polyline points="12 6 12 12 16 14" />
+							</svg>
+							<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.HISTORY', 'History')}</span>
+						</button>
+						{isMaximized && showHistory && (
+							<ChatHistoryDropdown
+								items={history}
+								loading={historyLoading}
+								activeId={activeConversationId}
+								translate={t}
+								onSelect={handleSelectConversation}
+								onDelete={handleDeleteConversation}
+								onClose={closeHistory}
+								dismissRoot={historyAnchorRef}
+							/>
+						)}
+					</span>
 					{hasMessages && (
 						<button
 							type="button"
@@ -1353,8 +1383,8 @@ export function AiChatPanel() {
 			    conversation area only, never the panel's own header (which stays operable — the
 			    user can still collapse/detach while a picker is open). */}
 			<div style={bodyStyle} className="gz-ai-chat-body">
-				{/* Conversation history overlay */}
-				{showHistory && (
+				{/* Conversation history overlay — the docked panel's; the full page uses the dropdown. */}
+				{showHistory && !isMaximized && (
 					<ChatHistoryPanel
 						items={history}
 						loading={historyLoading}
