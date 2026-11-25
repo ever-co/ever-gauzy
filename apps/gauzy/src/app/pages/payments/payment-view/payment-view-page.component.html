@@ -220,7 +220,7 @@
 									<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_PAYMENT_ADD_EDIT]">
 										<button
 											nbButton
-											outline
+											ghost
 											size="tiny"
 											status="basic"
 											type="button"
@@ -229,7 +229,7 @@
 											(click)="recordPayment()"
 										>
 											<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
-											{{ 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT' | translate }}
+											{{ 'PAYMENT_VIEW.RECORD_PAYMENT' | translate }}
 										</button>
 									</ng-template>
 								}
@@ -278,11 +278,25 @@
 									<dt>{{ 'PAYMENT_VIEW.PAID_SO_FAR' | translate }}</dt>
 									<dd>
 										<ga-income-amount [value]="summary.paid" [rowData]="summary.invoice"></ga-income-amount>
-										@if (summary.count !== null) {
-											<span class="project-fact-hint">
+										<!-- How much of the invoice is paid: a short bar under the figure. -->
+										<span
+											class="payment-paid-track"
+											[class.is-done]="summary.paidInFull"
+											role="progressbar"
+											aria-valuemin="0"
+											aria-valuemax="100"
+											[attr.aria-valuenow]="summary.percent"
+											[attr.aria-label]="'PAYMENT_VIEW.PERCENT_PAID' | translate : { percent: summary.percent }"
+										>
+											<span [style.width.%]="summary.percent"></span>
+										</span>
+										<span class="project-fact-hint">
+											@if (summary.count !== null) {
 												{{ (summary.count === 1 ? 'PAYMENT_VIEW.PAYMENTS_COUNT_ONE' : 'PAYMENT_VIEW.PAYMENTS_COUNT') | translate : { count: summary.count } }}
-											</span>
-										}
+												·
+											}
+											{{ 'PAYMENT_VIEW.PERCENT_PAID' | translate : { percent: summary.percent } }}
+										</span>
 									</dd>
 								</div>
 								<div class="project-fact">
@@ -295,23 +309,6 @@
 									</dd>
 								</div>
 							</dl>
-
-							<!-- How much of the invoice is paid. -->
-							<div
-								class="payment-progress"
-								role="progressbar"
-								aria-valuemin="0"
-								aria-valuemax="100"
-								[attr.aria-valuenow]="summary.percent"
-								[attr.aria-label]="'PAYMENT_VIEW.PERCENT_PAID' | translate : { percent: summary.percent }"
-							>
-								<div class="payment-progress-track" [class.is-done]="summary.paidInFull">
-									<span [style.width.%]="summary.percent"></span>
-								</div>
-								<span class="payment-progress-label">
-									{{ 'PAYMENT_VIEW.PERCENT_PAID' | translate : { percent: summary.percent } }}
-								</span>
-							</div>
 						</div>
 					</section>
 
