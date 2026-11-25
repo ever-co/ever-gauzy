@@ -1,14 +1,15 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, DOCUMENT, inject } from '@angular/core';
 import { ChatSidebarService } from '@gauzy/ui-core/core';
 import { AiChatSidebarComponent } from './ai-chat-sidebar.component';
 
 /**
  * AiChatPageComponent
  *
- * Routed entry point of the FULL-PAGE chat (`/ai-chat`) — what the panel's
- * Maximize button opens. Like the detached window it is registered at the app
- * root, outside the `/pages` shell, so the chat gets the whole screen with no
- * nav menu sidebar, header or footer around it.
+ * Routed entry point of the FULL-PAGE chat (`/pages/ai-chat`) — what the
+ * panel's Maximize button opens. It is a page inside the `/pages` shell (so
+ * opening and leaving it never rebuilds the shell — see `AI_CHAT_PAGE_ROUTE`);
+ * while it is open the layout hides its menu, header and footer, and this page
+ * covers the screen.
  *
  * It renders {@link AiChatSidebarComponent}, the same panel the docked sidebar
  * renders, and that panel takes its conversation from the shared chat session
@@ -26,15 +27,23 @@ import { AiChatSidebarComponent } from './ai-chat-sidebar.component';
 	template: `<gz-ai-chat-sidebar></gz-ai-chat-sidebar>`,
 	styles: [
 		`
-			/* The router outlet sits in a plain <div> that has no height of its
-			   own, so the page height is claimed here rather than inherited. */
+			/* Covers the whole screen: the shell's menu, header and footer are hidden
+			   while this page is open, and the content column's padding must not frame
+			   the chat. Below the overlay container (dialogs, toasts, tooltips at 1040+). */
 			:host {
-				display: flex;
+				position: fixed;
+				inset: 0;
+				z-index: 1030;
+				/* The pages shell gives every routed page \`display: block\` and a 1s fade-in
+				   (\`router-outlet + *\` in pages.component.scss): the chat needs its flex column, and
+				   opening it must be instant. */
+				display: flex !important;
+				animation: none !important;
 				flex-direction: column;
-				height: 100vh;
-				width: 100%;
 				min-width: 0;
 				overflow: hidden;
+				background: var(--layout-background-color, var(--background-basic-color-1));
+				color: var(--text-basic-color);
 				/* The docked chat gets --gz-chat-surface from its nb-sidebar wrapper; this page
 				   has no wrapper, so publish the page background it renders on (same as the
 				   detached window) — the panel's overlays need an opaque surface. */
@@ -48,6 +57,19 @@ export class AiChatPageComponent {
 	constructor() {
 		const chatSidebar = inject(ChatSidebarService);
 		chatSidebar.setFullPageOpen(true);
-		inject(DestroyRef).onDestroy(() => chatSidebar.setFullPageOpen(false));
+
+		// The layout scrolls the WINDOW (Nebular window mode), and the shell under this page is
+		// still taller than the screen — so the browser drew a page scrollbar beside the chat that
+		// scrolled nothing visible. The conversation has its own scroller; the page must not scroll.
+		const { documentElement: html, body } = inject(DOCUMENT);
+		const previous = { html: html.style.overflow, body: body.style.overflow };
+		html.style.overflow = 'hidden';
+		body.style.overflow = 'hidden';
+
+		inject(DestroyRef).onDestroy(() => {
+			html.style.overflow = previous.html;
+			body.style.overflow = previous.body;
+			chatSidebar.setFullPageOpen(false);
+		});
 	}
 }
