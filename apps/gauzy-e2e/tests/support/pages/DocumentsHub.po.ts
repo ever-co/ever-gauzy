@@ -5,6 +5,7 @@ import {
 	dispatchClickWhenSettled,
 	enterInput,
 	verifyElementIsVisible,
+	verifyElementNotExist,
 	verifyText,
 	verifyTextNotExisting,
 	verifyValue,
@@ -93,8 +94,12 @@ export const shellVisible = async () => {
 };
 
 export const treeSidebarVisible = async () => {
-	await verifyElementIsVisible(DocumentsHubPage.treeColumnCss);
+	// Open the folder drawer, check the tree is in it, then close it again so it does not cover the page.
+	await dispatchClick(DocumentsHubPage.foldersButtonCss);
+	await verifyElementIsVisible(DocumentsHubPage.treeDrawerOpenCss);
 	await verifyElementIsVisible(DocumentsHubPage.treeCss);
+	await dispatchClick(DocumentsHubPage.treeDrawerCloseCss);
+	await verifyElementNotExist(DocumentsHubPage.treeDrawerOpenCss);
 };
 
 export const filterBarVisible = async () => {
