@@ -80,8 +80,8 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       width: var(--gz-chat-width, 24rem) !important;
     }
 
-    // Maximize is not a layout state any more: it opens the full-page chat route
-    // (`/ai-chat`, outside this layout), so the docked panel only ever has its own width.
+    // Maximize is not a layout state of this sidebar: it opens the full-page chat route
+    // (`/pages/ai-chat`), so the docked panel only ever has its own width.
 
     // COLLAPSED MUST REMOVE THE PANEL, not merely narrow it.
     //
@@ -805,5 +805,16 @@ nb-sidebar[tag='menu-sidebar'] {
   }
   40% {
     transform: translateY(1px);
+  }
+}
+
+// Full-page chat (/pages/ai-chat, the chat's Maximize): the page covers the screen, so the shell's
+// chrome is hidden rather than torn down — leaving the page then shows it again instantly, with
+// nothing to reload. The docked chat is not rendered meanwhile (see the template).
+:host ::ng-deep nb-layout.gz-chat-full-page {
+  nb-layout-header,
+  nb-layout-footer,
+  nb-sidebar.menu-sidebar {
+    display: none !important;
   }
 }
