@@ -11,6 +11,7 @@ import {
 import { parseAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { AttachmentCard } from './AttachmentCard';
 import { stripLeakedToolCalls } from './leaked-tool-calls';
+import { MessageActions, type MessageActionsProps } from './MessageActions';
 import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
 
@@ -97,6 +98,11 @@ export interface ChatMessageItemProps {
 	resolveAttachmentFile?: (messageId: string, index: number) => File | undefined;
 	/** `t(key, fallback)` from the panel. */
 	translate?: (key: string, fallback: string) => string;
+	/**
+	 * The action row under a finished assistant reply (Copy, Read aloud, Good / Bad response,
+	 * Regenerate). Omitted → no row.
+	 */
+	actions?: Omit<MessageActionsProps, 'text' | 'translate'>;
 }
 
 /**
@@ -110,6 +116,7 @@ export interface ChatMessageItemProps {
  *   the user's approval.
  * - `data-docs-citations` parts (contributed by @gauzy/plugin-docs) → clickable
  *   source chips deep-linking into the Documents hub.
+ * - under a finished assistant reply, the {@link MessageActions} row when `actions` is given.
  * Other part kinds (step markers, reasoning) are not rendered in the
  * compact sidebar view.
  */
@@ -120,9 +127,20 @@ export function ChatMessageItem({
 	onOpenCitation,
 	onPreviewAttachment,
 	resolveAttachmentFile,
-	translate
+	translate,
+	actions
 }: ChatMessageItemProps) {
 	const isUser = message.role === 'user';
+
+	// What Copy and Read aloud work on: the reply's words, as shown (leaked tool calls removed).
+	const replyText =
+		!isUser && actions
+			? message.parts
+					.filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+					.map((part) => stripLeakedToolCalls(part.text))
+					.filter((text) => !isBlankText(text))
+					.join('\n\n')
+			: '';
 
 	const rowStyle: CSSProperties = {
 		display: 'flex',
@@ -251,6 +269,10 @@ export function ChatMessageItem({
 
 				return null;
 			})}
+
+			{!isUser && actions && !isStreaming && (replyText || actions.onRegenerate) && (
+				<MessageActions text={replyText} {...(translate ? { translate } : {})} {...actions} />
+			)}
 		</div>
 	);
 }

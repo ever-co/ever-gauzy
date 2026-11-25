@@ -1,6 +1,7 @@
 import { useRef, useEffect, type CSSProperties } from 'react';
 import type { UIMessage } from 'ai';
 import { ChatMessageItem } from './ChatMessageItem';
+import type { MessageFeedback } from './MessageActions';
 import type { IDocsCitation } from './DocsCitationChips';
 import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
@@ -19,6 +20,12 @@ export interface ChatMessageListProps {
 	resolveAttachmentFile?: (messageId: string, index: number) => File | undefined;
 	/** `t(key, fallback)` from the panel. */
 	translate?: (key: string, fallback: string) => string;
+	/** Run the latest reply again. Given → each finished reply gets the action row. */
+	onRegenerate?: (messageId: string) => void;
+	/** Ratings given this session, by message id. */
+	feedback?: Record<string, MessageFeedback>;
+	/** Rate a reply (`undefined` clears it). */
+	onFeedback?: (messageId: string, feedback: MessageFeedback | undefined) => void;
 }
 
 /**
@@ -35,7 +42,10 @@ export function ChatMessageList({
 	onOpenCitation,
 	onPreviewAttachment,
 	resolveAttachmentFile,
-	translate
+	translate,
+	onRegenerate,
+	feedback,
+	onFeedback
 }: ChatMessageListProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +70,7 @@ export function ChatMessageList({
 
 	const lastMessage = messages[messages.length - 1];
 	const isStreaming = status === 'streaming';
+	const isBusy = status === 'submitted' || status === 'streaming';
 
 	return (
 		<div ref={scrollRef} style={containerStyle} className="gz-ai-chat-scroll gz-ai-chat-messages">
@@ -73,6 +84,24 @@ export function ChatMessageList({
 					onPreviewAttachment={onPreviewAttachment}
 					resolveAttachmentFile={resolveAttachmentFile}
 					translate={translate}
+					{...(message.role === 'assistant' && (onRegenerate || onFeedback)
+						? {
+								actions: {
+									busy: isBusy,
+									// Regenerate belongs to the latest reply only, as in other chat apps.
+									...(onRegenerate && message === lastMessage
+										? { onRegenerate: () => onRegenerate(message.id) }
+										: {}),
+									...(onFeedback
+										? {
+												feedback: feedback?.[message.id],
+												onFeedback: (value: MessageFeedback | undefined) =>
+													onFeedback(message.id, value)
+											}
+										: {})
+								}
+							}
+						: {})}
 				/>
 			))}
 
