@@ -322,6 +322,7 @@ export const chatMarkdownCss = `
 		.gz-ai-chat-scroll,
 		${MD} pre,
 		${MD} table,
+		${MD} [data-streamdown='table-wrapper'] > div:last-child,
 		${MD} [data-streamdown='code-block-body'] {
 			scrollbar-width: thin;
 			scrollbar-color: ${chatTheme.scrollbarThumb} ${chatTheme.scrollbarTrack};
@@ -329,14 +330,17 @@ export const chatMarkdownCss = `
 		.gz-ai-chat-scroll::-webkit-scrollbar,
 		${MD} pre::-webkit-scrollbar,
 		${MD} table::-webkit-scrollbar,
+		${MD} [data-streamdown='table-wrapper'] > div:last-child::-webkit-scrollbar,
 		${MD} [data-streamdown='code-block-body']::-webkit-scrollbar { width: 6px; height: 6px; }
 		.gz-ai-chat-scroll::-webkit-scrollbar-track,
 		${MD} pre::-webkit-scrollbar-track,
 		${MD} table::-webkit-scrollbar-track,
+		${MD} [data-streamdown='table-wrapper'] > div:last-child::-webkit-scrollbar-track,
 		${MD} [data-streamdown='code-block-body']::-webkit-scrollbar-track { background: ${chatTheme.scrollbarTrack}; }
 		.gz-ai-chat-scroll::-webkit-scrollbar-thumb,
 		${MD} pre::-webkit-scrollbar-thumb,
 		${MD} table::-webkit-scrollbar-thumb,
+		${MD} [data-streamdown='table-wrapper'] > div:last-child::-webkit-scrollbar-thumb,
 		${MD} [data-streamdown='code-block-body']::-webkit-scrollbar-thumb {
 			background: ${chatTheme.scrollbarThumb};
 			border-radius: 999px;
