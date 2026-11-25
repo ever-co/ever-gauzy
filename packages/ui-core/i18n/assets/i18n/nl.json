@@ -8261,6 +8261,8 @@
 		"ACTIVITY_FAILED": "De activiteit van de factuur kon niet worden geladen",
 		"RECEIPT_SENT": "Ontvangstbewijs verzonden naar {{ name }}",
 		"RECEIPT_NOT_SENT": "Het ontvangstbewijs kon niet worden verzonden",
+		"RECEIPT_TITLE": "Betalingsbewijs",
+		"PRINTED_ON": "Afgedrukt op {{ date }}",
 		"DELETE_NAME": "de betaling van {{ amount }}",
 		"DELETE_NAME_FROM": "de betaling van {{ amount }} van {{ contact }}"
 	},

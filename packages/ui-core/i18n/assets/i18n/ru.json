@@ -8277,6 +8277,8 @@
 		"ACTIVITY_FAILED": "Не удалось загрузить активность по счёту",
 		"RECEIPT_SENT": "Квитанция отправлена: {{ name }}",
 		"RECEIPT_NOT_SENT": "Не удалось отправить квитанцию",
+		"RECEIPT_TITLE": "Квитанция об оплате",
+		"PRINTED_ON": "Напечатано {{ date }}",
 		"DELETE_NAME": "платёж на {{ amount }}",
 		"DELETE_NAME_FROM": "платёж на {{ amount }} от {{ contact }}"
 	},

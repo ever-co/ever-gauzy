@@ -8263,6 +8263,8 @@
 		"ACTIVITY_FAILED": "No se pudo cargar la actividad de la factura",
 		"RECEIPT_SENT": "Recibo enviado a {{ name }}",
 		"RECEIPT_NOT_SENT": "No se pudo enviar el recibo",
+		"RECEIPT_TITLE": "Recibo de pago",
+		"PRINTED_ON": "Impreso el {{ date }}",
 		"DELETE_NAME": "el pago de {{ amount }}",
 		"DELETE_NAME_FROM": "el pago de {{ amount }} de {{ contact }}"
 	},

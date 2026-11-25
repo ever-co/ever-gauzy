@@ -8253,6 +8253,8 @@
 		"ACTIVITY_FAILED": "تعذّر تحميل نشاط الفاتورة",
 		"RECEIPT_SENT": "تم إرسال الإيصال إلى {{ name }}",
 		"RECEIPT_NOT_SENT": "تعذّر إرسال الإيصال",
+		"RECEIPT_TITLE": "إيصال دفع",
+		"PRINTED_ON": "طُبع في {{ date }}",
 		"DELETE_NAME": "الدفعة بمبلغ {{ amount }}",
 		"DELETE_NAME_FROM": "الدفعة بمبلغ {{ amount }} من {{ contact }}"
 	},

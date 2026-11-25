@@ -8261,6 +8261,8 @@
 		"ACTIVITY_FAILED": "Impossibile caricare l'attività della fattura",
 		"RECEIPT_SENT": "Ricevuta inviata a {{ name }}",
 		"RECEIPT_NOT_SENT": "Impossibile inviare la ricevuta",
+		"RECEIPT_TITLE": "Ricevuta di pagamento",
+		"PRINTED_ON": "Stampato il {{ date }}",
 		"DELETE_NAME": "il pagamento di {{ amount }}",
 		"DELETE_NAME_FROM": "il pagamento di {{ amount }} da {{ contact }}"
 	},

@@ -8260,6 +8260,8 @@
 		"ACTIVITY_FAILED": "Nie udało się wczytać aktywności faktury",
 		"RECEIPT_SENT": "Potwierdzenie wysłano do {{ name }}",
 		"RECEIPT_NOT_SENT": "Nie udało się wysłać potwierdzenia",
+		"RECEIPT_TITLE": "Potwierdzenie płatności",
+		"PRINTED_ON": "Wydrukowano {{ date }}",
 		"DELETE_NAME": "płatność na kwotę {{ amount }}",
 		"DELETE_NAME_FROM": "płatność na kwotę {{ amount }} od {{ contact }}"
 	},

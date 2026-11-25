@@ -8257,6 +8257,8 @@
 		"ACTIVITY_FAILED": "Die Aktivität der Rechnung konnte nicht geladen werden",
 		"RECEIPT_SENT": "Beleg an {{ name }} gesendet",
 		"RECEIPT_NOT_SENT": "Der Beleg konnte nicht gesendet werden",
+		"RECEIPT_TITLE": "Zahlungsbeleg",
+		"PRINTED_ON": "Gedruckt am {{ date }}",
 		"DELETE_NAME": "die Zahlung über {{ amount }}",
 		"DELETE_NAME_FROM": "die Zahlung über {{ amount }} von {{ contact }}"
 	},

@@ -8258,6 +8258,8 @@
 		"ACTIVITY_FAILED": "L'activité de la facture n'a pas pu être chargée",
 		"RECEIPT_SENT": "Reçu envoyé à {{ name }}",
 		"RECEIPT_NOT_SENT": "Le reçu n'a pas pu être envoyé",
+		"RECEIPT_TITLE": "Reçu de paiement",
+		"PRINTED_ON": "Imprimé le {{ date }}",
 		"DELETE_NAME": "le paiement de {{ amount }}",
 		"DELETE_NAME_FROM": "le paiement de {{ amount }} de {{ contact }}"
 	},

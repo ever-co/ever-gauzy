@@ -9585,6 +9585,8 @@
 		"ACTIVITY_FAILED": "无法加载发票动态",
 		"RECEIPT_SENT": "收据已发送给 {{ name }}",
 		"RECEIPT_NOT_SENT": "无法发送收据",
+		"RECEIPT_TITLE": "付款收据",
+		"PRINTED_ON": "打印于 {{ date }}",
 		"DELETE_NAME": "金额为 {{ amount }} 的付款",
 		"DELETE_NAME_FROM": "来自 {{ contact }}、金额为 {{ amount }} 的付款"
 	},

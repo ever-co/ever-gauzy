@@ -7259,6 +7259,8 @@
 		"ACTIVITY_FAILED": "The invoice's activity could not be loaded",
 		"RECEIPT_SENT": "Receipt sent to {{ name }}",
 		"RECEIPT_NOT_SENT": "The receipt could not be sent",
+		"RECEIPT_TITLE": "Payment receipt",
+		"PRINTED_ON": "Printed {{ date }}",
 		"DELETE_NAME": "the payment of {{ amount }}",
 		"DELETE_NAME_FROM": "the payment of {{ amount }} from {{ contact }}"
 	},

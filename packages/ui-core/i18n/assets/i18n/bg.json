@@ -8304,6 +8304,8 @@
 		"ACTIVITY_FAILED": "Активността по фактурата не можа да бъде заредена",
 		"RECEIPT_SENT": "Разписката е изпратена до {{ name }}",
 		"RECEIPT_NOT_SENT": "Разписката не можа да бъде изпратена",
+		"RECEIPT_TITLE": "Разписка за плащане",
+		"PRINTED_ON": "Отпечатано на {{ date }}",
 		"DELETE_NAME": "плащането от {{ amount }}",
 		"DELETE_NAME_FROM": "плащането от {{ amount }} от {{ contact }}"
 	},

@@ -8269,6 +8269,8 @@
 		"ACTIVITY_FAILED": "לא ניתן היה לטעון את פעילות החשבונית",
 		"RECEIPT_SENT": "הקבלה נשלחה אל {{ name }}",
 		"RECEIPT_NOT_SENT": "לא ניתן היה לשלוח את הקבלה",
+		"RECEIPT_TITLE": "קבלה על תשלום",
+		"PRINTED_ON": "הודפס ב־{{ date }}",
 		"DELETE_NAME": "התשלום על סך {{ amount }}",
 		"DELETE_NAME_FROM": "התשלום על סך {{ amount }} מ-{{ contact }}"
 	},

@@ -9589,6 +9589,8 @@
 		"ACTIVITY_FAILED": "Não foi possível carregar a atividade da fatura",
 		"RECEIPT_SENT": "Recibo enviado para {{ name }}",
 		"RECEIPT_NOT_SENT": "Não foi possível enviar o recibo",
+		"RECEIPT_TITLE": "Recibo de pagamento",
+		"PRINTED_ON": "Impresso em {{ date }}",
 		"DELETE_NAME": "o pagamento de {{ amount }}",
 		"DELETE_NAME_FROM": "o pagamento de {{ amount }} de {{ contact }}"
 	},
