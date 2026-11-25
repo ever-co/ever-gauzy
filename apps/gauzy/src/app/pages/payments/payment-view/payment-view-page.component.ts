@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,9 +55,7 @@ import {
 	paymentDaysFromDue,
 	paymentNeighbours
 } from '../payment-record-view';
-
-/** The class the page puts on the document's body while it prints: its print styles hide the app around it. */
-const PRINTING_CLASS = 'payment-printing';
+import { printPaymentReceipt } from './payment-receipt-print';
 
 /** The payment's headline, worked out once per payment. */
 export interface IPaymentHeadline {
@@ -157,7 +155,8 @@ interface ActionOrigin {
  * activity and the stamps in the side one.
  *
  * Keys, when no field, dialog or menu has the focus: E edits, C copies the link, J / K open the next / previous
- * payment. Esc is left to the app's menus and panels, which close on it.
+ * payment. Esc is left to the app's menus and panels, which close on it. Ctrl / Cmd + P prints the receipt, as the
+ * Print button does, rather than the page.
  *
  * The page belongs to the organization selected in the header: a payment of another organization reads "not found",
  * and switching the organization reloads the page, discarding any load in flight.
@@ -176,7 +175,7 @@ interface ActionOrigin {
 	// The project quick look's page layout: the headline across the top, then two columns.
 	host: { class: 'is-page' }
 })
-export class PaymentViewPageComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class PaymentViewPageComponent extends TranslationBaseComponent implements OnInit {
 	readonly PermissionsEnum = PermissionsEnum;
 	readonly BaseEntityEnum = BaseEntityEnum;
 	readonly backLink = PAYMENTS_LIST_LINK;
@@ -308,10 +307,6 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	ngOnDestroy(): void {
-		document.body.classList.remove(PRINTING_CLASS);
-	}
-
 	/**
 	 * The receipt is e-mailed to the contact the invoice was sent to, at its primary e-mail, signed with the
 	 * organization it is from: without either there is no one to send it to, or no one to send it from.
@@ -326,6 +321,12 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	/** The page's keys; none while the viewer types, or while a dialog or a menu is open. */
 	@HostListener('document:keydown', ['$event'])
 	onKeydown(event: KeyboardEvent): void {
+		// The browser's own print shortcut prints the receipt: printed as it is, the page would carry the app around it.
+		if (this.payment && (event.ctrlKey || event.metaKey) && !event.altKey && (event.key || '').toLowerCase() === 'p') {
+			event.preventDefault();
+			this.print();
+			return;
+		}
 		if (
 			!this.payment ||
 			this.busy ||
@@ -366,20 +367,71 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	/** Prints the page as a receipt: its print styles keep the payment and the invoice, and hide the rest. */
+	/**
+	 * Prints the payment's receipt: a document of its own with the payment and the invoice it pays — no app around
+	 * it, no buttons, no charts — in the viewer's language.
+	 */
 	print(): void {
-		window.print();
-	}
+		const payment = this.payment;
+		const headline = this.headline;
+		if (!payment || !headline) return;
+		const locale = this.translateService.getCurrentLang() || 'en';
+		const t = (key: string, params?: Record<string, unknown>) => this.getTranslation(key, params);
+		const money = (value: unknown, currency: string) => formatExpenseMoney(Number(value) || 0, currency, locale);
+		const date = (value: Date | string | undefined) => (value ? moment(value).locale(locale).format('LL') : null);
+		const method = (item: IPayment) => {
+			const key = this.methodKeyOf(item);
+			return key ? t(key) : null;
+		};
+		const summary = this.invoiceSummary;
+		const invoiceCurrency = summary?.invoice.currency || payment.currency;
 
-	/** Printing from the button or the browser's own menu: the app around the page is hidden while it prints. */
-	@HostListener('window:beforeprint')
-	onBeforePrint(): void {
-		document.body.classList.add(PRINTING_CLASS);
-	}
-
-	@HostListener('window:afterprint')
-	onAfterPrint(): void {
-		document.body.classList.remove(PRINTING_CLASS);
+		printPaymentReceipt({
+			lang: locale,
+			rtl: ['ar', 'he'].includes(locale),
+			organization: payment.invoice?.fromOrganization?.name ?? this.organization?.name ?? null,
+			title: t('PAYMENT_VIEW.RECEIPT_TITLE'),
+			printedOn: t('PAYMENT_VIEW.PRINTED_ON', { date: moment().locale(locale).format('LL') }),
+			heading: headline.title,
+			amountLabel: t('PAYMENTS_PAGE.AMOUNT'),
+			amount: money(payment.amount, payment.currency),
+			details: [
+				{ label: t('PAYMENTS_PAGE.PAYMENT_DATE'), value: date(payment.paymentDate) },
+				{ label: t('SM_TABLE.STATUS'), value: t(headline.statusKey) },
+				{ label: t('PAYMENTS_PAGE.PAYMENT_METHOD'), value: method(payment) },
+				{ label: t('PAYMENTS_PAGE.CONTACT'), value: paymentContactName(payment) },
+				{ label: t('PAYMENTS_PAGE.PROJECT'), value: payment.project?.name },
+				{ label: t('PAYMENTS_PAGE.RECORDED_BY'), value: payment.createdByUser?.name },
+				{ label: t('PAYMENTS_PAGE.NOTE'), value: payment.note }
+			],
+			invoice: summary
+				? {
+						title: t('PAYMENT_VIEW.INVOICE_TITLE', { number: summary.invoice.invoiceNumber }),
+						lines: [
+							{ label: t('INVOICES_PAGE.INVOICE_DATE'), value: date(summary.invoice.invoiceDate) },
+							{ label: t('INVOICES_PAGE.DUE_DATE'), value: date(summary.invoice.dueDate) },
+							{ label: t('INVOICES_PAGE.PAYMENTS.TOTAL_VALUE'), value: money(summary.total, invoiceCurrency) },
+							{ label: t('PAYMENT_VIEW.PAID_SO_FAR'), value: money(summary.paid, invoiceCurrency) },
+							{ label: t('PAYMENT_VIEW.BALANCE_DUE'), value: money(summary.balance, invoiceCurrency) }
+						],
+						paymentsTitle: t('PAYMENT_VIEW.INVOICE_PAYMENTS'),
+						columns: {
+							date: t('PAYMENTS_PAGE.PAYMENT_DATE'),
+							method: t('PAYMENTS_PAGE.PAYMENT_METHOD'),
+							amount: t('PAYMENTS_PAGE.AMOUNT')
+						},
+						thisPayment: t('PAYMENT_VIEW.THIS_PAYMENT'),
+						payments: this.invoicePaymentsFailed
+							? []
+							: this.invoicePayments.map((row) => ({
+									date: date(row.payment.paymentDate) ?? '—',
+									method: method(row.payment) ?? '—',
+									amount: money(row.payment.amount, row.payment.currency || invoiceCurrency),
+									isCurrent: row.isCurrent
+							  }))
+				  }
+				: null
+		});
 	}
 
 	/** Opens another payment's page: the previous or the next one. */
