@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotAcceptableException } from '@nestjs/common';
+import { NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { In, Not, IsNull } from 'typeorm';
 import { ID, ITimesheet } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
@@ -10,6 +10,27 @@ import { TimeSheetService } from '../../timesheet.service';
 @CommandHandler(TimesheetSubmitCommand)
 export class TimesheetSubmitHandler implements ICommandHandler<TimesheetSubmitCommand> {
 	constructor(readonly _timeSheetService: TimeSheetService, readonly _emailService: EmailService) {}
+
+	/**
+	 * Marks one timesheet as submitted, only while it is still not submitted.
+	 *
+	 * @returns `true` when this call made the timesheet submitted, `false` when another submit got there first.
+	 */
+	private async claim(id: ID, organizationId: ID, submittedAt: Date): Promise<boolean> {
+		try {
+			const result = await this._timeSheetService.update(
+				{ id, organizationId, submittedAt: IsNull() },
+				{ submittedAt }
+			);
+			return (result as { affected?: number } | undefined)?.affected !== 0;
+		} catch (error) {
+			// `update` by criteria throws when no row matches any more: another submit won the race
+			if (error instanceof NotFoundException) {
+				return false;
+			}
+			throw error;
+		}
+	}
 
 	/**
 	 * Submits multiple timesheets by updating their status and sending notifications.
@@ -47,15 +68,15 @@ export class TimesheetSubmitHandler implements ICommandHandler<TimesheetSubmitCo
 			const pending = await this._timeSheetService.find({
 				where: { id: In(ids), organizationId, submittedAt: IsNull() }
 			});
-			newlySubmittedIds = new Set(pending.map((timesheet) => timesheet.id));
 
-			// `update` by criteria refuses a criteria that matches nothing, so skip it when all are submitted
-			if (newlySubmittedIds.size > 0) {
-				await this._timeSheetService.update(
-					{ id: In([...newlySubmittedIds]), organizationId, submittedAt: IsNull() },
-					{ submittedAt: new Date() }
-				);
-			}
+			// Each timesheet is claimed on its own, guarded by `submittedAt IS NULL` in the statement itself.
+			// When two submits overlap, both may have read the timesheet as pending, but only one write can
+			// still match: the loser neither moves the timestamp nor emails, and is not reported as an error.
+			const submittedAt = new Date();
+			const claims = await Promise.all(
+				pending.map(async ({ id }) => ((await this.claim(id, organizationId, submittedAt)) ? id : null))
+			);
+			newlySubmittedIds = new Set(claims.filter((id): id is ID => id !== null));
 		} else {
 			await this._timeSheetService.update({ id: In(ids), organizationId }, { submittedAt: null });
 		}

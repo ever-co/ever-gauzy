@@ -1,7 +1,8 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
-import { NotAcceptableException } from '@nestjs/common';
+import { BadRequestException, NotAcceptableException, NotFoundException } from '@nestjs/common';
+import { FindOperator } from 'typeorm';
 import { TimesheetSubmitCommand } from '../timesheet-submit.command';
 import { TimesheetSubmitHandler } from './timesheet-submit.handler';
 
@@ -41,10 +42,17 @@ describe('TimesheetSubmitHandler', () => {
 
 		const result = await run('submit');
 
-		expect(timeSheetService.update).toHaveBeenCalledTimes(1);
-		const [criteria, payload] = timeSheetService.update.mock.calls[0];
-		expect(criteria.organizationId).toBe(ORGANIZATION_ID);
-		expect(payload.submittedAt).toBeInstanceOf(Date);
+		// One guarded write per timesheet, all stamped with the same time
+		expect(timeSheetService.update).toHaveBeenCalledTimes(2);
+		for (const [criteria, payload] of timeSheetService.update.mock.calls) {
+			expect(criteria.organizationId).toBe(ORGANIZATION_ID);
+			// The write itself only matches a timesheet that is still not submitted
+			expect(criteria.submittedAt).toBeInstanceOf(FindOperator);
+			expect(criteria.submittedAt.type).toBe('isNull');
+			expect(payload.submittedAt).toBeInstanceOf(Date);
+		}
+		const stamps = timeSheetService.update.mock.calls.map(([, payload]) => payload.submittedAt.getTime());
+		expect(new Set(stamps).size).toBe(1);
 		expect(emailService.timesheetSubmit).toHaveBeenCalledTimes(2);
 		expect(result).toHaveLength(2);
 	});
@@ -56,8 +64,9 @@ describe('TimesheetSubmitHandler', () => {
 
 		const result = await run('submit');
 
+		expect(timeSheetService.update).toHaveBeenCalledTimes(1);
 		const [criteria] = timeSheetService.update.mock.calls[0];
-		expect(criteria.id.value).toEqual(['ts-2']);
+		expect(criteria.id).toBe('ts-2');
 		expect(emailService.timesheetSubmit).toHaveBeenCalledTimes(1);
 		expect(emailService.timesheetSubmit).toHaveBeenCalledWith(
 			'ts-2@example.com',
@@ -65,6 +74,41 @@ describe('TimesheetSubmitHandler', () => {
 		);
 		// The response still lists every submitted timesheet that was named
 		expect(result.map((item) => item.id)).toEqual(['ts-1', 'ts-2']);
+	});
+
+	it('does not email or fail when an overlapping submit wins the write (criteria matches no row)', async () => {
+		timeSheetService.find
+			.mockResolvedValueOnce([timesheet('ts-1'), timesheet('ts-2')]) // both read as pending
+			.mockResolvedValueOnce([timesheet('ts-1'), timesheet('ts-2')]);
+		timeSheetService.update.mockImplementation(async (criteria: { id: string }) => {
+			if (criteria.id === 'ts-1') throw new NotFoundException('The requested record was not found');
+			return {};
+		});
+
+		const result = await run('submit');
+
+		expect(emailService.timesheetSubmit).toHaveBeenCalledTimes(1);
+		expect(emailService.timesheetSubmit).toHaveBeenCalledWith('ts-2@example.com', expect.anything());
+		expect(result).toHaveLength(2);
+	});
+
+	it('does not email a timesheet whose guarded write affected no row', async () => {
+		timeSheetService.find
+			.mockResolvedValueOnce([timesheet('ts-1')])
+			.mockResolvedValueOnce([timesheet('ts-1')]);
+		timeSheetService.update.mockResolvedValue({ affected: 0 });
+
+		await run('submit', ['ts-1']);
+
+		expect(emailService.timesheetSubmit).not.toHaveBeenCalled();
+	});
+
+	it('still surfaces a write failure that is not a lost race', async () => {
+		timeSheetService.find.mockResolvedValueOnce([timesheet('ts-1')]);
+		timeSheetService.update.mockRejectedValue(new BadRequestException('boom'));
+
+		await expect(run('submit', ['ts-1'])).rejects.toBeInstanceOf(BadRequestException);
+		expect(emailService.timesheetSubmit).not.toHaveBeenCalled();
 	});
 
 	it('writes and emails nothing when every timesheet is already submitted', async () => {
