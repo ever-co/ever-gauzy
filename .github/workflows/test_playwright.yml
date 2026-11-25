@@ -429,8 +429,10 @@ jobs:
         # readiness probe answered from the old servers, and the tests would have run against the
         # previous shard's database (stage run c96cc81, 2026-11-25). Nothing to stop on a fresh VM.
         run: |
+          command -v forever >/dev/null || { echo "::error::forever is not on PATH (see 'Install forever package')"; exit 1; }
+          # Answers non-zero when nothing is running, which is the normal case on a fresh VM.
           forever stopall || true
-          for i in $(seq 1 30); do
+          for _ in {1..30}; do
             busy=""
             for port in 3001 4200; do
               if (echo > "/dev/tcp/127.0.0.1/$port") 2>/dev/null; then busy="$busy $port"; fi
@@ -645,6 +647,7 @@ jobs:
           # failure stays a failure, with gh's own message. Same handling as build.yml's cleanup.
           # cspell:words mktemp
           err=$(mktemp)
+          trap 'rm -f "$err"' EXIT
           if ! ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="e2e-node-modules") | .id' 2>"$err"); then
             if grep -q 'HTTP 404' "$err"; then
               echo "::notice::no artifact list for run $GITHUB_RUN_ID (404: not a GitHub Actions run) - nothing to delete"
