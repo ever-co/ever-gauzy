@@ -130,23 +130,33 @@ export function ChatMessageItem({
 		animation: 'fadeIn 0.2s ease'
 	};
 
-	const bubbleStyle: CSSProperties = {
-		maxWidth: isUser ? '88%' : '96%',
+	const textStyle: CSSProperties = {
 		minWidth: 0,
-		padding: isUser ? '7px 11px' : '8px 11px',
-		borderRadius: isUser
-			? `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight} ${chatTheme.bubbleRadius}`
-			: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight}`,
-		backgroundColor: isUser ? chatTheme.userBubbleBg : chatTheme.assistantBubbleBg,
-		// The assistant bubble is a quiet surface, so a hairline is what gives it an edge
-		// against the panel; the user bubble already has its own fill.
-		border: isUser ? '1px solid transparent' : `1px solid ${chatTheme.borderSoft}`,
-		color: isUser ? chatTheme.userBubbleText : chatTheme.assistantBubbleText,
 		fontSize: chatTheme.fontSizeMessage,
 		lineHeight: chatTheme.lineHeightMessage,
 		letterSpacing: '0.01em',
 		wordBreak: 'break-word'
 	};
+
+	// The user's words sit in their accent bubble on the right. The reply has no box at all — no
+	// fill, no border — and keeps the width the bubble had, so it reads as text rather than as a tile.
+	const bubbleStyle: CSSProperties = isUser
+		? {
+				...textStyle,
+				maxWidth: '88%',
+				padding: '7px 11px',
+				borderRadius: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight} ${chatTheme.bubbleRadius}`,
+				backgroundColor: chatTheme.userBubbleBg,
+				border: '1px solid transparent',
+				color: chatTheme.userBubbleText
+			}
+		: {
+				...textStyle,
+				// Sized to its text, up to the same 96% of the column the bubble used to have.
+				maxWidth: '96%',
+				padding: 0,
+				color: chatTheme.assistantBubbleText
+			};
 
 	return (
 		<div>
