@@ -77,11 +77,12 @@ const PERSIST_DEBOUNCE_MS = 600;
 export const CHAT_DETACHED_WINDOW_PATH = '/ai-chat/window';
 
 /**
- * Router path of the full-page ("maximized") chat. Registered at the app root
- * next to the detached window, for the same reason: it shows the chat without
- * the nav menu sidebar, header and footer of the `/pages` shell.
+ * Router path of the full-page ("maximized") chat. It is a page INSIDE the
+ * `/pages` shell, so opening and leaving it never rebuilds the shell; while it
+ * is open (`maximized`) the layout hides its menu, header and footer and the
+ * page covers the screen.
  */
-export const CHAT_FULL_PAGE_PATH = '/ai-chat';
+export const CHAT_FULL_PAGE_PATH = '/pages/ai-chat';
 
 /** Where Restore lands when the full page was opened directly (bookmark, reload). */
 const CHAT_FULL_PAGE_FALLBACK_URL = '/pages/dashboard';
@@ -140,9 +141,10 @@ export class ChatSidebarService {
 	readonly width = signal<number>(DEFAULT_CHAT_WIDTH);
 
 	/**
-	 * Maximized: the full-page chat route (`/ai-chat`) is on screen. Set by that
-	 * page itself; Maximize navigates there and Restore navigates back to the
-	 * page the user maximized from, with the docked panel open.
+	 * Maximized: the full-page chat route (`/pages/ai-chat`) is on screen. Set by
+	 * that page itself; Maximize navigates there and Restore navigates back to the
+	 * page the user maximized from, with the docked panel open. The layout reads
+	 * it to hide its menu, header, footer and docked chat meanwhile.
 	 */
 	readonly maximized = signal<boolean>(false);
 
@@ -273,7 +275,7 @@ export class ChatSidebarService {
 	}
 
 	/**
-	 * Open the chat as a full page (`/ai-chat`), remembering the current page so
+	 * Open the chat as a full page (`/pages/ai-chat`), remembering the current page so
 	 * Restore can bring the user back to it. The panel is marked expanded first,
 	 * so coming back always shows the docked chat again.
 	 */
