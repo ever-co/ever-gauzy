@@ -372,7 +372,7 @@ jobs:
         # wall-clock only comes down by splitting across containers, exactly as that config says
         # ("shard across CI containers instead"). Each shard gets its OWN API + freshly seeded DB,
         # so shards cannot pollute each other. `strategy.job-total` used below is this list's
-        # length, so the shard count lives in one place.
+        # length; its fallback there (for the in-cluster runner, which leaves it empty) must match.
         shard: [1, 2, 3, 4]
 
     steps:
@@ -420,6 +420,26 @@ jobs:
       - name: Add npm global bin to PATH
         shell: bash
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+
+      - name: Stop servers an earlier shard left running
+        shell: bash
+        # GitHub gives every shard a fresh VM. The in-cluster runner (ever-co/k8s-gitops apps/ci-builds,
+        # act) runs the four shards one after another on one host, and `forever` kept the previous
+        # shard's API (:3001) and web (:4200) alive: this shard's web died with EADDRINUSE, the
+        # readiness probe answered from the old servers, and the tests would have run against the
+        # previous shard's database (stage run c96cc81, 2026-11-25). Nothing to stop on a fresh VM.
+        run: |
+          forever stopall || true
+          for i in $(seq 1 30); do
+            busy=""
+            for port in 3001 4200; do
+              if (echo > "/dev/tcp/127.0.0.1/$port") 2>/dev/null; then busy="$busy $port"; fi
+            done
+            [ -z "$busy" ] && exit 0
+            sleep 1
+          done
+          echo "::error::port(s)$busy still in use 30 s after stopping the earlier servers"
+          exit 1
 
       - name: Download prebuilt API + Web bundles
         uses: actions/download-artifact@v8
@@ -570,7 +590,10 @@ jobs:
         # before the run; the plain *.spec.ts and the generated BDD specs run together (see playwright.config).
         # --shard splits the FULL suite across the matrix jobs — no spec is skipped or filtered, each
         # shard runs its slice with the same retries/timeouts as before.
-        run: npx bddgen && npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        # The in-cluster runner (act) leaves `strategy.job-total` empty, which made `--shard=1/` and
+        # failed every shard in 15 s (stage run c96cc81, 2026-11-25). The fallback is the length of
+        # the `shard` list above: change both together.
+        run: npx bddgen && npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total || 4 }}
         env:
           CI: 'true'
           E2E_BASE_URL: http://localhost:4200
@@ -617,7 +640,19 @@ jobs:
         # 1-day minimum; the only real fix is deleting it the moment the last consumer is done.
         run: |
           set -euo pipefail
-          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="e2e-node-modules") | .id')
+          # A run with no GitHub Actions run behind it (the in-cluster ci-builds runner) has no artifact
+          # list to read: the listing answers 404 and there is nothing of this run to delete. Any other
+          # failure stays a failure, with gh's own message. Same handling as build.yml's cleanup.
+          # cspell:words mktemp
+          err=$(mktemp)
+          if ! ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="e2e-node-modules") | .id' 2>"$err"); then
+            if grep -q 'HTTP 404' "$err"; then
+              echo "::notice::no artifact list for run $GITHUB_RUN_ID (404: not a GitHub Actions run) - nothing to delete"
+              exit 0
+            fi
+            echo "::error::could not list the artifacts of run $GITHUB_RUN_ID: $(cat "$err")"
+            exit 1
+          fi
           if [ -z "$ids" ]; then
             echo "no e2e-node-modules artifact on this run"; exit 0
           fi
