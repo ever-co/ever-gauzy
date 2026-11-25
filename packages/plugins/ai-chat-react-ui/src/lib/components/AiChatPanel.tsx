@@ -5,7 +5,8 @@ import {
 	useRef,
 	useState,
 	type CSSProperties,
-	type PointerEvent as ReactPointerEvent
+	type PointerEvent as ReactPointerEvent,
+	type SetStateAction
 } from 'react';
 import { useChat } from '@ai-sdk/react';
 import {
@@ -39,6 +40,7 @@ import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-pr
 import { useChatTooltips } from '../use-chat-tooltips';
 import { chatTheme } from '../chat-theme';
 import { chatMarkdownCss } from '../chat-markdown-css';
+import { acquireAiChatSession, newConversationId } from './ai-chat-session';
 
 /**
  * What the docs upload endpoint answers with (the slice this panel reads).
@@ -86,14 +88,6 @@ function parseChatError(error: Error | undefined): { code?: string; providerId?:
 }
 
 /**
- * Client-generated conversation id (UUID v4, crypto-secure).
- * `crypto.randomUUID` is available in every browser Angular 21 supports.
- */
-function newConversationId(): string {
-	return crypto.randomUUID();
-}
-
-/**
  * AiChatPanel
  *
  * Full-height AI agent chat panel rendered in the dedicated chat sidebar
@@ -112,52 +106,6 @@ export function AiChatPanel() {
 	const store = useMemo(() => injector.get(Store), [injector]);
 	const chatSidebar = useMemo(() => injector.get(ChatSidebarService), [injector]);
 	const t = useChatTranslate(injector);
-	const [input, setInput] = useState('');
-
-	// Conversation persistence: a client-generated id sent with every turn;
-	// the backend saves the full message list for the current user.
-	const conversationIdRef = useRef<string>(newConversationId());
-	const [activeConversationId, setActiveConversationId] = useState(conversationIdRef.current);
-	const [showHistory, setShowHistory] = useState(false);
-	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
-	const [historyLoading, setHistoryLoading] = useState(false);
-
-	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
-	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
-	// Documents is asynchronous, so no id exists yet when the upload returns).
-	// An upload also keeps its picked `File`, so the preview opens instantly from memory.
-	const [attachments, setAttachments] = useState<IPreviewableAttachment[]>([]);
-	/** The attachment open in the preview overlay, if any. */
-	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
-	/**
-	 * Files uploaded this session, keyed by the id of the message they were sent with — one entry per
-	 * attachment, in order — so a card on a SENT message can still preview from memory. Cleared with
-	 * the panel; history reloads fall back to the Documents copy.
-	 */
-	const sentFilesRef = useRef(new Map<string, (File | undefined)[]>());
-	/**
-	 * Files of the message just sent, until it shows up in `messages` with its id. Keyed by the
-	 * MESSAGE (and the attachment's position in it), never by file name: without Documents a sent
-	 * file has no id, and two different `report.pdf` files would otherwise overwrite each other.
-	 */
-	const pendingSentFilesRef = useRef<{ text: string; files: (File | undefined)[] } | null>(null);
-	const [showAttachPicker, setShowAttachPicker] = useState(false);
-	const [isAttaching, setIsAttaching] = useState(false);
-	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
-	const [uploadingName, setUploadingName] = useState<string | null>(null);
-	const [attachmentError, setAttachmentError] = useState<string | null>(null);
-
-	// Docking / maximize state comes straight from the Angular
-	// ChatSidebarService signals — they also change outside this panel
-	// (e.g. collapsing clears maximized), so a live bridge is required.
-	const dockSide = useAngularSignal(injector, chatSidebar.position);
-	const isMaximized = useAngularSignal(injector, chatSidebar.maximized);
-	// True in the detached window (`/ai-chat/window`): there is no sidebar to
-	// dock, maximize, resize or collapse there, so those controls are dropped.
-	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
-	const rootRef = useRef<HTMLDivElement>(null);
-	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
-	useChatTooltips(rootRef);
 
 	const authHeaders = useCallback(
 		(): Record<string, string> => ({
@@ -167,6 +115,88 @@ export function AiChatPanel() {
 		}),
 		[store]
 	);
+
+	/**
+	 * The chat state shared by every mounted panel of this window (see `ai-chat-session.ts`): the
+	 * docked panel and the full-page chat (Maximize) are different components, so the conversation,
+	 * a reply still streaming, the draft and the staged attachments live there rather than here —
+	 * switching between the two then loses nothing.
+	 */
+	const session = useMemo(
+		() =>
+			acquireAiChatSession(store.user?.id ?? store.userId ?? null, ({ conversationIdRef: idRef }) => ({
+				transport: new DefaultChatTransport({
+					api: `${environment.API_BASE_URL}/api/ai-chat`,
+					headers: authHeaders,
+					body: () => ({ conversationId: idRef.current })
+				}),
+				// Resume the agent loop once all client tool results / approvals are in.
+				sendAutomaticallyWhen: (options) =>
+					lastAssistantMessageIsCompleteWithToolCalls(options) ||
+					lastAssistantMessageIsCompleteWithApprovalResponses(options)
+			})),
+		[store, authHeaders]
+	);
+
+	const [input, setInputState] = useState(session.input);
+	const setInput = useCallback(
+		(value: string) => {
+			session.input = value;
+			setInputState(value);
+		},
+		[session]
+	);
+
+	// Conversation persistence: a client-generated id sent with every turn;
+	// the backend saves the full message list for the current user.
+	const conversationIdRef = session.conversationIdRef;
+	const [activeConversationId, setActiveConversationId] = useState(conversationIdRef.current);
+	const [showHistory, setShowHistory] = useState(false);
+	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
+	const [historyLoading, setHistoryLoading] = useState(false);
+
+	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
+	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
+	// Documents is asynchronous, so no id exists yet when the upload returns).
+	// An upload also keeps its picked `File`, so the preview opens instantly from memory.
+	const [attachments, setAttachmentsState] = useState<IPreviewableAttachment[]>(session.attachments.current);
+	useEffect(() => session.onAttachments(setAttachmentsState), [session]);
+	const setAttachments = useCallback(
+		(update: SetStateAction<IPreviewableAttachment[]>) => session.setAttachments(update),
+		[session]
+	);
+	/** The attachment open in the preview overlay, if any. */
+	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
+	/**
+	 * Files uploaded this session, keyed by the id of the message they were sent with — one entry per
+	 * attachment, in order — so a card on a SENT message can still preview from memory. Kept for the
+	 * chat session (it survives Maximize / Restore); history reloads fall back to the Documents copy.
+	 */
+	const sentFilesRef = session.sentFilesRef;
+	/**
+	 * Files of the message just sent, until it shows up in `messages` with its id. Keyed by the
+	 * MESSAGE (and the attachment's position in it), never by file name: without Documents a sent
+	 * file has no id, and two different `report.pdf` files would otherwise overwrite each other.
+	 */
+	const pendingSentFilesRef = session.pendingSentFilesRef;
+	const [showAttachPicker, setShowAttachPicker] = useState(false);
+	const [isAttaching, setIsAttaching] = useState(false);
+	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
+	const [uploadingName, setUploadingName] = useState<string | null>(null);
+	const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
+	// Docking / maximize state comes straight from the Angular
+	// ChatSidebarService signals — they also change outside this panel
+	// (e.g. the full-page chat sets maximized while it is open), so a live
+	// bridge is required.
+	const dockSide = useAngularSignal(injector, chatSidebar.position);
+	const isMaximized = useAngularSignal(injector, chatSidebar.maximized);
+	// True in the detached window (`/ai-chat/window`): there is no sidebar to
+	// dock, maximize, resize or collapse there, so those controls are dropped.
+	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
+	const rootRef = useRef<HTMLDivElement>(null);
+	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
+	useChatTooltips(rootRef);
 
 	/**
 	 * The tenant/organization scope the Documents endpoints require IN THE REQUEST ITSELF —
@@ -259,57 +289,46 @@ export function AiChatPanel() {
 		[injector]
 	);
 
-	const transport = useMemo(
-		() =>
-			new DefaultChatTransport({
-				api: `${environment.API_BASE_URL}/api/ai-chat`,
-				headers: authHeaders,
-				body: () => ({ conversationId: conversationIdRef.current })
-			}),
-		[authHeaders]
-	);
-
 	/**
 	 * Indirection for the stream error handler.
 	 *
-	 * `useChat`'s `onError` needs `setMessages`, which `useChat` itself returns — a cycle. The ref is
-	 * assigned right after the hook, and `onError` can only fire once a request is in flight, so it
-	 * is always populated by the time it is read.
+	 * The session's `Chat` is created once and forwards `onError` here; the panel on screen points
+	 * it at its own handler on every render (it needs `setMessages`, which `useChat` returns). It can
+	 * only fire once a request is in flight, so it is always populated by the time it is read.
 	 */
-	const handleStreamErrorRef = useRef<((error: unknown) => void) | null>(null);
+	const handleStreamErrorRef = session.streamErrorRef;
 
-	const chat = useChat({
-		transport,
-		// Resume the agent loop once all client tool results / approvals are in.
-		sendAutomaticallyWhen: (options) =>
-			lastAssistantMessageIsCompleteWithToolCalls(options) ||
-			lastAssistantMessageIsCompleteWithApprovalResponses(options),
-		// Client ("canvas") tools run here, in the browser.
-		onToolCall: ({ toolCall }) => {
-			const {
-				toolName,
-				toolCallId,
-				input: toolInput
-			} = toolCall as {
-				toolName: string;
-				toolCallId: string;
-				input: unknown;
-			};
-			if (!isClientTool(toolName)) return;
-			// Deliberately not awaited — awaiting inside onToolCall deadlocks the stream.
-			executeClientTool(injector, toolName, toolInput)
-				.then((output) => chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never }))
-				.catch((error: unknown) =>
-					chat.addToolOutput({
-						state: 'output-error',
-						tool: toolName as never,
-						toolCallId,
-						errorText: error instanceof Error ? error.message : String(error)
-					})
-				);
-		},
-		onError: (streamError: unknown) => handleStreamErrorRef.current?.(streamError)
-	});
+	// The shared `Chat`: messages, status and any request in flight belong to the session, so a
+	// reply keeps streaming while the user moves between the docked panel and the full page.
+	const chat = useChat({ chat: session.chat });
+
+	// Client ("canvas") tools run here, in the browser — forwarded by the session's `Chat` to the
+	// panel on screen.
+	session.toolCallRef.current = ({ toolCall }) => {
+		const {
+			toolName,
+			toolCallId,
+			input: toolInput
+		} = toolCall as {
+			toolName: string;
+			toolCallId: string;
+			input: unknown;
+		};
+		if (!isClientTool(toolName)) return;
+		// Deliberately not awaited — awaiting inside onToolCall deadlocks the stream.
+		executeClientTool(injector, toolName, toolInput)
+			.then((output) =>
+				session.chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never })
+			)
+			.catch((error: unknown) =>
+				session.chat.addToolOutput({
+					state: 'output-error',
+					tool: toolName as never,
+					toolCallId,
+					errorText: error instanceof Error ? error.message : String(error)
+				})
+			);
+	};
 
 	const { messages, sendMessage, status, stop, error, regenerate, setMessages, addToolApprovalResponse } = chat;
 
@@ -320,7 +339,7 @@ export function AiChatPanel() {
 	 * a free-tier limit repeatedly is normal, and yanking the user's page away each time would be its
 	 * own bug.
 	 */
-	const rateLimitPageOpenedRef = useRef(false);
+	const rateLimitPageOpenedRef = session.rateLimitPageOpenedRef;
 
 	/**
 	 * Turn a rate-limited turn into something the user can act on.
