@@ -46,6 +46,7 @@ import {
 	PAYMENT_CHART_MONTH_OPTIONS,
 	PAYMENT_META_SECTIONS,
 	buildPaymentDetailsSections,
+	countsTowardInvoice,
 	loadContactMonthsPayments,
 	loadInvoiceActivity,
 	loadInvoicePayments,
@@ -96,7 +97,10 @@ export interface IPaymentInvoiceSummary {
 	paidInFull: boolean;
 	/** How much of the total is paid, 0 to 100: the progress bar's width. */
 	percent: number;
-	/** Payments counted in `paid`; `null` while they are read, or when they could not be. */
+	/**
+	 * Payments counted in `paid` — those in the invoice's currency; `null` while they are read, or when they could
+	 * not be, and `paid` is then only what the invoice says.
+	 */
 	count: number | null;
 }
 
@@ -227,6 +231,8 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	private loadSequence = 0;
 	/** The same for the read of the invoice's payments. */
 	private invoicePaymentsSequence = 0;
+	/** That read while it runs: the receipt waits for it, so it never prints the invoice's figures half read. */
+	private invoicePaymentsRead: Promise<void> | null = null;
 	/** The same for the charts' read. */
 	private chartsSequence = 0;
 	/** The monthly chart's payments: the contact's, in the payment's currency, over the chart's months. */
@@ -337,7 +343,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		// The browser's own print shortcut prints the receipt: printed as it is, the page would carry the app around it.
 		if (this.payment && (event.ctrlKey || event.metaKey) && !event.altKey && (event.key || '').toLowerCase() === 'p') {
 			event.preventDefault();
-			this.print();
+			void this.print();
 			return;
 		}
 		if (
@@ -383,8 +389,18 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	/**
 	 * Prints the payment's receipt: a document of its own with the payment and the invoice it pays — no app around
 	 * it, no buttons, no charts — in the viewer's language.
+	 *
+	 * The invoice's paid total, its balance and its payments are printed only from its payments as read: while they
+	 * are read the receipt waits for them, and when they could not be read it leaves those three out rather than
+	 * print what the invoice last said beside this payment.
 	 */
-	print(): void {
+	async print(): Promise<void> {
+		if (this.invoicePaymentsRead) {
+			const payment = this.payment;
+			await this.invoicePaymentsRead;
+			// The viewer moved to another payment meanwhile: that page prints its own.
+			if (this.payment !== payment) return;
+		}
 		const payment = this.payment;
 		const headline = this.headline;
 		if (!payment || !headline) return;
@@ -398,6 +414,8 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		};
 		const summary = this.invoiceSummary;
 		const invoiceCurrency = summary?.invoice.currency || payment.currency;
+		// The paid total and the balance come from the invoice's payments; without them they are not printed.
+		const paymentsRead = !!summary && summary.count !== null && !this.invoicePaymentsFailed;
 
 		printPaymentReceipt({
 			lang: locale,
@@ -424,8 +442,12 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 							{ label: t('INVOICES_PAGE.INVOICE_DATE'), value: date(summary.invoice.invoiceDate) },
 							{ label: t('INVOICES_PAGE.DUE_DATE'), value: date(summary.invoice.dueDate) },
 							{ label: t('INVOICES_PAGE.PAYMENTS.TOTAL_VALUE'), value: money(summary.total, invoiceCurrency) },
-							{ label: t('PAYMENT_VIEW.PAID_SO_FAR'), value: money(summary.paid, invoiceCurrency) },
-							{ label: t('PAYMENT_VIEW.BALANCE_DUE'), value: money(summary.balance, invoiceCurrency) }
+							...(paymentsRead
+								? [
+										{ label: t('PAYMENT_VIEW.PAID_SO_FAR'), value: money(summary.paid, invoiceCurrency) },
+										{ label: t('PAYMENT_VIEW.BALANCE_DUE'), value: money(summary.balance, invoiceCurrency) }
+								  ]
+								: [])
 						],
 						paymentsTitle: t('PAYMENT_VIEW.INVOICE_PAYMENTS'),
 						columns: {
@@ -434,7 +456,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 							amount: t('PAYMENTS_PAGE.AMOUNT')
 						},
 						thisPayment: t('PAYMENT_VIEW.THIS_PAYMENT'),
-						payments: this.invoicePaymentsFailed
+						payments: !paymentsRead
 							? []
 							: this.invoicePayments.map((row) => ({
 									date: date(row.payment.paymentDate) ?? '—',
@@ -620,6 +642,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	/** Draws the payment and reads the invoice's other payments; nothing of a previous payment stays. */
 	private show(payment: IPayment | null): void {
 		this.invoicePaymentsSequence++;
+		this.invoicePaymentsRead = null;
 		this.chartsSequence++;
 		this.payment = payment;
 		this.invoicePayments = [];
@@ -760,8 +783,18 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		};
 	}
 
+	/** Reads every payment of the payment's invoice, and keeps the read for the receipt to wait on. */
+	private loadInvoicePayments(payment: IPayment): Promise<void> {
+		const read = this.readInvoicePayments(payment);
+		this.invoicePaymentsRead = read;
+		void read.finally(() => {
+			if (this.invoicePaymentsRead === read) this.invoicePaymentsRead = null;
+		});
+		return read;
+	}
+
 	/** Reads every payment of the payment's invoice. A failed read leaves the rest as it is; the table says so. */
-	private async loadInvoicePayments(payment: IPayment): Promise<void> {
+	private async readInvoicePayments(payment: IPayment): Promise<void> {
 		const scope = this.viewScope;
 		const sequence = ++this.invoicePaymentsSequence;
 		this.invoicePayments = [{ payment, isCurrent: true }];
@@ -843,19 +876,22 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 
 	/**
 	 * The invoice's total, what is paid of it and what is still due. Paid adds up the invoice's payments once they are
-	 * read (`count`); until then, or when they could not be read, it is what the invoice says is paid.
+	 * read (`read`) — only those in the invoice's currency, which can be added to its total; a payment in another one
+	 * stays in the table. Until they are read, or when they could not be, it is what the invoice says is paid.
 	 */
-	private describeInvoice(count: number | null): void {
+	private describeInvoice(read: number | null): void {
 		const invoice = this.payment?.invoice;
 		if (!invoice) {
 			this.invoiceSummary = null;
 			return;
 		}
 		const total = Number(invoice.totalValue) || 0;
-		const paid =
-			count !== null
-				? this.invoicePayments.reduce((sum, row) => sum + (Number(row.payment.amount) || 0), 0)
-				: Number(invoice.alreadyPaid) || 0;
+		const counted =
+			read !== null ? this.invoicePayments.filter((row) => countsTowardInvoice(row.payment, invoice)) : null;
+		const count = counted ? counted.length : null;
+		const paid = counted
+			? counted.reduce((sum, row) => sum + (Number(row.payment.amount) || 0), 0)
+			: Number(invoice.alreadyPaid) || 0;
 		this.invoiceSummary = {
 			invoice,
 			total,
