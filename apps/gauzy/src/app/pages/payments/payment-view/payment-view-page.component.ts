@@ -48,6 +48,7 @@ import {
 	buildPaymentDetailsSections,
 	countsTowardInvoice,
 	loadContactMonthsPayments,
+	roundMoney,
 	loadInvoiceActivity,
 	loadInvoicePayments,
 	loadMonthPayments,
@@ -885,18 +886,21 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			this.invoiceSummary = null;
 			return;
 		}
-		const total = Number(invoice.totalValue) || 0;
+		// To the cent, as the invoice sync saves them, so the page and the saved invoice agree on paid in full.
+		const total = roundMoney(Number(invoice.totalValue) || 0);
 		const counted =
 			read !== null ? this.invoicePayments.filter((row) => countsTowardInvoice(row.payment, invoice)) : null;
 		const count = counted ? counted.length : null;
-		const paid = counted
-			? counted.reduce((sum, row) => sum + (Number(row.payment.amount) || 0), 0)
-			: Number(invoice.alreadyPaid) || 0;
+		const paid = roundMoney(
+			counted
+				? counted.reduce((sum, row) => sum + (Number(row.payment.amount) || 0), 0)
+				: Number(invoice.alreadyPaid) || 0
+		);
 		this.invoiceSummary = {
 			invoice,
 			total,
 			paid,
-			balance: Math.max(0, total - paid),
+			balance: roundMoney(Math.max(0, total - paid)),
 			paidInFull: total > 0 && paid >= total,
 			percent: total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0,
 			count
