@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,7 @@ import {
 import {
 	ErrorHandlingService,
 	InvoiceEstimateHistoryService,
+	InvoicesService,
 	PaymentService,
 	Store,
 	ToastrService
@@ -45,15 +46,17 @@ import {
 	PAYMENT_CHART_MONTH_OPTIONS,
 	PAYMENT_META_SECTIONS,
 	buildPaymentDetailsSections,
+	loadContactMonthsPayments,
 	loadInvoiceActivity,
 	loadInvoicePayments,
-	loadOrganizationPayments,
+	loadMonthPayments,
 	loadPayment,
+	loadPaymentNeighbours,
 	paymentChartRecord,
 	paymentContactId,
 	paymentContactName,
 	paymentDaysFromDue,
-	paymentNeighbours
+	syncInvoicePaidState
 } from '../payment-record-view';
 import { printPaymentReceipt } from './payment-receipt-print';
 
@@ -175,7 +178,7 @@ interface ActionOrigin {
 	// The project quick look's page layout: the headline across the top, then two columns.
 	host: { class: 'is-page' }
 })
-export class PaymentViewPageComponent extends TranslationBaseComponent implements OnInit {
+export class PaymentViewPageComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	readonly PermissionsEnum = PermissionsEnum;
 	readonly BaseEntityEnum = BaseEntityEnum;
 	readonly backLink = PAYMENTS_LIST_LINK;
@@ -226,8 +229,17 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	private invoicePaymentsSequence = 0;
 	/** The same for the charts' read. */
 	private chartsSequence = 0;
-	/** The organization's payments the charts are drawn from, as last read. */
-	private organizationPayments: IPayment[] = [];
+	/** The monthly chart's payments: the contact's, in the payment's currency, over the chart's months. */
+	private contactPayments: IPayment[] = [];
+	/** The share chart's payments: the organization's, in the payment's month and currency. */
+	private monthPayments: IPayment[] = [];
+	/** The same as `loadSequence` for the read of the previous and next payments. */
+	private neighboursSequence = 0;
+	/**
+	 * The page was left. An edit, a record or a delete that answers afterwards must not refresh it or send the viewer
+	 * back to the list from wherever they went.
+	 */
+	private destroyed = false;
 	/** The same for the read of the invoice's activity. */
 	private activitySequence = 0;
 	/** The invoice's changes as read, described again in a new language. */
@@ -240,6 +252,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		private readonly dialogService: NbDialogService,
 		private readonly paymentService: PaymentService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private readonly invoicesService: InvoicesService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly store: Store,
@@ -441,10 +454,17 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	/** Sets the monthly chart's span; the payments already read are drawn again, nothing is read. */
+	ngOnDestroy(): void {
+		this.destroyed = true;
+	}
+
+	/** Sets the monthly chart's span, and reads the payments of the months it now covers. */
 	setChartMonths(months: number): void {
+		if (months === this.chartMonths) return;
 		this.chartMonths = months;
-		this.describeCharts();
+		if (this.payment?.paymentDate) {
+			void this.loadCharts(this.payment);
+		}
 	}
 
 	/** The link of a payment of the invoice: its own page. */
@@ -476,6 +496,8 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			if (invoice) {
 				await this.createInvoiceHistory(this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT'), invoice, origin);
 			}
+			// The invoice it paid and the one it pays now, when the edit moved it.
+			await this.syncInvoices([payment.invoice, invoice], origin);
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
 			// The viewer moved to another payment or organization while it saved: the page is theirs now.
 			if (!this.isStillOn(origin)) return;
@@ -509,6 +531,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 				currency: saved?.currency ?? result.currency
 			});
 			await this.createInvoiceHistory(action, target, origin);
+			await this.syncInvoices([target], origin);
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
 			if (!this.isStillOn(origin)) return;
 			await this.refresh(payment.id);
@@ -564,6 +587,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 					payment.invoice,
 					origin
 				);
+				await this.syncInvoices([payment.invoice], origin);
 			}
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
 			// The viewer moved to another payment or organization while it deleted: the page is theirs now.
@@ -601,8 +625,10 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		this.invoicePayments = [];
 		this.invoicePaymentsLoading = false;
 		this.invoicePaymentsFailed = false;
-		this.organizationPayments = [];
+		this.contactPayments = [];
+		this.monthPayments = [];
 		this.charts = NO_CHARTS;
+		this.neighboursSequence++;
 		this.activitySequence++;
 		this.activityRecords = [];
 		this.activity = NO_ACTIVITY;
@@ -617,6 +643,26 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		}
 		if (payment?.paymentDate) {
 			void this.loadCharts(payment);
+			void this.loadNeighbours(payment);
+		}
+	}
+
+	/** Reads the payments either side of this one, for the previous / next buttons and J / K. */
+	private async loadNeighbours(payment: IPayment): Promise<void> {
+		const scope = this.viewScope;
+		if (!scope) return;
+		const sequence = ++this.neighboursSequence;
+		try {
+			const { previous, next } = await loadPaymentNeighbours(this.paymentService, scope, payment);
+			if (sequence !== this.neighboursSequence) return;
+			this.previousPayment = previous;
+			this.nextPayment = next;
+		} catch {
+			// Without them the buttons stay disabled; the page is whole.
+		} finally {
+			if (sequence === this.neighboursSequence) {
+				this.cdr.markForCheck();
+			}
 		}
 	}
 
@@ -660,19 +706,25 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Reads the organization's payments the charts are drawn from. A failed read leaves the rest as it is; the charts'
+	 * Reads only what the charts draw: the contact's payments in the payment's currency over the chart's months, and
+	 * the organization's payments in its month and currency. A failed read leaves the rest as it is; the charts'
 	 * panels say so.
 	 */
 	private async loadCharts(payment: IPayment): Promise<void> {
 		const scope = this.viewScope;
 		if (!scope) return;
 		const sequence = ++this.chartsSequence;
+		const months = this.chartMonths;
 		this.charts = { ...NO_CHARTS, loading: true };
 		this.describeCharts();
 		try {
-			const payments = await loadOrganizationPayments(this.paymentService, scope);
+			const [contactPayments, monthPayments] = await Promise.all([
+				loadContactMonthsPayments(this.paymentService, scope, payment, months),
+				loadMonthPayments(this.paymentService, scope, payment)
+			]);
 			if (sequence !== this.chartsSequence) return;
-			this.organizationPayments = payments;
+			this.contactPayments = contactPayments;
+			this.monthPayments = monthPayments;
 			this.charts = { ...this.charts, loading: false };
 			this.describeCharts();
 		} catch {
@@ -688,8 +740,8 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 
 	/**
 	 * Draws the charts from the payments read, in the viewer's language: the months of the payments from the same
-	 * contact (every payment when it names none), and the payment against every payment received in its month. Only
-	 * payments in its currency are added up; the payment itself counts as the page read it.
+	 * contact (every payment when it names none), and the payment against every payment received in its month. The
+	 * reads keep to its currency; the payment itself counts as the page read it.
 	 */
 	private describeCharts(): void {
 		const payment = this.payment;
@@ -698,19 +750,11 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		}
 		const locale = this.translateService.getCurrentLang() || 'en';
 		const contactId = paymentContactId(payment);
-		const fromContact = contactId
-			? this.organizationPayments.filter((item) => paymentContactId(item) === contactId)
-			: this.organizationPayments;
 		const self = paymentChartRecord(payment);
-		if (!this.charts.loading) {
-			const { previous, next } = paymentNeighbours(this.organizationPayments, payment);
-			this.previousPayment = previous;
-			this.nextPayment = next;
-		}
 		this.charts = {
 			...this.charts,
-			monthBars: categoryMonthBars(fromContact.map(paymentChartRecord), self, locale, this.chartMonths),
-			share: this.charts.loading ? null : monthShareOf(this.organizationPayments.map(paymentChartRecord), self),
+			monthBars: categoryMonthBars(this.contactPayments.map(paymentChartRecord), self, locale, this.chartMonths),
+			share: this.charts.loading ? null : monthShareOf(this.monthPayments.map(paymentChartRecord), self),
 			month: moment(payment.paymentDate).locale(locale).format('MMMM YYYY'),
 			contact: contactId ? paymentContactName(payment) : null
 		};
@@ -869,6 +913,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	/** The page still shows the payment and the organization the action started on, from the same load. */
 	private isStillOn(origin: ActionOrigin): boolean {
 		return (
+			!this.destroyed &&
 			this.paymentId === origin.paymentId &&
 			this.organization?.id === origin.organizationId &&
 			this.loadSequence === origin.generation
@@ -900,6 +945,26 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			}
 		} finally {
 			this.cdr.markForCheck();
+		}
+	}
+
+	/**
+	 * Saves on each invoice what its payments now add up to — paid, due and its status — as the invoice's payments
+	 * page does after a change. The invoices endpoint asks for the invoice edit permission; without it the invoices
+	 * are left for that page to bring up to date. A save that fails leaves the payment saved.
+	 */
+	private async syncInvoices(invoices: Array<IInvoice | null | undefined>, origin: ActionOrigin): Promise<void> {
+		if (!this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT)) return;
+		const unique = new Map<string, IInvoice>();
+		for (const invoice of invoices) {
+			if (invoice?.id) unique.set(invoice.id, invoice);
+		}
+		for (const invoice of unique.values()) {
+			try {
+				await syncInvoicePaidState(this.paymentService, this.invoicesService, invoice, origin.scope);
+			} catch (error) {
+				console.error('Error updating the invoice after a payment change:', error);
+			}
 		}
 	}
 
