@@ -549,7 +549,9 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		const origin = this.actionOrigin();
 		const confirmed = await firstValueFrom(
 			this.dialogService
-				.open(DeleteConfirmationComponent, { context: { recordType: this.paymentName(payment) } })
+				.open(DeleteConfirmationComponent, {
+					context: { recordType: this.paymentName(payment), confirmName: this.paymentConfirmName(payment) }
+				})
 				.onClose.pipe(first())
 		);
 		if (!confirmed || !this.isStillOn(origin)) return;
@@ -819,6 +821,21 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			percent: total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0,
 			count
 		};
+	}
+
+	/**
+	 * What the viewer types to confirm the delete: who paid, or the invoice it pays when it names no one, or its
+	 * amount when it pays no invoice either.
+	 */
+	private paymentConfirmName(payment: IPayment): string {
+		const contact = paymentContactName(payment);
+		if (contact) return contact;
+		if (payment.invoice?.invoiceNumber) return `#${payment.invoice.invoiceNumber}`;
+		return formatExpenseMoney(
+			Number(payment.amount) || 0,
+			payment.currency,
+			this.translateService.getCurrentLang() || undefined
+		);
 	}
 
 	/** The payment as the delete confirmation names it, e.g. `Payment of $1,200.00 from Acme`. */
