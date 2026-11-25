@@ -30,14 +30,14 @@ export class DocumentCommentAnchor extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => Number })
 	@IsInt()
 	@Min(0)
-	@MultiORMColumn({ type: 'integer' })
+	@MultiORMColumn()
 	startOffset: number;
 
 	/** The range's end in the block's text, excluded. */
 	@ApiProperty({ type: () => Number })
 	@IsInt()
 	@Min(0)
-	@MultiORMColumn({ type: 'integer' })
+	@MultiORMColumn()
 	endOffset: number;
 
 	/** The text the range covered when the comment was made. */

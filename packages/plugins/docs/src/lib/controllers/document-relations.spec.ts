@@ -21,8 +21,13 @@ jest.mock('@gauzy/core', () => ({
 	UUIDValidationPipe: class {}
 }));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
-// The DTO classes extend `TenantOrganizationBaseDTO`, which the mock above cannot provide.
+// The DTO classes extend `TenantOrganizationBaseDTO`, which the mock above cannot provide. The
+// controller imports the Markdown DTO from its own file, not from the barrel, so it is stubbed too.
 jest.mock('../dto', () => ({}));
+jest.mock('../dto/update-document-markdown.dto', () => ({ UpdateDocumentMarkdownDTO: class {} }));
+// The Markdown service is only injected; importing it would load the document service and its
+// event classes, which extend `@gauzy/core` bases the mock above does not provide.
+jest.mock('../services/document-markdown.service', () => ({ DocumentMarkdownService: class {} }));
 
 import { ALLOWED_DOCUMENT_RELATIONS, toRelationList } from './document.controller';
 
