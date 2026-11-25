@@ -1187,9 +1187,12 @@ export function AiChatPanel() {
 				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
 
 				<span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
-					{/* On the full page History is a dropdown anchored here (the button toggles it);
-					    in the narrow docked panel it is the overlay rendered in the body below. */}
-					<span ref={historyAnchorRef} style={{ position: 'relative', display: 'flex' }}>
+					{/* On the full page History is a dropdown (the button toggles it); in the narrow
+					    docked panel it is the overlay rendered in the body below. Not a positioning
+					    context on purpose: the dropdown hangs from the HEADER's right edge, into the
+					    empty margin beside the conversation, instead of from this button over it. This
+					    span only holds button + dropdown together for the outside-click check. */}
+					<span ref={historyAnchorRef} style={{ display: 'flex' }}>
 						<button
 							type="button"
 							onClick={isMaximized && showHistory ? () => setShowHistory(false) : openHistory}

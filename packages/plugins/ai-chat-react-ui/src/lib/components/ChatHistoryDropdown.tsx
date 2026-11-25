@@ -119,7 +119,8 @@ const dropdownCss = `
 /**
  * ChatHistoryDropdown
  *
- * The saved conversations as a dropdown under the header's History button — the full-page chat's
+ * The saved conversations as a dropdown at the right of the header, opened by its History button
+ * and kept clear of the conversation column — the full-page chat's
  * version of {@link ChatHistoryPanel}, which covers the whole chat body: the right fit for the
  * narrow docked panel, a wall of empty space on a full screen. Grouped by date, newest first; the
  * open conversation is highlighted; the delete control shows on hover or keyboard focus (always on
@@ -159,8 +160,10 @@ export function ChatHistoryDropdown({
 
 	const containerStyle: CSSProperties = {
 		position: 'absolute',
-		top: 'calc(100% + 8px)',
-		right: 0,
+		// Positioned against the full-page header (not the History button), level with its last
+		// control: the list opens in the margin to the right of the conversation, not across it.
+		top: 'calc(100% + 4px)',
+		right: 16,
 		zIndex: 20,
 		width: 340,
 		maxWidth: 'calc(100vw - 32px)',
