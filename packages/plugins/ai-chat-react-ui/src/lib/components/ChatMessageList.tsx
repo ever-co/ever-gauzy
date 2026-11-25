@@ -62,7 +62,7 @@ export function ChatMessageList({
 	const isStreaming = status === 'streaming';
 
 	return (
-		<div ref={scrollRef} style={containerStyle} className="gz-ai-chat-scroll">
+		<div ref={scrollRef} style={containerStyle} className="gz-ai-chat-scroll gz-ai-chat-messages">
 			{messages.map((message) => (
 				<ChatMessageItem
 					key={message.id}
