@@ -10,6 +10,7 @@ import {
 } from './DocsCitationChips';
 import { parseAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { AttachmentCard } from './AttachmentCard';
+import { stripLeakedToolCalls } from './leaked-tool-calls';
 import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
 
@@ -102,7 +103,8 @@ export interface ChatMessageItemProps {
  * ChatMessageItem
  *
  * Renders one UI message from its `parts`:
- * - text parts → markdown bubbles (user: accent right, assistant: subtle left)
+ * - text parts → markdown bubbles (user: accent right, assistant: subtle left), minus any tool
+ *   call the model wrote out as text instead of making it
  * - tool parts (`tool-*` / `dynamic-tool`) → compact ToolCallCard chips with
  *   live state, expandable details and Approve/Reject when the tool awaits
  *   the user's approval.
@@ -150,15 +152,17 @@ export function ChatMessageItem({
 		<div>
 			{message.parts.map((part, index) => {
 				if (part.type === 'text') {
+					// A tool call the model wrote out instead of making it is not for the reader.
+					const text = isUser ? part.text : stripLeakedToolCalls(part.text, isStreaming);
 					// Models often open a step with a whitespace-only text part (a bare "\n") right
 					// before a tool call; rendered, it is an empty bubble above the tool card.
-					if (isBlankText(part.text)) return null;
+					if (isBlankText(text)) return null;
 					// A user message that carries attachments starts with the preamble the panel
 					// composed. The MODEL needs that text (it is what makes `docs_read` actionable
 					// and keeps the attachment context alive across turns); the READER does not —
 					// render chips + the user's own words instead. Display-only: the message text
 					// is never altered.
-					const attachmentView = isUser ? parseAttachmentPreamble(part.text) : null;
+					const attachmentView = isUser ? parseAttachmentPreamble(text) : null;
 					if (attachmentView) {
 						// Cards in their own row ABOVE the bubble; the bubble holds only the words.
 						return (
@@ -187,9 +191,9 @@ export function ChatMessageItem({
 						<div style={rowStyle} key={`${message.id}-${index}`}>
 							<div style={bubbleStyle}>
 								{isUser ? (
-									<span style={{ whiteSpace: 'pre-wrap' }}>{part.text}</span>
+									<span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>
 								) : (
-									<MarkdownContent content={part.text} isStreaming={isStreaming} />
+									<MarkdownContent content={text} isStreaming={isStreaming} />
 								)}
 							</div>
 						</div>
