@@ -52,7 +52,7 @@ export const chatMarkdownCss = `
 		${MD} p,
 		${MD} li,
 		${MD} td { color: ${chatTheme.textBody}; }
-		${MD} p { margin: 0 0 0.9em; }
+		${MD} p { margin: 0 0 0.75em; }
 
 		${MD} h1,
 		${MD} h2,
@@ -60,42 +60,48 @@ export const chatMarkdownCss = `
 		${MD} h4,
 		${MD} h5,
 		${MD} h6 {
-			margin: 1.4em 0 0.55em;
+			margin: 1.15em 0 0.45em;
 			font-family: inherit;
 			font-weight: ${chatTheme.fontWeightSemibold};
 			line-height: 1.35;
 			letter-spacing: -0.005em;
 			color: inherit;
 		}
-		${MD} h1 { font-size: 1.45em; }
-		${MD} h2 { font-size: 1.28em; }
-		${MD} h3 { font-size: 1.15em; }
-		${MD} h4 { font-size: 1.05em; }
+		${MD} h1 { font-size: 1.35em; }
+		${MD} h2 { font-size: 1.22em; }
+		${MD} h3 { font-size: 1.1em; }
+		${MD} h4,
 		${MD} h5,
-		${MD} h6 {
-			font-size: 1em;
-			letter-spacing: 0.03em;
-			text-transform: uppercase;
-			color: ${chatTheme.textSecondary};
-		}
-		${MD} h1,
-		${MD} h2 {
-			padding-bottom: 0.35em;
-			border-bottom: 1px solid ${chatTheme.borderSoft};
-		}
+		${MD} h6 { font-size: 1em; }
+		${MD} h5,
+		${MD} h6 { color: ${chatTheme.textSecondary}; }
+		/* A heading straight after another block needs less air than one opening a section. */
+		${MD} h1 + *,
+		${MD} h2 + *,
+		${MD} h3 + *,
+		${MD} h4 + * { margin-top: 0; }
 
 		${MD} ul,
-		${MD} ol { margin: 0 0 0.25em; padding-left: 1.4em; }
-		${MD} li { margin: 0; }
+		${MD} ol { margin: 0 0 0.75em; padding-left: 1.5em; }
+		${MD} ul { list-style: disc; }
+		${MD} ol { list-style: decimal; }
+		${MD} li { margin: 0; padding-left: 0.15em; }
+		${MD} li + li { margin-top: 0.3em; }
 		${MD} li > ul,
-		${MD} li > ol { margin: 0.1em 0 0; }
+		${MD} li > ol { margin: 0.3em 0 0; }
+		${MD} li > ul { list-style: circle; }
 		${MD} li::marker { color: ${chatTheme.textHint}; }
+		${MD} ol > li::marker { font-variant-numeric: tabular-nums; }
 		${MD} li > p { margin: 0; }
+		${MD} li > p + p { margin-top: 0.4em; }
 		${MD} li input[type='checkbox'] {
 			margin: 0 0.45em 0 0;
 			accent-color: ${chatTheme.accent};
 			vertical-align: baseline;
 		}
+		/* A checkbox outside a task list only ever comes from a stray \`<input>\` tag in the model's
+		   text (the renderer keeps it as a disabled checkbox) — a grey box that means nothing. */
+		${MD} input[type='checkbox']:not(li input) { display: none; }
 
 		/* 600, not the UA's 700: bold runs should read as emphasis, not shouting. */
 		${MD} strong,
@@ -127,7 +133,8 @@ export const chatMarkdownCss = `
 		   code-block wrapper, so the card lives on the wrapper and every inner
 		   box stays transparent. */
 		${MD} [data-streamdown='code-block'] {
-			margin: 0 0 0.95em;
+			position: relative;
+			margin: 0 0 0.85em;
 			border: 1px solid ${chatTheme.codeBorder};
 			border-radius: 10px;
 			background: ${chatTheme.codeBg};
@@ -136,13 +143,14 @@ export const chatMarkdownCss = `
 		${MD} [data-streamdown='code-block-header'] {
 			display: flex;
 			align-items: center;
-			padding: 0.5em 0.85em;
+			height: 30px;
+			/* Room on the right for the copy / download buttons that sit on this row. */
+			padding: 0 72px 0 0.85em;
 			border-bottom: 1px solid ${chatTheme.borderSoft};
 			background: color-mix(in srgb, currentColor 3%, transparent);
 			font-family: ${chatTheme.fontFamilyMono};
 			font-size: 0.85em;
-			letter-spacing: 0.04em;
-			text-transform: uppercase;
+			text-transform: lowercase;
 			color: ${chatTheme.textHint};
 		}
 		${MD} [data-streamdown='code-block-body'] {
@@ -174,40 +182,45 @@ export const chatMarkdownCss = `
 			font-size: 1em;
 			color: inherit;
 		}
-		/* Copy / download live in a Tailwind-only sticky bar; without Tailwind
-		   they fall out as a naked row of 24px glyphs. Re-form them as a pill. */
+		/* Copy / download: Streamdown pins them top-right with Tailwind classes this app does not
+		   ship, so without this they fell out as a row of their own between the header and the
+		   code. Pinned onto the header row instead, the way a code card carries them. */
 		${MD} [data-streamdown='code-block'] > div:has(> [data-streamdown='code-block-actions']) {
+			position: absolute;
+			top: 0;
+			right: 0;
+			height: 30px;
 			display: flex;
-			justify-content: flex-end;
-			padding: 0 0.5em;
-			margin-top: 0.4em;
+			align-items: center;
+			padding: 0 6px;
+			margin: 0;
 		}
 		${MD} [data-streamdown='code-block-actions'] {
 			display: inline-flex;
 			align-items: center;
 			gap: 2px;
-			padding: 2px;
-			border-radius: 6px;
-			border: 1px solid ${chatTheme.borderSoft};
-			background: ${chatTheme.surface};
+			padding: 0;
+			border: none;
+			background: transparent;
 			color: ${chatTheme.textHint};
 		}
 		${MD} [data-streamdown='code-block-actions'] button {
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			width: 20px;
-			height: 20px;
+			width: 22px;
+			height: 22px;
 			padding: 0;
 			border: none;
-			border-radius: 4px;
+			border-radius: 5px;
 			background: transparent;
 			color: inherit;
 			cursor: pointer;
-			transition: background-color ${chatTheme.transitionSpeed} ease;
+			transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
 		}
 		${MD} [data-streamdown='code-block-actions'] button:hover {
 			background: ${chatTheme.surfaceDeep};
+			color: ${chatTheme.textPrimary};
 		}
 		${MD} [data-streamdown='code-block-actions'] svg { width: 12px; height: 12px; }
 
@@ -228,33 +241,72 @@ export const chatMarkdownCss = `
 		   scroller instead. A table may exceed \`max-width\` when its min-content
 		   width does, which is exactly when the wrapper starts scrolling; anything
 		   narrower wraps to fit as before. */
+		/* Streamdown wraps a table as [controls row] + [scroller > table], styled with Tailwind
+		   classes this app does not ship. The scroller becomes the framed card; the controls sit
+		   right-aligned above it as quiet icon buttons. */
 		${MD} [data-streamdown='table-wrapper'] {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			max-width: 100%;
+			min-width: 0;
+			margin: 0 0 0.85em;
+		}
+		${MD} [data-streamdown='table-wrapper'] > div:first-child:not(:last-child) {
+			display: flex;
+			justify-content: flex-end;
+			align-items: center;
+			gap: 2px;
+		}
+		${MD} [data-streamdown='table-wrapper'] > div:first-child:not(:last-child) button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 22px;
+			height: 22px;
+			padding: 0;
+			border: none;
+			border-radius: 5px;
+			background: transparent;
+			color: ${chatTheme.textHint};
+			cursor: pointer;
+			transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+		}
+		${MD} [data-streamdown='table-wrapper'] > div:first-child:not(:last-child) button:hover {
+			background: ${chatTheme.surfaceDeep};
+			color: ${chatTheme.textPrimary};
+		}
+		${MD} [data-streamdown='table-wrapper'] svg { width: 13px; height: 13px; }
+		${MD} [data-streamdown='table-wrapper'] > div:last-child {
 			max-width: 100%;
 			min-width: 0;
 			overflow-x: auto;
+			border: 1px solid ${chatTheme.border};
+			border-radius: 8px;
 		}
 		${MD} table {
 			display: table;
-			max-width: 100%;
-			width: fit-content;
+			width: 100%;
 			border-collapse: collapse;
-			margin: 0 0 0.95em;
+			margin: 0;
 			font-size: 0.95em;
 		}
 		${MD} th,
 		${MD} td {
-			padding: 0.45em 0.7em;
-			border: 1px solid ${chatTheme.border};
+			padding: 0.5em 0.75em;
+			border: none;
+			border-bottom: 1px solid ${chatTheme.borderSoft};
 			text-align: left;
 			vertical-align: top;
 		}
+		${MD} tbody tr:last-child td { border-bottom: none; }
 		${MD} th {
 			font-weight: ${chatTheme.fontWeightSemibold};
 			white-space: nowrap;
-			background: ${chatTheme.surfaceDeep};
+			background: ${chatTheme.surface};
+			border-bottom-color: ${chatTheme.border};
 			color: inherit;
 		}
-		${MD} tbody tr:nth-child(even) td { background: ${chatTheme.surface}; }
 
 		${MD} hr {
 			height: 0;
