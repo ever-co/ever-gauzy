@@ -925,7 +925,7 @@ export function AiChatPanel() {
 				${chatMarkdownCss}
 
 				/* Tool steps. The row is the expander, so the label carries the affordance:
-				   accent coloured, underlined on hover, like every other link here. */
+				   underlined on hover, like every other link here. */
 				.gz-ai-chat-tool-label { transition: color ${chatTheme.transitionSpeed} ease; }
 				.gz-ai-chat-tool-row:hover .gz-ai-chat-tool-label { text-decoration: underline; }
 				.gz-ai-chat-tool-row:focus-visible {
@@ -1077,7 +1077,7 @@ export function AiChatPanel() {
 				}
 				.gz-ai-chat--full .gz-ai-chat-messages {
 					padding: 24px max(24px, calc((100% - ${FULL_PAGE_COLUMN}px) / 2)) 24px !important;
-					gap: 20px !important;
+					gap: 14px !important;
 				}
 				.gz-ai-chat--full .gz-ai-chat-composer {
 					box-sizing: border-box;
