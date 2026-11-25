@@ -87,6 +87,9 @@ function parseChatError(error: Error | undefined): { code?: string; providerId?:
 	}
 }
 
+/** Width (px) of the centred reading column on the full-page chat (Maximize). */
+const FULL_PAGE_COLUMN = 768;
+
 /**
  * AiChatPanel
  *
@@ -889,7 +892,13 @@ export function AiChatPanel() {
 	};
 
 	return (
-		<div ref={rootRef} style={containerStyle}>
+		<div
+			ref={rootRef}
+			style={containerStyle}
+			className={
+				isMaximized ? (hasMessages ? 'gz-ai-chat--full' : 'gz-ai-chat--full gz-ai-chat--empty') : undefined
+			}
+		>
 			{/* Keyframes, the shared markdown sheet, and every state inline styles
 			    cannot express (hover, focus, ::placeholder). Wide streamed content
 			    (code blocks, tables) scrolls inside its own box here rather than
@@ -1042,12 +1051,69 @@ export function AiChatPanel() {
 				}
 				.gz-ai-chat-resize:hover { background: rgba(51, 102, 255, 0.35) !important; }
 				.gz-ai-chat-resize:hover::after { height: 48px; background: rgba(255, 255, 255, 0.8); }
+
+				/* ── Full page (Maximize) ─────────────────────────────────────────
+				   The chat owns the whole screen there, so the conversation, the alerts and the
+				   composer share ONE centred reading column instead of running edge to edge — the
+				   messages' scrollbar still sits at the window edge, because the column is made by
+				   the scroll box's padding rather than by a narrower scroll box. With no messages
+				   yet, the welcome and the composer are centred together on the screen. The docked
+				   panel and the detached window are untouched. */
+				.gz-ai-chat--full .gz-ai-chat-head {
+					border-bottom-color: transparent !important;
+					padding: 12px 16px 12px 20px !important;
+				}
+				.gz-ai-chat--full .gz-ai-chat-messages {
+					padding: 24px max(24px, calc((100% - ${FULL_PAGE_COLUMN}px) / 2)) 24px !important;
+					gap: 20px !important;
+				}
+				.gz-ai-chat--full .gz-ai-chat-composer {
+					box-sizing: border-box;
+					width: 100%;
+					max-width: ${FULL_PAGE_COLUMN + 48}px;
+					margin: 0 auto;
+					border-top: none !important;
+					padding: 8px 24px 24px !important;
+				}
+				.gz-ai-chat--full .gz-ai-chat-composer-box {
+					border-radius: 20px !important;
+					padding: 12px 12px 8px 14px !important;
+				}
+				.gz-ai-chat--full .gz-ai-chat-alert,
+				.gz-ai-chat--full .gz-ai-chat-attach-error {
+					box-sizing: border-box;
+					width: calc(100% - 48px);
+					max-width: ${FULL_PAGE_COLUMN}px;
+					margin: 0 auto;
+				}
+				.gz-ai-chat--full .gz-ai-chat-alert {
+					border-top: none !important;
+					border-radius: 10px;
+					margin-bottom: 4px;
+				}
+				.gz-ai-chat--full .gz-ai-chat-attach-error { padding: 8px 4px 0 !important; }
+				.gz-ai-chat--empty .gz-ai-chat-body {
+					justify-content: center;
+					padding-bottom: 8vh;
+				}
+				.gz-ai-chat--empty .gz-ai-chat-welcome {
+					flex: 0 0 auto !important;
+					padding-bottom: 12px !important;
+				}
+				.gz-ai-chat--full .gz-ai-welcome-title {
+					font-size: 1.125rem !important;
+					letter-spacing: -0.01em !important;
+				}
+				.gz-ai-chat--full .gz-ai-welcome-subtitle {
+					font-size: 0.8125rem !important;
+					max-width: 380px !important;
+				}
 			`}</style>
 
 			{/* Header: title + history + new chat + dock/maximize/collapse.
 			    History and New chat carry their names — they were unlabelled
 			    glyphs, which is why people asked whether history existed. */}
-			<div style={headerStyle}>
+			<div style={headerStyle} className="gz-ai-chat-head">
 				<svg
 					width="14"
 					height="14"
@@ -1286,7 +1352,7 @@ export function AiChatPanel() {
 			{/* Chat body — fills remaining height. The overlays mount INSIDE it so they cover the
 			    conversation area only, never the panel's own header (which stays operable — the
 			    user can still collapse/detach while a picker is open). */}
-			<div style={bodyStyle}>
+			<div style={bodyStyle} className="gz-ai-chat-body">
 				{/* Conversation history overlay */}
 				{showHistory && (
 					<ChatHistoryPanel
@@ -1341,6 +1407,7 @@ export function AiChatPanel() {
 				{errorView && (
 					<div
 						role="alert"
+						className="gz-ai-chat-alert"
 						style={{
 							padding: '8px 12px',
 							backgroundColor: 'rgba(255, 61, 113, 0.12)',
@@ -1409,6 +1476,7 @@ export function AiChatPanel() {
 				{attachmentError && (
 					<div
 						role="alert"
+						className="gz-ai-chat-attach-error"
 						style={{
 							padding: '8px 12px 0',
 							color: chatTheme.red,
