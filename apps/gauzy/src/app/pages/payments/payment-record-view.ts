@@ -1,6 +1,6 @@
 import * as moment from 'moment';
-import { IInvoiceEstimateHistory, IPayment } from '@gauzy/contracts';
-import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-core/core';
+import { IInvoice, IInvoiceEstimateHistory, InvoiceStatusTypesEnum, IPayment } from '@gauzy/contracts';
+import { InvoiceEstimateHistoryService, InvoicesService, PaymentService } from '@gauzy/ui-core/core';
 import { IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 import { IChartAmountRecord } from '../expenses/expense-view/expense-view-charts';
 
@@ -80,6 +80,170 @@ export async function loadInvoiceActivity(
 		.slice(0, INVOICE_ACTIVITY_LIMIT);
 }
 
+/** The payments' read is paged: at most this many a page, which is the endpoint's own ceiling. */
+const PAYMENT_PAGE_SIZE = 100;
+
+/**
+ * A read of the payments in a date range stops after this many pages. The charts' reads are bounded by their range
+ * (one contact's payments over the chart's months, or one month of payments in one currency), so the ceiling is
+ * only a guard against an organization that records thousands of them a month.
+ */
+const PAYMENT_READ_MAX_PAGES = 20;
+
+/** How many payments either side of one are read to find its previous and next: enough for those of the same day. */
+const PAYMENT_NEIGHBOUR_READ = 10;
+
+/** The payments endpoint's date range takes UTC `YYYY-MM-DD HH:mm:ss`, as the payments grid sends it. */
+function paymentDateBound(value: moment.MomentInput): string {
+	return moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
+}
+
+/**
+ * Reads the organization's payments with a payment date in a range, page by page, without their relations: the
+ * charts need the amount, the currency, the date and the contact, which are the payment's own columns.
+ */
+async function loadPaymentsBetween(
+	service: PaymentService,
+	scope: IRecordViewScope,
+	start: moment.Moment,
+	end: moment.Moment,
+	where: Record<string, unknown> = {}
+): Promise<IPayment[]> {
+	const payments: IPayment[] = [];
+	for (let page = 1; page <= PAYMENT_READ_MAX_PAGES; page++) {
+		const { items = [], total = 0 } = await service.pagination({
+			where: {
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId,
+				paymentDate: { startDate: paymentDateBound(start), endDate: paymentDateBound(end) },
+				...where
+			},
+			order: { paymentDate: 'ASC' },
+			take: PAYMENT_PAGE_SIZE,
+			skip: page
+		});
+		payments.push(...items);
+		if (!items.length || payments.length >= total) break;
+	}
+	return payments;
+}
+
+/**
+ * The monthly chart's payments: those from the payment's contact (every payment when it names none), in its
+ * currency, over the `months` months ending with its own.
+ */
+export async function loadContactMonthsPayments(
+	service: PaymentService,
+	scope: IRecordViewScope,
+	payment: IPayment,
+	months: number
+): Promise<IPayment[]> {
+	const month = moment.utc(payment.paymentDate);
+	const contactId = paymentContactId(payment);
+	return loadPaymentsBetween(
+		service,
+		scope,
+		month.clone().subtract(months - 1, 'months').startOf('month'),
+		month.clone().endOf('month'),
+		{
+			...(payment.currency ? { currency: payment.currency } : {}),
+			...(contactId ? { organizationContactId: contactId } : {})
+		}
+	);
+}
+
+/** The share chart's payments: every payment of the organization in the payment's month and currency. */
+export async function loadMonthPayments(
+	service: PaymentService,
+	scope: IRecordViewScope,
+	payment: IPayment
+): Promise<IPayment[]> {
+	const month = moment.utc(payment.paymentDate);
+	return loadPaymentsBetween(service, scope, month.clone().startOf('month'), month.clone().endOf('month'), {
+		...(payment.currency ? { currency: payment.currency } : {})
+	});
+}
+
+/**
+ * The payments either side of one: the few just before and just after its payment date — those of the same day
+ * among them — read apart, then put in order by {@link paymentNeighbours}.
+ */
+export async function loadPaymentNeighbours(
+	service: PaymentService,
+	scope: IRecordViewScope,
+	payment: IPayment
+): Promise<{ previous: IPayment | null; next: IPayment | null }> {
+	if (!payment.paymentDate) {
+		return { previous: null, next: null };
+	}
+	const read = (startDate: string, endDate: string, direction: 'ASC' | 'DESC') =>
+		service.pagination({
+			where: {
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId,
+				paymentDate: { startDate, endDate }
+			},
+			order: { paymentDate: direction, createdAt: direction },
+			take: PAYMENT_NEIGHBOUR_READ,
+			skip: 1
+		});
+	const date = paymentDateBound(payment.paymentDate);
+	const [before, after] = await Promise.all([
+		read(paymentDateBound(0), date, 'DESC'),
+		read(date, paymentDateBound('9999-12-31T23:59:59Z'), 'ASC')
+	]);
+	// Both reads hold the payments of the same instant, this one among them: each is kept once.
+	const unique = new Map<string, IPayment>();
+	for (const item of [...(before.items ?? []), ...(after.items ?? [])]) {
+		unique.set(item.id, item);
+	}
+	return paymentNeighbours([...unique.values()], payment);
+}
+
+/**
+ * The invoice's status for what is paid of it, as the invoice's payments page sets it: partly paid, fully paid or
+ * overpaid. Nothing paid moves an invoice back to Viewed only from a paid status; a draft or a sent invoice keeps its
+ * own.
+ */
+function invoicePaymentStatus(total: number, paid: number, current: string | undefined): string | null {
+	if (paid <= 0) {
+		const paidStatuses: string[] = [
+			InvoiceStatusTypesEnum.PARTIALLY_PAID,
+			InvoiceStatusTypesEnum.FULLY_PAID,
+			InvoiceStatusTypesEnum.OVERPAID
+		];
+		return current && paidStatuses.includes(current) ? InvoiceStatusTypesEnum.VIEWED : null;
+	}
+	if (paid < total) return InvoiceStatusTypesEnum.PARTIALLY_PAID;
+	if (paid === total) return InvoiceStatusTypesEnum.FULLY_PAID;
+	return InvoiceStatusTypesEnum.OVERPAID;
+}
+
+const roundMoney = (value: number) => Math.round(value * 100) / 100;
+
+/**
+ * Saves on the invoice what its payments add up to — `alreadyPaid`, `amountDue`, `paid` and its status — after a
+ * payment of it was recorded, edited or deleted, as the invoice's payments page does after each change: the payments
+ * endpoint leaves the invoice as it was.
+ */
+export async function syncInvoicePaidState(
+	paymentService: PaymentService,
+	invoicesService: InvoicesService,
+	invoice: IInvoice,
+	scope: IRecordViewScope
+): Promise<void> {
+	const payments = await loadInvoicePayments(paymentService, invoice.id, scope);
+	const total = roundMoney(Number(invoice.totalValue) || 0);
+	const paid = roundMoney(payments.reduce((sum, item) => sum + (Number(item.amount) || 0), 0));
+	const status = invoicePaymentStatus(total, paid, invoice.status);
+	await invoicesService.updateAction(invoice.id, {
+		alreadyPaid: paid,
+		amountDue: roundMoney(Math.max(0, total - paid)),
+		paid: total > 0 && paid >= total,
+		...(status ? { status } : {})
+	} as any);
+}
+
 /** The payments either side of one, by payment date (then by when they were recorded): the page's previous / next. */
 export function paymentNeighbours(
 	payments: IPayment[],
@@ -116,18 +280,6 @@ export function paymentDaysFromDue(payment: IPayment): number | null {
 /** The monthly payments chart's spans, in months, and the one it opens on: as the recurring expense page's. */
 export const PAYMENT_CHART_MONTH_OPTIONS = [6, 12, 24];
 export const PAYMENT_CHART_MONTHS = 12;
-
-/** Relations the organization's payments are read with for the charts: the invoice names the contact it was sent to. */
-export const PAYMENT_CHART_RELATIONS = ['invoice'];
-
-/** Reads every payment of the organization, for the page's charts. */
-export async function loadOrganizationPayments(service: PaymentService, scope: IRecordViewScope): Promise<IPayment[]> {
-	const { items = [] } = await service.getAll(PAYMENT_CHART_RELATIONS, {
-		organizationId: scope.organizationId,
-		tenantId: scope.tenantId
-	});
-	return items;
-}
 
 /** The id of the contact the payment came from: its own contact, or the one its invoice was sent to. */
 export function paymentContactId(payment: IPayment): string | null {
