@@ -32,7 +32,11 @@ export const DocumentsHubPage = {
 
 	// ── Shell (docs-shell.component.html, UX spec §2) ────────────────────────────────────────────
 	shellCss: '.docs-shell',
-	treeColumnCss: '.docs-shell .docs-tree-column',
+	// The folder tree is a drawer: kept rendered while closed (hidden with `visibility`), opened by the
+	// folder button in each page's header (gz-docs-folders-button) and closed by its own close button.
+	foldersButtonCss: 'gz-docs-folders-button button.docs-folders-button',
+	treeDrawerOpenCss: '.docs-shell .docs-tree-drawer.open',
+	treeDrawerCloseCss: '.docs-shell .docs-tree-drawer .docs-tree-drawer-close',
 	detailColumnCss: '.docs-shell .docs-detail-column',
 
 	// ── Tree sidebar (gz-docs-tree, UX spec §3) ──────────────────────────────────────────────────
