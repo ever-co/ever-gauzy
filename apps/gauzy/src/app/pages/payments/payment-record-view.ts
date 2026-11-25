@@ -90,7 +90,10 @@ const PAYMENT_PAGE_SIZE = 100;
  */
 const PAYMENT_READ_MAX_PAGES = 20;
 
-/** How many payments either side of one are read to find its previous and next: enough for those of the same day. */
+/**
+ * How many payments of the nearest earlier and later dates are read to find the previous and next one: the nearest
+ * date's payments may tie on their date, and among those the order goes on by when they were recorded.
+ */
 const PAYMENT_NEIGHBOUR_READ = 10;
 
 /** The payments endpoint's date range takes UTC `YYYY-MM-DD HH:mm:ss`, as the payments grid sends it. */
@@ -110,6 +113,8 @@ async function loadPaymentsBetween(
 	where: Record<string, unknown> = {}
 ): Promise<IPayment[]> {
 	const payments: IPayment[] = [];
+	/** How many payments the range holds, as the endpoint counts them. */
+	let expected = 0;
 	for (let page = 1; page <= PAYMENT_READ_MAX_PAGES; page++) {
 		const { items = [], total = 0 } = await service.pagination({
 			where: {
@@ -122,8 +127,14 @@ async function loadPaymentsBetween(
 			take: PAYMENT_PAGE_SIZE,
 			skip: page
 		});
+		expected = total;
 		payments.push(...items);
 		if (!items.length || payments.length >= total) break;
+	}
+	// More payments than the read may take: half of them would draw wrong totals, so the read fails instead and the
+	// chart says it could not be drawn.
+	if (payments.length < expected) {
+		throw new Error('PAYMENTS_READ_INCOMPLETE: the range holds more payments than a read takes.');
 	}
 	return payments;
 }
@@ -165,8 +176,12 @@ export async function loadMonthPayments(
 }
 
 /**
- * The payments either side of one: the few just before and just after its payment date — those of the same day
- * among them — read apart, then put in order by {@link paymentNeighbours}.
+ * The payments either side of one, in the page's full order — payment date, then when they were recorded, then id:
+ * every payment of its own payment date, which can tie with it, and the few of the nearest date before and after it.
+ * {@link paymentNeighbours} puts them in that order, so a payment among many of the same date gets the ones right
+ * beside it, and the first or last of its date gets one of the date before or after.
+ *
+ * The payments endpoint's dates are to the second: a payment date with a fraction of a second is read with its second.
  */
 export async function loadPaymentNeighbours(
 	service: PaymentService,
@@ -176,25 +191,25 @@ export async function loadPaymentNeighbours(
 	if (!payment.paymentDate) {
 		return { previous: null, next: null };
 	}
-	const read = (startDate: string, endDate: string, direction: 'ASC' | 'DESC') =>
+	const read = (start: moment.Moment, end: moment.Moment, direction: 'ASC' | 'DESC') =>
 		service.pagination({
 			where: {
 				organizationId: scope.organizationId,
 				tenantId: scope.tenantId,
-				paymentDate: { startDate, endDate }
+				paymentDate: { startDate: paymentDateBound(start), endDate: paymentDateBound(end) }
 			},
 			order: { paymentDate: direction, createdAt: direction },
 			take: PAYMENT_NEIGHBOUR_READ,
 			skip: 1
 		});
-	const date = paymentDateBound(payment.paymentDate);
-	const [before, after] = await Promise.all([
-		read(paymentDateBound(0), date, 'DESC'),
-		read(date, paymentDateBound('9999-12-31T23:59:59Z'), 'ASC')
+	const date = moment.utc(payment.paymentDate).startOf('second');
+	const [sameDate, before, after] = await Promise.all([
+		loadPaymentsBetween(service, scope, date, date),
+		read(moment.utc(0), date.clone().subtract(1, 'second'), 'DESC'),
+		read(date.clone().add(1, 'second'), moment.utc('9999-12-31T23:59:59Z'), 'ASC')
 	]);
-	// Both reads hold the payments of the same instant, this one among them: each is kept once.
 	const unique = new Map<string, IPayment>();
-	for (const item of [...(before.items ?? []), ...(after.items ?? [])]) {
+	for (const item of [...sameDate, ...(before.items ?? []), ...(after.items ?? [])]) {
 		unique.set(item.id, item);
 	}
 	return paymentNeighbours([...unique.values()], payment);
@@ -219,7 +234,11 @@ function invoicePaymentStatus(total: number, paid: number, current: string | und
 	return InvoiceStatusTypesEnum.OVERPAID;
 }
 
-const roundMoney = (value: number) => Math.round(value * 100) / 100;
+/** Money to the cent, so sums of amounts compare as the amounts do (0.7 + 0.1 is 0.8, not 0.7999…). */
+export const roundMoney = (value: number) => Math.round(value * 100) / 100;
+
+/** How many times a sync reads the invoice and its payments again when another write changed the invoice first. */
+const INVOICE_SYNC_ATTEMPTS = 3;
 
 /**
  * Whether a payment counts toward its invoice's paid total: only a payment in the invoice's currency does, since an
@@ -233,7 +252,14 @@ export function countsTowardInvoice(payment: IPayment, invoice: IInvoice): boole
 /**
  * Saves on the invoice what its payments add up to — `alreadyPaid`, `amountDue`, `paid` and its status — after a
  * payment of it was recorded, edited or deleted, as the invoice's payments page does after each change: the payments
- * endpoint leaves the invoice as it was.
+ * endpoint leaves the invoice as it was. Only payments in the invoice's currency count (see
+ * {@link countsTowardInvoice}): a payment in another one adds nothing to what is paid or takes nothing from what is
+ * due.
+ *
+ * Two syncs can run at once, from two pages. Each reads the invoice first, then its payments, and writes on the
+ * condition that the invoice is still as it read it (`expectedUpdatedAt`, which the server checks in the write's own
+ * transaction). A sync that lost the race to another write is answered 409 and starts again from a fresh read, so
+ * what is saved last was worked out from the payments as they were after the write before it.
  */
 export async function syncInvoicePaidState(
 	paymentService: PaymentService,
@@ -241,20 +267,34 @@ export async function syncInvoicePaidState(
 	invoice: IInvoice,
 	scope: IRecordViewScope
 ): Promise<void> {
-	const payments = await loadInvoicePayments(paymentService, invoice.id, scope);
-	const total = roundMoney(Number(invoice.totalValue) || 0);
-	const paid = roundMoney(
-		payments
-			.filter((item) => countsTowardInvoice(item, invoice))
-			.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-	);
-	const status = invoicePaymentStatus(total, paid, invoice.status);
-	await invoicesService.updateAction(invoice.id, {
-		alreadyPaid: paid,
-		amountDue: roundMoney(Math.max(0, total - paid)),
-		paid: total > 0 && paid >= total,
-		...(status ? { status } : {})
-	} as any);
+	for (let attempt = 1; ; attempt++) {
+		const current = await invoicesService.getById(invoice.id, [], {
+			organizationId: scope.organizationId,
+			tenantId: scope.tenantId
+		});
+		const payments = await loadInvoicePayments(paymentService, invoice.id, scope);
+		const total = roundMoney(Number(current.totalValue) || 0);
+		const paid = roundMoney(
+			payments
+				.filter((item) => countsTowardInvoice(item, current))
+				.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+		);
+		const status = invoicePaymentStatus(total, paid, current.status);
+		try {
+			await invoicesService.updateAction(invoice.id, {
+				alreadyPaid: paid,
+				amountDue: roundMoney(Math.max(0, total - paid)),
+				paid: total > 0 && paid >= total,
+				...(status ? { status } : {}),
+				...(current.updatedAt ? { expectedUpdatedAt: current.updatedAt } : {})
+			} as any);
+			return;
+		} catch (error) {
+			if ((error as { status?: number })?.status !== 409 || attempt >= INVOICE_SYNC_ATTEMPTS) {
+				throw error;
+			}
+		}
+	}
 }
 
 /** The payments either side of one, by payment date (then by when they were recorded): the page's previous / next. */
