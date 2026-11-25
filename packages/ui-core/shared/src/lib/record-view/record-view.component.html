@@ -243,9 +243,13 @@
 				<a class="record-link" [href]="'tel:' + row.value">{{ row.value }}</a>
 			}
 			@case ('link') {
-				<a class="record-link" [href]="row.field.href || row.value" target="_blank" rel="noopener noreferrer">{{
-					row.value
-				}}</a>
+				@if (row.field.route) {
+					<a class="record-link" [routerLink]="row.field.route">{{ row.value }}</a>
+				} @else {
+					<a class="record-link" [href]="row.field.href || row.value" target="_blank" rel="noopener noreferrer">{{
+						row.value
+					}}</a>
+				}
 			}
 			@case ('html') {
 				<div class="record-rich" [innerHTML]="row.value"></div>
