@@ -136,7 +136,6 @@
 			class="chat-sidebar"
 			[class]="chatSidebarService.config()?.class ?? ''"
 			[class.chat-sidebar-end]="chatSidebarService.position() === 'end'"
-			[class.chat-sidebar-maximized]="chatSidebarService.maximized()"
 			[style.--gz-chat-width]="chatSidebarService.width() + 'px'"
 			tag="chat-sidebar"
 			[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"
