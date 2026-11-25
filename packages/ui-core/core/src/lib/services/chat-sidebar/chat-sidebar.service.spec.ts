@@ -9,11 +9,12 @@ jest.mock('../users/users.service', () => ({ UsersService: class UsersService {}
 
 import { Injector, runInInjectionContext } from '@angular/core';
 import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
 import { UsersService } from '../users/users.service';
-import { ChatSidebarService, MAX_CHAT_WIDTH } from './chat-sidebar.service';
+import { CHAT_FULL_PAGE_PATH, ChatSidebarService, MAX_CHAT_WIDTH } from './chat-sidebar.service';
 
 interface StoreMock {
 	user$: BehaviorSubject<IUser | null>;
@@ -35,6 +36,7 @@ function setup() {
 	const updateUiPreferences = jest.fn(async (patch: any) => ({ ...(store.user?.uiPreferences ?? {}), ...patch }));
 	const usersService = { updateUiPreferences };
 	const location = { prepareExternalUrl: (path: string) => path };
+	const router = { url: '/pages/tasks?view=board', navigateByUrl: jest.fn(async (_url: string) => true) };
 
 	// A bare injector + `runInInjectionContext` is enough for the service's
 	// `inject()` calls and keeps this spec off `TestBed` (which needs the full
@@ -43,11 +45,12 @@ function setup() {
 		providers: [
 			{ provide: Store, useValue: store },
 			{ provide: UsersService, useValue: usersService },
-			{ provide: Location, useValue: location }
+			{ provide: Location, useValue: location },
+			{ provide: Router, useValue: router }
 		]
 	});
 	const service = runInInjectionContext(injector, () => new ChatSidebarService());
-	return { service, store, user$, updateUiPreferences };
+	return { service, store, user$, updateUiPreferences, router };
 }
 
 const CONFIG = { loadComponent: () => class {} as any, defaultExpanded: true };
@@ -233,20 +236,97 @@ describe('ChatSidebarService — persisted state precedence and server sync', ()
 		updateUiPreferences.mockRejectedValueOnce(new Error('boom'));
 		service.register(CONFIG);
 		user$.next({ id: 'u1' } as any);
-		service.toggleMaximized();
+		service.setPosition('end');
 		await flushPersist();
 		expect(updateUiPreferences).toHaveBeenCalledTimes(1);
 		expect(warn).toHaveBeenCalled();
-		expect(service.maximized()).toBe(true);
-		expect(service.expanded()).toBe(true);
+		expect(service.position()).toBe('end');
 		warn.mockRestore();
 	});
 
-	it('maximized is persisted and implies expanded when applied from the server', () => {
+	it('a stored maximized flag is ignored: it no longer opens anything on load', () => {
 		const { service, user$ } = setup();
 		service.register(CONFIG);
 		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: false, maximized: true } } } as any);
+		expect(service.maximized()).toBe(false);
+		expect(service.expanded()).toBe(false);
+		expect(localStorage.getItem('gauzy_chat_sidebar_u1_maximized')).toBe('false');
+	});
+});
+
+describe('ChatSidebarService — full-page chat (Maximize / Restore)', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+		localStorage.clear();
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	it('Maximize opens the full page and remembers the page it came from', () => {
+		const { service, router } = setup();
+		service.register(CONFIG);
+		service.toggleMaximized();
+		expect(router.navigateByUrl).toHaveBeenCalledWith(CHAT_FULL_PAGE_PATH);
+
+		service.setFullPageOpen(true);
 		expect(service.maximized()).toBe(true);
+
+		service.toggleMaximized(); // Restore
+		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/tasks?view=board');
 		expect(service.expanded()).toBe(true);
+	});
+
+	it('Maximize from a closed panel marks it expanded, so Restore shows the docked chat', () => {
+		const { service } = setup();
+		service.register({ ...CONFIG, defaultExpanded: false });
+		expect(service.expanded()).toBe(false);
+		service.maximize();
+		expect(service.expanded()).toBe(true);
+	});
+
+	it('Close on the full page goes back with the docked panel closed', () => {
+		const { service, router } = setup();
+		service.register(CONFIG);
+		service.maximize();
+		service.setFullPageOpen(true);
+
+		service.collapse();
+		expect(service.expanded()).toBe(false);
+		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/tasks?view=board');
+	});
+
+	it('Restore on a full page opened directly lands on the dashboard', () => {
+		const { service, router } = setup();
+		service.register(CONFIG);
+		service.setFullPageOpen(true); // e.g. a bookmark — no Maximize click before it
+		service.restore();
+		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/dashboard');
+	});
+
+	it('leaving the full page any other way clears the maximized state and the stale return URL', () => {
+		const { service, router } = setup();
+		service.register(CONFIG);
+		service.maximize();
+		service.setFullPageOpen(true);
+		service.setFullPageOpen(false); // browser Back, or the assistant opened a page
+		expect(service.maximized()).toBe(false);
+
+		service.setFullPageOpen(true);
+		service.restore();
+		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/dashboard');
+	});
+
+	it('Maximize is never persisted', async () => {
+		const { service, user$, updateUiPreferences } = setup();
+		service.register({ ...CONFIG, defaultExpanded: false });
+		user$.next({ id: 'u1' } as any);
+		service.maximize();
+		service.setFullPageOpen(true);
+		await flushPersist();
+		expect(updateUiPreferences).toHaveBeenCalledWith({
+			aiChat: { expanded: true, position: 'start', width: 384, maximized: false }
+		});
 	});
 });
