@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,7 +6,14 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment';
-import { BaseEntityEnum, IInvoice, IOrganization, IPayment, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	IInvoice,
+	IInvoiceEstimateHistory,
+	IOrganization,
+	IPayment,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import {
 	ErrorHandlingService,
 	InvoiceEstimateHistoryService,
@@ -23,6 +30,7 @@ import {
 	recordViewPageStateOf
 } from '@gauzy/ui-core/shared';
 import { PaymentMutationComponent } from '../../invoices/invoice-payments/payment-mutation/payment-mutation.component';
+import { InvoicePaymentReceiptMutationComponent } from '../../invoices/invoice-payments/payment-receipt-mutation/payment-receipt-mutation.component';
 import { formatExpenseMoney } from '../../expenses/expense-record-view';
 import {
 	IExpenseChartBar,
@@ -37,13 +45,19 @@ import {
 	PAYMENT_CHART_MONTH_OPTIONS,
 	PAYMENT_META_SECTIONS,
 	buildPaymentDetailsSections,
+	loadInvoiceActivity,
 	loadInvoicePayments,
 	loadOrganizationPayments,
 	loadPayment,
 	paymentChartRecord,
 	paymentContactId,
-	paymentContactName
+	paymentContactName,
+	paymentDaysFromDue,
+	paymentNeighbours
 } from '../payment-record-view';
+
+/** The class the page puts on the document's body while it prints: its print styles hide the app around it. */
+const PRINTING_CLASS = 'payment-printing';
 
 /** The payment's headline, worked out once per payment. */
 export interface IPaymentHeadline {
@@ -54,8 +68,15 @@ export interface IPaymentHeadline {
 	tone: 'success' | 'danger';
 	/** i18n key of its payment method, `null` when none was picked. */
 	methodKey: string | null;
-	/** How long ago it was paid, e.g. "3 days ago". */
-	since: string | null;
+	/**
+	 * When it was paid against the invoice's due date, e.g. "Paid 5 days before due"; without a due date, how long ago,
+	 * by calendar day: "Today", "3 days ago".
+	 */
+	timing: string | null;
+	/** Paid after the invoice's due date. */
+	late: boolean;
+	/** The payment date written out in full, e.g. "Wednesday, November 25, 2026": the date's tooltip. */
+	dateTitle: string | null;
 }
 
 /** One payment of the invoice, as the page's table lists it. */
@@ -72,9 +93,33 @@ export interface IPaymentInvoiceSummary {
 	paid: number;
 	balance: number;
 	paidInFull: boolean;
+	/** How much of the total is paid, 0 to 100: the progress bar's width. */
+	percent: number;
 	/** Payments counted in `paid`; `null` while they are read, or when they could not be. */
 	count: number | null;
 }
+
+/** One change of the invoice, as the activity panel lists it. */
+export interface IPaymentActivityItem {
+	id: string;
+	/** What was done, as it was written when it was done, e.g. "Payment of 100 USD added". */
+	action: string;
+	/** Who did it. */
+	user: string | null;
+	/** When, e.g. "2 hours ago". */
+	when: string | null;
+	/** When, in full: the time's tooltip. */
+	whenTitle: string | null;
+}
+
+/** The invoice's latest changes. */
+export interface IPaymentActivity {
+	loading: boolean;
+	failed: boolean;
+	items: IPaymentActivityItem[];
+}
+
+const NO_ACTIVITY: IPaymentActivity = { loading: false, failed: false, items: [] };
 
 /** The charts: the contact's payments month by month, and this payment's share of its month's payments. */
 export interface IPaymentCharts {
@@ -105,11 +150,14 @@ interface ActionOrigin {
  * A payment on its own full-width page, `/pages/accounting/payments/view/:id`: what the payments list's View button
  * and a payment's sidebar favorite open.
  *
- * Laid out as the recurring expense page: the actions — Edit, Copy link, the favorite star and Delete — beside the
- * back button; the headline across the top (who paid, its status, method and project, then the amount, the date,
+ * Laid out as the recurring expense page: the actions — previous / next payment, Edit, Send receipt, Print, Copy
+ * link, the favorite star and Delete — beside the back button; the headline across the top (who paid, its status, method and project, then the amount, the date,
  * the invoice and who recorded it as figures); the invoice it pays, every payment of that invoice and the contact's
- * payments month by month in the wide column; the details, its share of the month's payments and the stamps in the
- * side one.
+ * payments month by month in the wide column; the details, its share of the month's payments, the invoice's latest
+ * activity and the stamps in the side one.
+ *
+ * Keys, when no field, dialog or menu has the focus: E edits, C copies the link, J / K open the next / previous
+ * payment. Esc is left to the app's menus and panels, which close on it.
  *
  * The page belongs to the organization selected in the header: a payment of another organization reads "not found",
  * and switching the organization reloads the page, discarding any load in flight.
@@ -128,13 +176,15 @@ interface ActionOrigin {
 	// The project quick look's page layout: the headline across the top, then two columns.
 	host: { class: 'is-page' }
 })
-export class PaymentViewPageComponent extends TranslationBaseComponent implements OnInit {
+export class PaymentViewPageComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	readonly PermissionsEnum = PermissionsEnum;
 	readonly BaseEntityEnum = BaseEntityEnum;
 	readonly backLink = PAYMENTS_LIST_LINK;
 	readonly invoiceViewLink = INVOICE_VIEW_LINK;
 	/** The invoices' own page asks for one of these. */
 	readonly invoiceViewPermissions = [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW];
+	/** The invoice's history is read with this one alone: the history's read asks for it, not for the org-wide view. */
+	readonly invoiceActivityPermissions = [PermissionsEnum.INVOICES_VIEW];
 	readonly metaSections: IRecordViewSection[] = PAYMENT_META_SECTIONS;
 
 	/** The payment as read: what the edit dialog is opened on, and what the page shows. */
@@ -148,6 +198,12 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	invoicePayments: IInvoicePaymentRow[] = [];
 	invoicePaymentsLoading = false;
 	invoicePaymentsFailed = false;
+
+	/** The invoice's latest changes. */
+	activity: IPaymentActivity = NO_ACTIVITY;
+	/** The payments either side of this one, by payment date. */
+	previousPayment: IPayment | null = null;
+	nextPayment: IPayment | null = null;
 
 	/** The contact's payments month by month, and this payment's share of its month. */
 	charts: IPaymentCharts = NO_CHARTS;
@@ -173,6 +229,10 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 	private chartsSequence = 0;
 	/** The organization's payments the charts are drawn from, as last read. */
 	private organizationPayments: IPayment[] = [];
+	/** The same for the read of the invoice's activity. */
+	private activitySequence = 0;
+	/** The invoice's changes as read, described again in a new language. */
+	private activityRecords: IInvoiceEstimateHistory[] = [];
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -248,6 +308,87 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		}
 	}
 
+	ngOnDestroy(): void {
+		document.body.classList.remove(PRINTING_CLASS);
+	}
+
+	/**
+	 * The receipt is e-mailed to the contact the invoice was sent to, at its primary e-mail, signed with the
+	 * organization it is from: without either there is no one to send it to, or no one to send it from.
+	 */
+	get canSendReceipt(): boolean {
+		const invoice = this.payment?.invoice;
+		return !!invoice?.toContact?.primaryEmail && !!invoice.fromOrganization;
+	}
+
+	/* ── Keys and printing ── */
+
+	/** The page's keys; none while the viewer types, or while a dialog or a menu is open. */
+	@HostListener('document:keydown', ['$event'])
+	onKeydown(event: KeyboardEvent): void {
+		if (
+			!this.payment ||
+			this.busy ||
+			event.defaultPrevented ||
+			event.ctrlKey ||
+			event.metaKey ||
+			event.altKey ||
+			event.shiftKey
+		) {
+			return;
+		}
+		const target = event.target as HTMLElement | null;
+		if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) {
+			return;
+		}
+		if (document.querySelector('.cdk-overlay-backdrop')) {
+			return;
+		}
+		switch ((event.key || '').toLowerCase()) {
+			case 'e':
+				if (this.store.hasAnyPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)) {
+					event.preventDefault();
+					void this.edit();
+				}
+				break;
+			case 'c':
+				event.preventDefault();
+				void this.copyLink();
+				break;
+			case 'j':
+				event.preventDefault();
+				this.openPayment(this.nextPayment);
+				break;
+			case 'k':
+				event.preventDefault();
+				this.openPayment(this.previousPayment);
+				break;
+		}
+	}
+
+	/** Prints the page as a receipt: its print styles keep the payment and the invoice, and hide the rest. */
+	print(): void {
+		window.print();
+	}
+
+	/** Printing from the button or the browser's own menu: the app around the page is hidden while it prints. */
+	@HostListener('window:beforeprint')
+	onBeforePrint(): void {
+		document.body.classList.add(PRINTING_CLASS);
+	}
+
+	@HostListener('window:afterprint')
+	onAfterPrint(): void {
+		document.body.classList.remove(PRINTING_CLASS);
+	}
+
+	/** Opens another payment's page: the previous or the next one. */
+	openPayment(payment: IPayment | null): void {
+		if (payment) {
+			void this.router.navigate(this.paymentLink(payment));
+		}
+	}
+
 	/** Sets the monthly chart's span; the payments already read are drawn again, nothing is read. */
 	setChartMonths(months: number): void {
 		this.chartMonths = months;
@@ -291,6 +432,58 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			this.errorHandler.handleError(error);
 		} finally {
 			this.setBusy(false);
+		}
+	}
+
+	/**
+	 * Records another payment of the invoice with the form the lists record with, then notes it in the invoice's
+	 * history. The page stays on this payment; its invoice's figures and table take the new one in.
+	 */
+	async recordPayment(): Promise<void> {
+		const payment = this.payment;
+		const invoice = payment?.invoice;
+		if (!invoice || this.busy) return;
+		const origin = this.actionOrigin();
+		const result: IPayment = await firstValueFrom(
+			this.dialogService.open(PaymentMutationComponent, { context: { invoice } }).onClose.pipe(first())
+		);
+		if (!result || !this.isStillOn(origin)) return;
+		this.setBusy(true);
+		try {
+			const saved = await this.paymentService.add(result);
+			const target: IInvoice = result.invoice ?? saved?.invoice ?? invoice;
+			const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', {
+				amount: saved?.amount ?? result.amount,
+				currency: saved?.currency ?? result.currency
+			});
+			await this.createInvoiceHistory(action, target, origin);
+			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
+			if (!this.isStillOn(origin)) return;
+			await this.refresh(payment.id);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this.setBusy(false);
+		}
+	}
+
+	/**
+	 * Sends the payment's receipt to the contact the invoice was sent to, with the invoice page's dialog. The dialog
+	 * answers what the send answered: `true` sent, `false` the mail could not be sent; nothing when it was cancelled.
+	 */
+	async sendReceipt(): Promise<void> {
+		const payment = this.payment;
+		if (!payment || !this.canSendReceipt || this.busy) return;
+		const invoice = payment.invoice;
+		const sent: boolean | undefined = await firstValueFrom(
+			this.dialogService
+				.open(InvoicePaymentReceiptMutationComponent, { context: { invoice, payment } })
+				.onClose.pipe(first())
+		);
+		if (sent === true) {
+			this.toastrService.success('PAYMENT_VIEW.RECEIPT_SENT', { name: invoice.toContact.name });
+		} else if (sent === false) {
+			this.toastrService.danger('PAYMENT_VIEW.RECEIPT_NOT_SENT');
 		}
 	}
 
@@ -356,13 +549,60 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		this.invoicePaymentsFailed = false;
 		this.organizationPayments = [];
 		this.charts = NO_CHARTS;
+		this.activitySequence++;
+		this.activityRecords = [];
+		this.activity = NO_ACTIVITY;
+		this.previousPayment = null;
+		this.nextPayment = null;
 		this.describe();
 		if (payment?.invoice?.id) {
 			void this.loadInvoicePayments(payment);
+			if (this.store.hasAnyPermission(...this.invoiceActivityPermissions)) {
+				void this.loadActivity(payment);
+			}
 		}
 		if (payment?.paymentDate) {
 			void this.loadCharts(payment);
 		}
+	}
+
+	/** Reads the invoice's latest changes. A failed read leaves the rest as it is; the panel says so. */
+	private async loadActivity(payment: IPayment): Promise<void> {
+		const scope = this.viewScope;
+		if (!scope) return;
+		const sequence = ++this.activitySequence;
+		this.activity = { ...NO_ACTIVITY, loading: true };
+		try {
+			const records = await loadInvoiceActivity(this.invoiceEstimateHistoryService, payment.invoice.id, scope);
+			if (sequence !== this.activitySequence) return;
+			this.activityRecords = records;
+			this.activity = { ...NO_ACTIVITY };
+			this.describeActivity();
+		} catch {
+			if (sequence === this.activitySequence) {
+				this.activity = { ...NO_ACTIVITY, failed: true };
+			}
+		} finally {
+			if (sequence === this.activitySequence) {
+				this.cdr.markForCheck();
+			}
+		}
+	}
+
+	/** Describes the invoice's changes read, in the viewer's language. */
+	private describeActivity(): void {
+		if (this.activity.loading || this.activity.failed) return;
+		const locale = this.translateService.getCurrentLang() || 'en';
+		this.activity = {
+			...this.activity,
+			items: this.activityRecords.map((record) => ({
+				id: record.id,
+				action: record.action,
+				user: record.user?.name ?? null,
+				when: record.createdAt ? moment(record.createdAt).locale(locale).fromNow() : null,
+				whenTitle: record.createdAt ? moment(record.createdAt).locale(locale).format('LLLL') : null
+			}))
+		};
 	}
 
 	/**
@@ -408,6 +648,11 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			? this.organizationPayments.filter((item) => paymentContactId(item) === contactId)
 			: this.organizationPayments;
 		const self = paymentChartRecord(payment);
+		if (!this.charts.loading) {
+			const { previous, next } = paymentNeighbours(this.organizationPayments, payment);
+			this.previousPayment = previous;
+			this.nextPayment = next;
+		}
 		this.charts = {
 			...this.charts,
 			monthBars: categoryMonthBars(fromContact.map(paymentChartRecord), self, locale, this.chartMonths),
@@ -460,11 +705,42 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			statusKey: payment.overdue ? 'INVOICES_PAGE.PAYMENTS.OVERDUE' : 'INVOICES_PAGE.PAYMENTS.ON_TIME',
 			tone: payment.overdue ? 'danger' : 'success',
 			methodKey: this.methodKeyOf(payment),
-			since: payment.paymentDate ? moment(payment.paymentDate).locale(locale).fromNow() : null
+			...this.timingOf(payment, locale)
 		};
 		this.describeInvoice(this.invoicePaymentsLoading || this.invoicePaymentsFailed ? null : this.invoicePayments.length || null);
-		this.detailsSections = buildPaymentDetailsSections(payment);
+		this.detailsSections = buildPaymentDetailsSections(payment, {
+			contact: this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_CONTACT_VIEW),
+			project: this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+		});
 		this.describeCharts();
+		this.describeActivity();
+	}
+
+	/**
+	 * When the payment was made: against the invoice's due date when it has one, otherwise how long ago by calendar
+	 * day, so a payment of today reads "Today", not "in an hour".
+	 */
+	private timingOf(payment: IPayment, locale: string): Pick<IPaymentHeadline, 'timing' | 'late' | 'dateTitle'> {
+		if (!payment.paymentDate) {
+			return { timing: null, late: false, dateTitle: null };
+		}
+		const date = moment(payment.paymentDate).locale(locale);
+		const dateTitle = date.format('dddd, LL');
+		const days = paymentDaysFromDue(payment);
+		if (days !== null) {
+			const count = Math.abs(days);
+			let key = 'PAYMENT_VIEW.PAID_ON_DUE_DATE';
+			if (days < 0) {
+				key = count === 1 ? 'PAYMENT_VIEW.PAID_DAY_BEFORE_DUE' : 'PAYMENT_VIEW.PAID_DAYS_BEFORE_DUE';
+			} else if (days > 0) {
+				key = count === 1 ? 'PAYMENT_VIEW.PAID_DAY_AFTER_DUE' : 'PAYMENT_VIEW.PAID_DAYS_AFTER_DUE';
+			}
+			return { timing: this.getTranslation(key, { count }), late: days > 0, dateTitle };
+		}
+		const day = date.clone().startOf('day');
+		const today = moment().locale(locale).startOf('day');
+		const timing = day.isSame(today, 'day') ? this.getTranslation('PAYMENT_VIEW.TODAY') : day.from(today);
+		return { timing, late: false, dateTitle };
 	}
 
 	/**
@@ -488,6 +764,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			paid,
 			balance: Math.max(0, total - paid),
 			paidInFull: total > 0 && paid >= total,
+			percent: total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0,
 			count
 		};
 	}
