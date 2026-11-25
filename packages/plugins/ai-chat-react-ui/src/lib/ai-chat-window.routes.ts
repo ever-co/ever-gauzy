@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
-import { AiChatPageComponent } from './ai-chat-page.component';
 import { AiChatWindowComponent } from './ai-chat-window.component';
 
 /**
@@ -21,18 +20,20 @@ const AI_CHAT_ACCESS_DATA = {
 };
 
 /**
- * Routes of the chat views that live outside the app shell:
- * - `/ai-chat` — the full-page chat the panel's Maximize button opens
- *   (`CHAT_FULL_PAGE_PATH` in `@gauzy/ui-core/core`);
- * - `/ai-chat/window` — the detached chat window.
+ * Routes of the root `/ai-chat` path:
+ * - `/ai-chat/window` — the detached chat window;
+ * - `/ai-chat` — redirects to the full-page chat at `/pages/ai-chat`
+ *   (`CHAT_FULL_PAGE_PATH` in `@gauzy/ui-core/core`), so links to the old
+ *   address keep working.
  *
  * These are wired into the app's ROOT routes (`apps/gauzy/src/app/app.routes.ts`),
  * not into the page route registry the plugin's other routes use: every
  * registry location is a child of `/pages`, which renders the `PagesComponent`
- * shell (nav menu sidebar + header + footer), and these views have to show the
- * chat and nothing else.
+ * shell (nav menu sidebar + header + footer), and the detached window has to
+ * show the chat and nothing else. (The full page lives in that shell on purpose
+ * — see `AI_CHAT_PAGE_ROUTE`.)
  *
- * The root route only carries `AuthGuard`, so each view checks
+ * The root route only carries `AuthGuard`, so the window checks
  * `AI_CHAT_ACCESS` itself instead of rendering a chat whose every request 403s.
  */
 export const AI_CHAT_WINDOW_ROUTES: Routes = [
@@ -45,8 +46,6 @@ export const AI_CHAT_WINDOW_ROUTES: Routes = [
 	{
 		path: '',
 		pathMatch: 'full',
-		component: AiChatPageComponent,
-		canActivate: [PermissionsGuard],
-		data: AI_CHAT_ACCESS_DATA
+		redirectTo: '/pages/ai-chat'
 	}
 ];
