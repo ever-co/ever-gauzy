@@ -85,11 +85,9 @@ export function ChatMessageList({
 // ── Typing indicator ─────────────────────────────────────────────────────────
 
 function TypingIndicator() {
+	// No box: the reply it stands in for has none either.
 	const bubbleStyle: CSSProperties = {
-		backgroundColor: chatTheme.assistantBubbleBg,
-		border: `1px solid ${chatTheme.borderSoft}`,
-		borderRadius: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight}`,
-		padding: '9px 13px',
+		padding: '8px 0',
 		display: 'inline-flex',
 		alignItems: 'center',
 		gap: 5,
