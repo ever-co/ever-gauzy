@@ -8225,6 +8225,7 @@
 		"INVOICE_TITLE": "الفاتورة #{{ number }}",
 		"INVOICE_CAPTION": "الإجمالي والمدفوع والمتبقي",
 		"OPEN_INVOICE": "فتح الفاتورة",
+		"RECORD_PAYMENT": "تسجيل الدفعة",
 		"PAID_SO_FAR": "المدفوع حتى الآن",
 		"BALANCE_DUE": "الرصيد المستحق",
 		"PAID_IN_FULL": "مدفوعة بالكامل",

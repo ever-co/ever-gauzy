@@ -9557,6 +9557,7 @@
 		"INVOICE_TITLE": "发票 #{{ number }}",
 		"INVOICE_CAPTION": "总额、已付和待付",
 		"OPEN_INVOICE": "打开发票",
+		"RECORD_PAYMENT": "记录付款",
 		"PAID_SO_FAR": "目前已付",
 		"BALANCE_DUE": "待付余额",
 		"PAID_IN_FULL": "已全额付清",

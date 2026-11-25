@@ -9561,6 +9561,7 @@
 		"INVOICE_TITLE": "Fatura #{{ number }}",
 		"INVOICE_CAPTION": "Total, pago e em aberto",
 		"OPEN_INVOICE": "Abrir fatura",
+		"RECORD_PAYMENT": "Registrar pagamento",
 		"PAID_SO_FAR": "Pago até agora",
 		"BALANCE_DUE": "Saldo devedor",
 		"PAID_IN_FULL": "Paga integralmente",

@@ -8233,6 +8233,7 @@
 		"INVOICE_TITLE": "Factuur #{{ number }}",
 		"INVOICE_CAPTION": "Totaal, betaald en nog te betalen",
 		"OPEN_INVOICE": "Factuur openen",
+		"RECORD_PAYMENT": "Betaling registreren",
 		"PAID_SO_FAR": "Tot nu toe betaald",
 		"BALANCE_DUE": "Openstaand saldo",
 		"PAID_IN_FULL": "Volledig betaald",

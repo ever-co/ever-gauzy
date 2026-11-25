@@ -8232,6 +8232,7 @@
 		"INVOICE_TITLE": "Faktura #{{ number }}",
 		"INVOICE_CAPTION": "Razem, zapłacono i pozostało",
 		"OPEN_INVOICE": "Otwórz fakturę",
+		"RECORD_PAYMENT": "Zarejestruj płatność",
 		"PAID_SO_FAR": "Zapłacono dotąd",
 		"BALANCE_DUE": "Saldo do zapłaty",
 		"PAID_IN_FULL": "Opłacona w całości",

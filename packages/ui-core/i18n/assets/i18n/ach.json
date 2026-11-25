@@ -7231,6 +7231,7 @@
 		"INVOICE_TITLE": "Invoice #{{ number }}",
 		"INVOICE_CAPTION": "Total, paid and still due",
 		"OPEN_INVOICE": "Open invoice",
+		"RECORD_PAYMENT": "Record payment",
 		"PAID_SO_FAR": "Paid so far",
 		"BALANCE_DUE": "Balance due",
 		"PAID_IN_FULL": "Paid in full",

@@ -8233,6 +8233,7 @@
 		"INVOICE_TITLE": "Fattura #{{ number }}",
 		"INVOICE_CAPTION": "Totale, pagato e da pagare",
 		"OPEN_INVOICE": "Apri fattura",
+		"RECORD_PAYMENT": "Registra pagamento",
 		"PAID_SO_FAR": "Pagato finora",
 		"BALANCE_DUE": "Saldo dovuto",
 		"PAID_IN_FULL": "Pagata per intero",

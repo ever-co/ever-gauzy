@@ -8249,6 +8249,7 @@
 		"INVOICE_TITLE": "Счёт #{{ number }}",
 		"INVOICE_CAPTION": "Итого, оплачено и к оплате",
 		"OPEN_INVOICE": "Открыть счёт",
+		"RECORD_PAYMENT": "Записать платёж",
 		"PAID_SO_FAR": "Оплачено на сегодня",
 		"BALANCE_DUE": "Остаток к оплате",
 		"PAID_IN_FULL": "Оплачен полностью",

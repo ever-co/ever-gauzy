@@ -8241,6 +8241,7 @@
 		"INVOICE_TITLE": "חשבונית #{{ number }}",
 		"INVOICE_CAPTION": "סך הכול, שולם ונותר לתשלום",
 		"OPEN_INVOICE": "פתח חשבונית",
+		"RECORD_PAYMENT": "רישום תשלום",
 		"PAID_SO_FAR": "שולם עד כה",
 		"BALANCE_DUE": "יתרה לתשלום",
 		"PAID_IN_FULL": "שולמה במלואה",

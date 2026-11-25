@@ -8229,6 +8229,7 @@
 		"INVOICE_TITLE": "Rechnung #{{ number }}",
 		"INVOICE_CAPTION": "Gesamt, bezahlt und noch offen",
 		"OPEN_INVOICE": "Rechnung öffnen",
+		"RECORD_PAYMENT": "Zahlung aufzeichnen",
 		"PAID_SO_FAR": "Bisher bezahlt",
 		"BALANCE_DUE": "Offener Betrag",
 		"PAID_IN_FULL": "Vollständig bezahlt",

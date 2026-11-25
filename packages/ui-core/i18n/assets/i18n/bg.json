@@ -8276,6 +8276,7 @@
 		"INVOICE_TITLE": "Фактура #{{ number }}",
 		"INVOICE_CAPTION": "Общо, платено и оставащо",
 		"OPEN_INVOICE": "Отвори фактурата",
+		"RECORD_PAYMENT": "Запиши плащане",
 		"PAID_SO_FAR": "Платено досега",
 		"BALANCE_DUE": "Оставащо за плащане",
 		"PAID_IN_FULL": "Платена изцяло",

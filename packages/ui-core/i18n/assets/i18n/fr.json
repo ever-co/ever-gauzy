@@ -8230,6 +8230,7 @@
 		"INVOICE_TITLE": "Facture #{{ number }}",
 		"INVOICE_CAPTION": "Total, payé et restant dû",
 		"OPEN_INVOICE": "Ouvrir la facture",
+		"RECORD_PAYMENT": "Enregistrer le paiement",
 		"PAID_SO_FAR": "Payé à ce jour",
 		"BALANCE_DUE": "Solde dû",
 		"PAID_IN_FULL": "Payée intégralement",
