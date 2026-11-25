@@ -31,10 +31,14 @@ export {
 // Route config
 export { PLAYGROUND_PATH, PLAYGROUND_ROUTE } from './lib/playground.routes';
 
-// Full-page chat (`/ai-chat`, the panel's Maximize) and detached chat window
-// (`/ai-chat/window`) routes — wired into the app's ROOT routes so both render
-// without the /pages shell (nav menu sidebar, header, footer)
+// Detached chat window (`/ai-chat/window`) routes — wired into the app's ROOT
+// routes so the window renders without the /pages shell (nav menu sidebar,
+// header, footer). The bare `/ai-chat` redirects to the full-page chat.
 export { AI_CHAT_WINDOW_PATH, AI_CHAT_WINDOW_ROUTES } from './lib/ai-chat-window.routes';
+
+// Full-page chat (`/pages/ai-chat`, the panel's Maximize) — registered by the plugin
+export { AI_CHAT_PAGE_PATH, AI_CHAT_PAGE_ROUTE } from './lib/ai-chat-page.routes';
+export { AiChatPageComponent } from './lib/ai-chat-page.component';
 
 // AI Providers (BYOK) settings page — component, service, and route config
 export {
