@@ -121,6 +121,7 @@ enum IntegrationEntity {
 	OrganizationTeam
 	StrategicInitiative
 	Comment
+	Attachment
 	Document
 	InboxItem
 	Agent
