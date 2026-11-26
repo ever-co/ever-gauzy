@@ -121,6 +121,33 @@ function unwrapLine(line: string): string {
 		.trim();
 }
 
+/**
+ * The line on which the object opening at `lines[start]` closes — braces counted outside JSON
+ * strings — or -1 when the text ends first. There is no line limit: an answer of any length is
+ * found whole, so the lines inside it are never mistaken for calls of their own.
+ */
+function findObjectEnd(lines: string[], start: number): number {
+	let depth = 0;
+	let inString = false;
+	let escaped = false;
+	for (let index = start; index < lines.length; index++) {
+		for (const char of unwrapLine(lines[index])) {
+			if (inString) {
+				if (escaped) escaped = false;
+				else if (char === '\\') escaped = true;
+				else if (char === '"') inString = false;
+			} else if (char === '"') {
+				inString = true;
+			} else if (char === '{') {
+				depth++;
+			} else if (char === '}' && --depth === 0) {
+				return index;
+			}
+		}
+	}
+	return -1;
+}
+
 /** Has words or numbers in it — a real table row, unlike pipe-only debris. */
 function hasContent(line: string): boolean {
 	return /[\p{L}\p{N}]/u.test(line);
@@ -147,24 +174,21 @@ function cleanProse(text: string, isStreaming: boolean): string {
 
 		// A JSON object on its own line(s) shaped like a tool call — one that was never made.
 		if (candidate.startsWith('{')) {
-			let joined = candidate;
-			let end = index;
-			let parsed = parseJsonObject(joined);
-			while (!parsed && end + 1 < lines.length && end - index < 20) {
-				end++;
-				joined += '\n' + unwrapLine(lines[end]);
-				parsed = parseJsonObject(joined);
+			const end = findObjectEnd(lines, index);
+			if (end === -1) {
+				// Never closed: still arriving, or not JSON at all. A call being written is hidden
+				// rather than flashed; anything else is kept as it is, and its inner lines are not
+				// re-scanned as calls of their own.
+				if (!(isStreaming && PARTIAL_CALL.test(candidate))) kept.push(...lines.slice(index));
+				break;
 			}
-			if (parsed) {
-				// The whole object is one unit: a call is dropped entirely, an answer is kept entirely —
-				// never re-scanned line by line, or a call-shaped VALUE inside an answer
-				// (`{"example": {"path": "/pages/tasks"}}`) would be cut out and leave broken JSON.
-				if (!isToolCallShape(parsed)) kept.push(...lines.slice(index, end + 1));
-				index = end;
-				continue;
-			}
-			// Still arriving and opening like a call: hide it rather than flash it.
-			if (!parsed && isStreaming && end === lines.length - 1 && PARTIAL_CALL.test(candidate)) break;
+			// The whole block is one unit: a call is dropped entirely, everything else (an answer,
+			// braces in prose) kept entirely — never re-scanned line by line, or a call-shaped VALUE
+			// inside an answer (`{"example": {"path": "/pages/tasks"}}`) would be cut out of it.
+			const parsed = parseJsonObject(lines.slice(index, end + 1).map(unwrapLine).join('\n'));
+			if (!parsed || !isToolCallShape(parsed)) kept.push(...lines.slice(index, end + 1));
+			index = end;
+			continue;
 		}
 		kept.push(lines[index]);
 	}

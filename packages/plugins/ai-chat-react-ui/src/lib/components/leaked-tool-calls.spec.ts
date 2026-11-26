@@ -99,6 +99,12 @@ describe('stripLeakedToolCalls', () => {
 		expect(stripLeakedToolCalls(text)).toBe(text);
 	});
 
+	it('keeps a long JSON answer whole, however many lines it spans', () => {
+		const filler = Array.from({ length: 30 }, (_, index) => `"field${index}": ${index},`).join('\n');
+		const text = `The record:\n{\n${filler}\n"link":\n{"path":"/pages/tasks"}\n}`;
+		expect(stripLeakedToolCalls(text)).toBe(text);
+	});
+
 	it('keeps a line that is only inline-code JSON', () => {
 		expect(stripLeakedToolCalls('An example:\n`{"example":1}`')).toBe('An example:\n`{"example":1}`');
 	});
