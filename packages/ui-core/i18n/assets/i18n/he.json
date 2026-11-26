@@ -4208,7 +4208,9 @@
 			"STATUS": "סטטוס",
 			"JOB_POST_CONTENT": "תוכן משרה",
 			"PROPOSAL_CONTENT": "תוכן הצעה",
-			"VIEW_JOB_POST": "צפה במשרה"
+			"VIEW_JOB_POST": "צפה במשרה",
+			"PROJECT_PROPOSAL": "הצעת פרויקט",
+			"ACCEPTED_BY": "התקבל על ידי"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "ערוך הצעה",

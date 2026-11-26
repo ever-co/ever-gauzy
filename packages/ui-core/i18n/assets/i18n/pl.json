@@ -4181,7 +4181,9 @@
 			"STATUS": "Stan",
 			"JOB_POST_CONTENT": "Treść ogłoszenia o pracę",
 			"PROPOSAL_CONTENT": "Zawartość propozycji",
-			"VIEW_JOB_POST": "Wyświetl ogłoszenie o pracę"
+			"VIEW_JOB_POST": "Wyświetl ogłoszenie o pracę",
+			"PROJECT_PROPOSAL": "Propozycja projektu",
+			"ACCEPTED_BY": "Zaakceptowane przez"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Edytuj propozycję",

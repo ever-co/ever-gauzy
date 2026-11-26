@@ -4182,7 +4182,9 @@
 			"STATUS": "Stato",
 			"JOB_POST_CONTENT": "Contenuto del post di lavoro",
 			"PROPOSAL_CONTENT": "Contenuto della proposta",
-			"VIEW_JOB_POST": "Visualizza l'annuncio di lavoro"
+			"VIEW_JOB_POST": "Visualizza l'annuncio di lavoro",
+			"PROJECT_PROPOSAL": "Proposta di progetto",
+			"ACCEPTED_BY": "Accettato da"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Modifica Proposta",
