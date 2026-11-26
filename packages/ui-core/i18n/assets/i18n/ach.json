@@ -5025,6 +5025,20 @@
 		"WORKSPACE": "Workspace",
 		"SWITCH_WORKSPACE": "Switch workspace"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "You're here",
+		"SOON": "Soon",
+		"BETA": "Beta",
+		"FOOTER": "Opens in a new tab. You may need to sign in.",
+		"OPEN_APP": "{{ app }}, opens in a new tab",
+		"CURRENT_APP": "{{ app }}, you're here",
+		"PLACEMENT_TITLE": "App Launcher",
+		"PLACEMENT_DESCRIPTION": "Where the shortcut to the other Ever apps sits. Applies to this browser only.",
+		"PLACEMENT_SIDEBAR": "Sidebar",
+		"PLACEMENT_HEADER": "Top bar",
+		"PLACEMENT_RAIL": "Left rail",
+		"NOT_SAVED": "This browser did not keep the choice, so it lasts until the page reloads."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "Ever SI",
 		"OPEN": "Yab Ever SI",

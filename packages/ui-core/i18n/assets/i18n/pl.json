@@ -5254,6 +5254,20 @@
 		"WORKSPACE": "Obszar roboczy",
 		"SWITCH_WORKSPACE": "Przełącz obszar roboczy"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "Jesteś tutaj",
+		"SOON": "Wkrótce",
+		"BETA": "Beta",
+		"FOOTER": "Otwiera się w nowej karcie. Może być konieczne zalogowanie się.",
+		"OPEN_APP": "{{ app }}, otwiera się w nowej karcie",
+		"CURRENT_APP": "{{ app }}, jesteś tutaj",
+		"PLACEMENT_TITLE": "Launcher aplikacji",
+		"PLACEMENT_DESCRIPTION": "Gdzie znajduje się skrót do innych aplikacji Ever. Dotyczy tylko tej przeglądarki.",
+		"PLACEMENT_SIDEBAR": "Pasek boczny",
+		"PLACEMENT_HEADER": "Górny pasek",
+		"PLACEMENT_RAIL": "Lewa kolumna",
+		"NOT_SAVED": "Ta przeglądarka nie zapisała wyboru, więc obowiązuje on do ponownego wczytania strony."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "Ever SI",
 		"OPEN": "Otwórz Ever SI",

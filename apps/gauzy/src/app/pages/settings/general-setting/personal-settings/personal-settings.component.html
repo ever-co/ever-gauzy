@@ -91,6 +91,19 @@
 		</div>
 	</div>
 
+	<!-- Where the App Launcher sits (spec order: theme, App Launcher, language). Kept in this browser on pick. -->
+	@if (launcher.isAvailable) {
+		<div class="setting-row align-start">
+			<div class="row-copy">
+				<span class="row-label">{{ 'APP_LAUNCHER.PLACEMENT_TITLE' | translate }}</span>
+				<span class="row-hint">{{ 'APP_LAUNCHER.PLACEMENT_DESCRIPTION' | translate }}</span>
+			</div>
+			<div class="row-control placement-control">
+				<ga-app-launcher-placement [showHeading]="false"></ga-app-launcher-placement>
+			</div>
+		</div>
+	}
+
 	<div class="setting-row">
 		<label class="row-copy" for="generalLanguageSelect">
 			<span class="row-label">{{ 'SETTINGS_GENERAL.PREFERENCES.LANGUAGE' | translate }}</span>

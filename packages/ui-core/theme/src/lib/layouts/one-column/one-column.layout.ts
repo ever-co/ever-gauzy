@@ -12,7 +12,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbLayoutDirectionService, NbSidebarService } from '@nebular/theme';
-import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
+import {
+	AppLauncherService,
+	ChatSidebarService,
+	LayoutService,
+	NavigationBuilderService,
+	Store
+} from '@gauzy/ui-core/core';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
@@ -37,6 +43,8 @@ export class OneColumnLayoutComponent {
 	private readonly store = inject(Store);
 	public readonly navigationBuilderService = inject(NavigationBuilderService);
 	public readonly chatSidebarService = inject(ChatSidebarService);
+	/** Where the person keeps the App Launcher: the layout draws the rail for the `rail` position. */
+	public readonly launcher = inject(AppLauncherService);
 	private readonly sidebarService = inject(NbSidebarService);
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);

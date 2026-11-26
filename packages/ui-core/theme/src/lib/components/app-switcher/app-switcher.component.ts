@@ -10,9 +10,8 @@ import {
 	ViewChild
 } from '@angular/core';
 import { NbPopoverDirective, NbPosition } from '@nebular/theme';
-import { CURRENT_EVER_APP_ID, EVER_APPS, IEverApp, isCurrentEverApp, withEverAppLinks } from '@gauzy/ui-core/common';
-import { ElectronService } from '@gauzy/ui-core/core';
-import { GAUZY_ENV } from '@gauzy/ui-config';
+import { IEverApp, isCurrentEverApp } from '@gauzy/ui-core/common';
+import { AppLauncherService } from '@gauzy/ui-core/core';
 
 let nextPanelNumber = 0;
 
@@ -26,6 +25,12 @@ const EVER_MARK_PATH =
 
 type OpenReason = 'hover' | 'press';
 
+/**
+ * How the launcher's button looks: `mark`, the turning Ever mark at the top of the sidebar; `grid`, a grid of nine
+ * dots at the right end of the top bar.
+ */
+export type AppSwitcherVariant = 'mark' | 'grid';
+
 function isMousePointer(event: PointerEvent): boolean {
 	return event.pointerType === 'mouse';
 }
@@ -35,26 +40,6 @@ function containsNode(container: Element | null | undefined, node: Node | null):
 		return false;
 	}
 	return container.contains(node);
-}
-
-/**
- * The current app's row as this deployment serves it: its own `CLIENT_BASE_URL` (a self-hosted installation is not
- * the Ever-hosted one), or the catalog's entry when that setting is missing or is not a web address.
- */
-function withDeploymentAddress(app: IEverApp, clientBaseUrl: string | undefined): IEverApp {
-	if (!isCurrentEverApp(app) || !clientBaseUrl) {
-		return app;
-	}
-	try {
-		const { protocol, host } = new URL(clientBaseUrl);
-		const isWebAddress = protocol === 'http:' || protocol === 'https:';
-		if (!isWebAddress || !host) {
-			return app;
-		}
-		return { ...app, url: clientBaseUrl, domain: host };
-	} catch {
-		return app;
-	}
 }
 
 function getNextRowIndex(key: string, focusedIndex: number, rowCount: number): number | null {
@@ -85,27 +70,23 @@ function getNextRowIndex(key: string, focusedIndex: number, rowCount: number): n
 	styleUrls: ['./app-switcher.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false,
-	/** Without a catalog there is nothing to switch to: the host is hidden. */
-	host: { '[attr.hidden]': 'apps.length === 0 ? "" : null' }
+	/** With no other Ever app linked there is nothing to launch: the host is hidden. */
+	host: { '[attr.hidden]': 'launcher.isAvailable ? null : ""' }
 })
 export class AppSwitcherComponent implements OnDestroy {
-	private readonly _electronService = inject(ElectronService);
 	private readonly _document = inject(DOCUMENT);
-	private readonly _environment = inject(GAUZY_ENV, { optional: true });
+	readonly launcher = inject(AppLauncherService);
 
 	@Input() compact = false;
+
+	/** `mark` in the sidebar (the default), `grid` in the top bar. */
+	@Input() variant: AppSwitcherVariant = 'mark';
 
 	@ViewChild('trigger') readonly triggerRef?: ElementRef<HTMLButtonElement>;
 	@ViewChild('appsPopover') readonly appsPopover?: NbPopoverDirective;
 
-	/**
-	 * The catalog the deployment provides (`EVER_APPS`), each row as this deployment serves it: the addresses its
-	 * `EVER_APP_LINKS` gives (the catalog's otherwise), and its own address for the current app, which that setting
-	 * never changes.
-	 */
-	readonly apps: ReadonlyArray<IEverApp> = withEverAppLinks(inject(EVER_APPS), this._environment?.EVER_APP_LINKS, [
-		CURRENT_EVER_APP_ID
-	]).map((app) => withDeploymentAddress(app, this._environment?.CLIENT_BASE_URL));
+	/** The Ever apps, in the order every Ever app shares, as this deployment serves them. */
+	readonly apps: ReadonlyArray<IEverApp> = this.launcher.apps;
 
 	readonly markPath = EVER_MARK_PATH;
 	readonly panelId: string;
@@ -124,7 +105,22 @@ export class AppSwitcherComponent implements OnDestroy {
 		this.markGradientFill = `url(#${this.markGradientId})`;
 	}
 
+	/**
+	 * Whether this copy opens the list. The grid button always does (the top bar shows it only for the `header`
+	 * position, on a wide screen); the mark does for the `sidebar` position, and on a phone for any position, since
+	 * a phone shows neither the rail nor the top bar's button. Otherwise the mark stays in the sidebar, a plain mark.
+	 */
+	get isInteractive(): boolean {
+		if (this.variant === 'grid') {
+			return true;
+		}
+		return this.launcher.showsSidebarButton();
+	}
+
 	get placement(): NbPosition {
+		if (this.variant === 'grid') {
+			return NbPosition.BOTTOM_END;
+		}
 		if (this.compact) {
 			return NbPosition.END_TOP;
 		}
@@ -133,6 +129,18 @@ export class AppSwitcherComponent implements OnDestroy {
 
 	isCurrent(app: IEverApp): boolean {
 		return isCurrentEverApp(app);
+	}
+
+	/** The chip beside an app that is not generally available ("Soon", "Beta"), or `null`. */
+	statusKey(app: IEverApp): string | null {
+		switch (app.status) {
+			case 'soon':
+				return 'APP_LAUNCHER.SOON';
+			case 'beta':
+				return 'APP_LAUNCHER.BETA';
+			default:
+				return null;
+		}
 	}
 
 	onPanelShowStateChange(isShown: boolean): void {
@@ -180,17 +188,11 @@ export class AppSwitcherComponent implements OnDestroy {
 	}
 
 	onAppPick(event: MouseEvent, app: IEverApp): void {
-		// Inside the desktop apps a plain link would load the other app into the Gauzy window itself.
-		const shell = this._electronService.shell;
-		const canOpenInSystemBrowser = typeof shell?.openExternal === 'function';
 		this.hidePanel();
 		// Hiding detaches the row that held the focus: give it back to the button, as Escape does
 		this.triggerRef?.nativeElement.focus();
-		if (!canOpenInSystemBrowser) {
-			return;
-		}
-		event.preventDefault();
-		shell.openExternal(app.url);
+		// A new tab in the browser; the system browser inside the desktop apps
+		this.launcher.openApp(event, app);
 	}
 
 	onPanelKeydown(event: KeyboardEvent): void {

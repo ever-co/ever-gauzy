@@ -1,10 +1,12 @@
 import { IEverApp } from '@gauzy/ui-core/common';
 
 /**
- * The Ever apps the app switcher lists (`EVER_APPS` of `@gauzy/ui-core/common`), in their display order. Same apps,
- * URLs and logos as the Ever Teams app switcher (ever-teams `apps/web/core/constants/config/ever-apps.ts`): keep both
- * lists in sync. Works ships the Teams tile and Demand the Platform tile today, so those pairs look alike. Logo paths
- * are relative so they resolve under the web base href and the desktop builds' `./` base href.
+ * The Ever apps the App Launcher lists (`EVER_APPS` of `@gauzy/ui-core/common`), in their display order: the order
+ * every Ever app shares (Ever Platform, Ever Works, Ever Teams, Ever Gauzy, Ever Rec, Ever Traduora, Ever Demand),
+ * with Demand marked "Soon". Same apps, URLs and logos as the Ever Teams app switcher (ever-teams
+ * `apps/web/core/constants/config/ever-apps.ts`): keep both lists in sync. Works ships the Teams tile and Demand the
+ * Platform tile today, so those pairs look alike. Logo paths are relative so they resolve under the web base href and
+ * the desktop builds' `./` base href.
  *
  * The catalog lives here, in an Ever Platform module, because it names Ever hosts: the egress audit keeps those out of
  * the core packages (`tools/egress-audit/static-hostnames.mjs`). `EverConnectUiPlugin` carries it in its options
@@ -43,13 +45,6 @@ export const EVER_APP_CATALOG: ReadonlyArray<IEverApp> = [
 		url: 'https://app.gauzy.co',
 		domain: 'app.gauzy.co'
 	},
-	{
-		id: 'demand',
-		shortName: 'Demand',
-		logo: 'assets/images/ever-apps/demand.svg',
-		url: 'https://everdemand.co',
-		domain: 'everdemand.co'
-	},
 	{ id: 'rec', shortName: 'Rec', logo: 'assets/images/ever-apps/rec.svg', url: 'https://rec.so', domain: 'rec.so' },
 	{
 		id: 'traduora',
@@ -57,5 +52,13 @@ export const EVER_APP_CATALOG: ReadonlyArray<IEverApp> = [
 		logo: 'assets/images/ever-apps/traduora.png',
 		url: 'https://traduora.co',
 		domain: 'traduora.co'
+	},
+	{
+		id: 'demand',
+		shortName: 'Demand',
+		logo: 'assets/images/ever-apps/demand.svg',
+		url: 'https://everdemand.co',
+		domain: 'everdemand.co',
+		status: 'soon'
 	}
 ];

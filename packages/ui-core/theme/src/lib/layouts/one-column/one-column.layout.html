@@ -18,10 +18,17 @@
 	@if (user()) {
 		<nb-sidebar
 			class="menu-sidebar sidebar_class"
+			[class.with-app-rail]="launcher.showsRail()"
 			tag="menu-sidebar"
 			(stateChange)="onStateChange($event)"
 		>
-			<div class="custom-box" [class.compacted]="!isExpanded()">
+			<div class="custom-box" [class.compacted]="!isExpanded()" [class.with-app-rail]="launcher.showsRail()">
+				<!-- The App Launcher as a rail (the person's "Left rail" position, wide screens): a column at the
+				     sidebar's start edge. The sidebar grows by the rail's width, so the menu keeps its own. -->
+				@if (launcher.showsRail()) {
+					<gauzy-app-rail class="app-rail-column"></gauzy-app-rail>
+				}
+
 
 				@if (chatSidebarService.available() && !chatSidebarService.expanded()) {
 					<button

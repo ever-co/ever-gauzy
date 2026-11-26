@@ -2,12 +2,19 @@ import { InjectionToken, Provider } from '@angular/core';
 
 export type EverAppId = 'gauzy' | 'teams' | 'works' | 'platform' | 'demand' | 'rec' | 'traduora';
 
+/**
+ * Where an Ever app stands, shown as a chip beside its name in the App Launcher: `beta` ("Beta") or `soon`
+ * ("Soon"). Unset for an app that is generally available. The row still opens the app's address either way.
+ */
+export type EverAppStatus = 'beta' | 'soon';
+
 export interface IEverApp {
 	id: EverAppId;
 	shortName: string;
 	logo: string;
 	url: string;
 	domain: string;
+	status?: EverAppStatus;
 }
 
 export const CURRENT_EVER_APP_ID: EverAppId = 'gauzy';
@@ -68,4 +75,14 @@ export function everAppsFromPluginOptions(
 
 export function isCurrentEverApp(app: IEverApp): boolean {
 	return app.id === CURRENT_EVER_APP_ID;
+}
+
+/**
+ * Whether the list links at least one Ever app besides this one. The App Launcher (its button, its rail and its
+ * setting) shows only then, as Ever Teams does: a deployment that links no other app has nothing to launch.
+ *
+ * @param apps - The App Launcher's list, as this deployment serves it.
+ */
+export function hasOtherEverApp(apps: ReadonlyArray<IEverApp>): boolean {
+	return apps.some((app) => !isCurrentEverApp(app) && Boolean(app.url));
 }

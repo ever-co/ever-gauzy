@@ -1,0 +1,33 @@
+<nav class="app-rail" [attr.aria-label]="'HEADER.EVER_APPS' | translate">
+	<ul class="app-rail-list">
+		@for (app of apps; track app.id) {
+			<li class="app-rail-item" [class.current]="isCurrent(app)">
+				@if (isCurrent(app)) {
+					<span
+						class="app-rail-slot"
+						aria-current="page"
+						[attr.aria-label]="'APP_LAUNCHER.CURRENT_APP' | translate: { app: app.shortName }"
+						role="img"
+						[nbTooltip]="app.shortName"
+						nbTooltipPlacement="end"
+					>
+						<img class="app-rail-tile" [src]="app.logo" alt="" width="32" height="32" draggable="false" />
+					</span>
+				} @else {
+					<a
+						class="app-rail-slot"
+						[href]="app.url"
+						target="_blank"
+						rel="noopener noreferrer"
+						[attr.aria-label]="'APP_LAUNCHER.OPEN_APP' | translate: { app: displayName(app) }"
+						[nbTooltip]="displayName(app)"
+						nbTooltipPlacement="end"
+						(click)="onAppPick($event, app)"
+					>
+						<img class="app-rail-tile" [src]="app.logo" alt="" width="32" height="32" draggable="false" />
+					</a>
+				}
+			</li>
+		}
+	</ul>
+</nav>

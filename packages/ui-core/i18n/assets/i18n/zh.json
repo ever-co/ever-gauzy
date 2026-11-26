@@ -5788,6 +5788,20 @@
 		"WORKSPACE": "工作区",
 		"SWITCH_WORKSPACE": "切换工作区"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "您在这里",
+		"SOON": "即将推出",
+		"BETA": "测试版",
+		"FOOTER": "在新标签页中打开。您可能需要登录。",
+		"OPEN_APP": "{{ app }}，在新标签页中打开",
+		"CURRENT_APP": "{{ app }}，您在这里",
+		"PLACEMENT_TITLE": "应用启动器",
+		"PLACEMENT_DESCRIPTION": "前往其他 Ever 应用的快捷入口所在的位置。仅适用于此浏览器。",
+		"PLACEMENT_SIDEBAR": "侧边栏",
+		"PLACEMENT_HEADER": "顶部栏",
+		"PLACEMENT_RAIL": "左侧栏",
+		"NOT_SAVED": "此浏览器未能保存该选择，它在页面重新加载前有效。"
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "Ever SI",
 		"ATTACH_SOON": "附加文件或文件夹（即将推出）",

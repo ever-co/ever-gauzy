@@ -47,3 +47,13 @@
 nb-option .flag-icon {
 	margin-inline-end: 0.5rem;
 }
+
+// The App Launcher's three picture tiles need more room than a select.
+.row-control.placement-control {
+	flex-basis: 22rem;
+	justify-content: stretch;
+
+	ga-app-launcher-placement {
+		width: 100%;
+	}
+}

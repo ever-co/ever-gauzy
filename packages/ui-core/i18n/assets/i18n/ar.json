@@ -5253,6 +5253,20 @@
 		"WORKSPACE": "مساحة العمل",
 		"SWITCH_WORKSPACE": "تبديل مساحة العمل"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "أنت هنا",
+		"SOON": "قريبًا",
+		"BETA": "تجريبي",
+		"FOOTER": "يُفتح في علامة تبويب جديدة. قد تحتاج إلى تسجيل الدخول.",
+		"OPEN_APP": "{{ app }}، يُفتح في علامة تبويب جديدة",
+		"CURRENT_APP": "{{ app }}، أنت هنا",
+		"PLACEMENT_TITLE": "مشغّل التطبيقات",
+		"PLACEMENT_DESCRIPTION": "مكان الاختصار إلى تطبيقات Ever الأخرى. ينطبق على هذا المتصفح فقط.",
+		"PLACEMENT_SIDEBAR": "الشريط الجانبي",
+		"PLACEMENT_HEADER": "الشريط العلوي",
+		"PLACEMENT_RAIL": "عمود جانبي",
+		"NOT_SAVED": "لم يحفظ هذا المتصفح الاختيار، لذا يسري حتى إعادة تحميل الصفحة."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "Ever SI",
 		"OPEN": "فتح Ever SI",
