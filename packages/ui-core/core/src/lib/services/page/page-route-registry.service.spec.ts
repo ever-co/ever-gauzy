@@ -83,6 +83,14 @@ describe('PageRouteRegistryService — navigation-target contract', () => {
 		expect('title' in untitled).toBe(false);
 	});
 
+	it('keeps an explicitly empty title', () => {
+		register({ path: 'blank', component: class {} as never, title: '' });
+
+		const [route] = service.getPageLocationRoutes(PAGE_SECTIONS_LOCATION);
+		expect('title' in route).toBe(true);
+		expect(route.title).toBe('');
+	});
+
 	it('lets a component-ish target take precedence over redirectTo in the else-chain', () => {
 		const component = class {};
 		register({ path: 'jobs', component: component as never, redirectTo: 'unused' });

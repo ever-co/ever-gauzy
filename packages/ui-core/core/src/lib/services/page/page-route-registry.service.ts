@@ -258,8 +258,9 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			}
 
 			// The browser tab title (a string or a resolver). Without this a registration's `title`
-			// never reached the router. Attached only when present, like the guards above.
-			if (config.title) {
+			// never reached the router. Attached only when given — an explicit empty string included,
+			// so it stays distinguishable from an omitted title.
+			if (config.title !== undefined) {
 				route.title = config.title;
 			}
 
