@@ -1597,7 +1597,7 @@ export class EmailService {
 			const saved = await this.typeOrmEmailHistoryRepository.save(emailEntity);
 			if (retry) {
 				this.logger.warn(
-					`The "${template}" email ${saved?.id} failed (${emailEntity.lastErrorCode}); automatic retry 1 of ${
+					`The "${template}" email ${saved.id} failed (${emailEntity.lastErrorCode}); automatic retry 1 of ${
 						EMAIL_RETRY_MAX_ATTEMPTS - 1
 					} is due at ${emailEntity.nextRetryAt.toISOString()}.`
 				);
@@ -1672,24 +1672,25 @@ export class EmailService {
 		body: { retry?: IEmailRetryDraft; [field: string]: unknown },
 		scope: { organizationId?: ID | null; tenantId?: ID | null }
 	): Promise<any> {
-		const config = (instance as { config?: { transport?: unknown } })?.config;
 		const transport = smtpTransportOf(instance);
-		if (!transport || !config || !isEmailRetryEnabled() || !isEmailRetryTemplate(sendOptions.template)) {
+		if (!transport || !isEmailRetryEnabled() || !isEmailRetryTemplate(sendOptions.template)) {
 			return instance.send(sendOptions);
 		}
 
-		let handedOver: Record<string, unknown> | undefined;
+		// `smtpTransportOf` found the mailer at `config.transport`, so the configuration is there.
+		const config = (instance as unknown as { config: { transport: unknown } }).config;
+		const capture: { message?: Record<string, unknown> } = {};
 		config.transport = {
 			transporter: transport.transporter,
 			sendMail: (message: Record<string, unknown>) => {
-				handedOver = message;
+				capture.message = message;
 				return transport.sendMail(message);
 			}
 		};
 		try {
 			return await instance.send(sendOptions);
 		} catch (error) {
-			const retry = await this.retryDraftOf(instance, handedOver, error, scope);
+			const retry = await this.retryDraftOf(instance, capture.message, error, scope);
 			if (retry) {
 				body.retry = retry;
 			}
@@ -1724,8 +1725,8 @@ export class EmailService {
 	): Promise<IEmailRetryDraft | undefined> {
 		try {
 			const defaultFrom = (instance as { config?: { message?: { from?: unknown } } }).config?.message?.from;
+			// `isReproducibleEmailMessage` also answers no for a message that never reached the transport.
 			if (
-				!handedOver ||
 				!classifyEmailSendError(error).retry ||
 				!isReproducibleEmailMessage(handedOver, defaultFrom) ||
 				typeof instance.renderAll !== 'function'
@@ -1739,11 +1740,8 @@ export class EmailService {
 				text?: unknown;
 			};
 			const again = await instance.renderAll('', {}, { to, subject, html });
-			if (
-				again?.subject !== subject ||
-				again?.html !== html ||
-				(again?.text ?? undefined) !== (text ?? undefined)
-			) {
+			const textOf = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
+			if (again?.subject !== subject || again?.html !== html || textOf(again?.text) !== textOf(text)) {
 				return undefined;
 			}
 			return {

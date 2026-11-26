@@ -338,11 +338,8 @@ const REPRODUCED_MESSAGE_FIELDS: ReadonlySet<string> = new Set([
  * @param message The message as email-templates handed it to the transport.
  * @param defaultFrom The sender of the mail settings the message went through (`config.message.from`).
  */
-export function isReproducibleEmailMessage(
-	message: Record<string, unknown> | undefined,
-	defaultFrom: unknown
-): boolean {
-	if (!message || typeof message !== 'object') {
+export function isReproducibleEmailMessage(message: unknown, defaultFrom: unknown): boolean {
+	if (!message || typeof message !== 'object' || Array.isArray(message)) {
 		return false;
 	}
 	for (const [field, value] of Object.entries(message)) {
@@ -350,7 +347,7 @@ export function isReproducibleEmailMessage(
 			return false;
 		}
 	}
-	const { from, to, subject, html, attachments } = message;
+	const { from, to, subject, html, attachments } = message as Record<string, unknown>;
 	return (
 		typeof to === 'string' &&
 		!!to &&

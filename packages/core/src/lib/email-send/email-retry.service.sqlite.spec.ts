@@ -68,10 +68,25 @@ describe('EmailRetryService on SQLite', () => {
 	let transporterName: string;
 	let service: EmailRetryService;
 	let previousSwitch: string | undefined;
+	/** The sweep's clock: NOW unless a case moves it. */
+	let clockAt: number;
+	/** The waits the sweep asked for (between the attempts of a SENT write). */
+	let waits: number[];
+	const clock = () => new Date(clockAt);
+	/** Sets the clock to `date`, and answers it: `sweep(at(date))` is a sweep run at `date`. */
+	const at = (date: Date): Date => {
+		clockAt = date.getTime();
+		return date;
+	};
+	const advance = (ms: number) => {
+		clockAt += ms;
+	};
 
 	beforeEach(async () => {
 		previousSwitch = process.env.EMAIL_RETRY_ENABLED;
 		delete process.env.EMAIL_RETRY_ENABLED;
+		clockAt = NOW.getTime();
+		waits = [];
 		for (const level of ['log', 'warn', 'error', 'debug'] as const) {
 			jest.spyOn(Logger.prototype, level).mockImplementation(() => undefined);
 		}
@@ -122,12 +137,16 @@ describe('EmailRetryService on SQLite', () => {
 		else process.env.EMAIL_RETRY_ENABLED = previousSwitch;
 	});
 
-	function newService(orm?: unknown): EmailRetryService {
-		return new EmailRetryService(
-			dataSource.getRepository(EmailHistory) as never,
-			{ getEmailInstance } as never,
-			orm as never
-		);
+	function newService(
+		orm?: unknown,
+		repository: unknown = dataSource.getRepository(EmailHistory)
+	): EmailRetryService {
+		return new EmailRetryService(repository as never, { getEmailInstance } as never, orm as never, {
+			now: clock,
+			sleep: async (ms: number) => {
+				waits.push(ms);
+			}
+		});
 	}
 
 	/** One `email_sent` row; by default a welcome email that failed 5 minutes ago and is due now. */
@@ -172,7 +191,7 @@ describe('EmailRetryService on SQLite', () => {
 		const unknown = await aRow({ retryCount: null, dueIn: null, status: null });
 		const before = await Promise.all([old, sent, unknown].map(rowOf));
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toEqual({ due: 0, sent: 0, rescheduled: 0, gaveUp: 0, taken: 0, dropped: 0, capped: false });
 		expect(send).not.toHaveBeenCalled();
@@ -188,7 +207,7 @@ describe('EmailRetryService on SQLite', () => {
 			return {};
 		});
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toMatchObject({ due: 1, sent: 1 });
 		// Claimed before the send: the next retry is no longer due, the count has moved on, and the claim is stamped
@@ -206,7 +225,7 @@ describe('EmailRetryService on SQLite', () => {
 		expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 1, nextRetryAt: null });
 
 		// Sent once: the next sweep finds nothing
-		await service.sweep(fromNow(HOUR));
+		await service.sweep(at(fromNow(HOUR)));
 		expect(send).toHaveBeenCalledTimes(1);
 	});
 
@@ -222,7 +241,7 @@ describe('EmailRetryService on SQLite', () => {
 			return due;
 		});
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toMatchObject({ due: 1, taken: 1, sent: 0 });
 		expect(send).not.toHaveBeenCalled();
@@ -235,7 +254,7 @@ describe('EmailRetryService on SQLite', () => {
 			await aRow({ email: 'c@example.test' })
 		];
 
-		const [first, second] = await Promise.all([newService().sweep(NOW), newService().sweep(NOW)]);
+		const [first, second] = await Promise.all([newService().sweep(at(NOW)), newService().sweep(at(NOW))]);
 
 		expect(sentTo().sort()).toEqual(['a@example.test', 'b@example.test', 'c@example.test']);
 		expect(first.sent + second.sent).toBe(3);
@@ -248,10 +267,10 @@ describe('EmailRetryService on SQLite', () => {
 	it('waits for an email whose retry is not due yet', async () => {
 		const id = await aRow({ dueIn: 2 * MINUTE });
 
-		expect(await service.sweep(NOW)).toMatchObject({ due: 0 });
+		expect(await service.sweep(at(NOW))).toMatchObject({ due: 0 });
 		expect(send).not.toHaveBeenCalled();
 
-		await service.sweep(fromNow(2 * MINUTE));
+		await service.sweep(at(fromNow(2 * MINUTE)));
 		expect(sentTo()).toEqual(['ada@example.test']);
 		expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT });
 	});
@@ -259,7 +278,7 @@ describe('EmailRetryService on SQLite', () => {
 	it('never retries an email older than two hours, even one still marked due', async () => {
 		const id = await aRow({ createdIn: -2 * HOUR - MINUTE, dueIn: -HOUR });
 
-		expect(await service.sweep(NOW)).toMatchObject({ due: 0 });
+		expect(await service.sweep(at(NOW))).toMatchObject({ due: 0 });
 		expect(send).not.toHaveBeenCalled();
 		expect(await rowOf(id)).toMatchObject({ retryCount: 0, nextRetryAt: stored(fromNow(-HOUR)) });
 	});
@@ -267,7 +286,7 @@ describe('EmailRetryService on SQLite', () => {
 	it('never retries an email whose two retries are spent', async () => {
 		await aRow({ retryCount: 2 });
 
-		expect(await service.sweep(NOW)).toMatchObject({ due: 0 });
+		expect(await service.sweep(at(NOW))).toMatchObject({ due: 0 });
 		expect(send).not.toHaveBeenCalled();
 	});
 
@@ -275,7 +294,7 @@ describe('EmailRetryService on SQLite', () => {
 		const id = await aRow();
 		send.mockRejectedValueOnce(refused());
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toMatchObject({ due: 1, rescheduled: 1, sent: 0 });
 		expect(await rowOf(id)).toMatchObject({
@@ -290,10 +309,10 @@ describe('EmailRetryService on SQLite', () => {
 		const id = await aRow();
 		send.mockRejectedValue(refused());
 
-		await service.sweep(NOW); // retry 1 of 2
-		await service.sweep(fromNow(30 * MINUTE)); // retry 2 of 2
+		await service.sweep(at(NOW)); // retry 1 of 2
+		await service.sweep(at(fromNow(30 * MINUTE))); // retry 2 of 2
 		const last = await rowOf(id);
-		await service.sweep(fromNow(HOUR)); // nothing left
+		await service.sweep(at(fromNow(HOUR))); // nothing left
 
 		expect(send).toHaveBeenCalledTimes(2);
 		expect(last).toMatchObject({ status: EmailStatusEnum.FAILED, retryCount: 2, nextRetryAt: null });
@@ -304,7 +323,7 @@ describe('EmailRetryService on SQLite', () => {
 		const id = await aRow();
 		send.mockRejectedValueOnce(noSuchUser());
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toMatchObject({ gaveUp: 1, rescheduled: 0 });
 		expect(await rowOf(id)).toMatchObject({
@@ -319,7 +338,7 @@ describe('EmailRetryService on SQLite', () => {
 		const id = await aRow({ createdIn: -HOUR - 45 * MINUTE });
 		send.mockRejectedValueOnce(refused());
 
-		await service.sweep(NOW);
+		await service.sweep(at(NOW));
 
 		expect(await rowOf(id)).toMatchObject({ retryCount: 1, nextRetryAt: null });
 	});
@@ -329,7 +348,7 @@ describe('EmailRetryService on SQLite', () => {
 		transporterName = 'Resend';
 		send.mockRejectedValueOnce(refused());
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toMatchObject({ gaveUp: 1 });
 		expect(await rowOf(id)).toMatchObject({ retryCount: 1, nextRetryAt: null });
@@ -343,7 +362,7 @@ describe('EmailRetryService on SQLite', () => {
 			);
 		}
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toMatchObject({ due: EMAIL_RETRY_BATCH_SIZE, sent: EMAIL_RETRY_BATCH_SIZE });
 		// The longest due (the highest index) went first
@@ -412,7 +431,7 @@ describe('EmailRetryService on SQLite', () => {
 			jest.spyOn(first as any, 'findDue').mockResolvedValue(due.slice(0, EMAIL_RETRY_BATCH_SIZE));
 			jest.spyOn(second as any, 'findDue').mockResolvedValue(due.slice(EMAIL_RETRY_BATCH_SIZE));
 
-			const reports = await Promise.all([first.sweep(NOW), second.sweep(NOW)]);
+			const reports = await Promise.all([first.sweep(at(NOW)), second.sweep(at(NOW))]);
 
 			const sent = sentTo();
 			expect(new Set(sent).size).toBe(sent.length);
@@ -427,11 +446,11 @@ describe('EmailRetryService on SQLite', () => {
 			await dueRows(3 * EMAIL_RETRY_BATCH_SIZE);
 			const due = await allDue();
 			const sweeps = [0, 1, 2].map((index) => {
-				const process = newService();
-				jest.spyOn(process as any, 'findDue').mockResolvedValue(
+				const sweeper = newService();
+				jest.spyOn(sweeper as any, 'findDue').mockResolvedValue(
 					due.slice(index * EMAIL_RETRY_BATCH_SIZE, (index + 1) * EMAIL_RETRY_BATCH_SIZE)
 				);
-				return process.sweep(NOW);
+				return sweeper.sweep(at(NOW));
 			});
 
 			await Promise.all(sweeps);
@@ -443,10 +462,10 @@ describe('EmailRetryService on SQLite', () => {
 		it('a second sweep within the period, after a full batch, sends nothing; the cap frees up after the period', async () => {
 			await dueRows(EMAIL_RETRY_BATCH_SIZE + 10);
 
-			expect(await service.sweep(NOW)).toMatchObject({ sent: EMAIL_RETRY_BATCH_SIZE, capped: false });
+			expect(await service.sweep(at(NOW))).toMatchObject({ sent: EMAIL_RETRY_BATCH_SIZE, capped: false });
 
 			// Another process (or the same one) a minute later: the period's batch is spent, whatever is due
-			const later = await newService().sweep(fromNow(MINUTE));
+			const later = await newService().sweep(at(fromNow(MINUTE)));
 			expect(later).toMatchObject({ due: 10, sent: 0, taken: 0, capped: true });
 			expect(send).toHaveBeenCalledTimes(EMAIL_RETRY_BATCH_SIZE);
 			const [{ waiting }] = await dataSource.query(
@@ -455,7 +474,7 @@ describe('EmailRetryService on SQLite', () => {
 			expect(Number(waiting)).toBe(10);
 
 			// Once the period is over, the rest goes
-			const next = await service.sweep(fromNow(EMAIL_RETRY_SWEEP_MS + 1));
+			const next = await service.sweep(at(fromNow(EMAIL_RETRY_SWEEP_MS + 1)));
 			expect(next).toMatchObject({ due: 10, sent: 10, capped: false });
 			expect(send).toHaveBeenCalledTimes(EMAIL_RETRY_BATCH_SIZE + 10);
 		});
@@ -473,10 +492,37 @@ describe('EmailRetryService on SQLite', () => {
 			await aRow({ email: 'one@example.test' });
 			await aRow({ email: 'two@example.test' });
 
-			const report = await service.sweep(NOW);
+			const report = await service.sweep(at(NOW));
 
 			expect(report).toMatchObject({ due: 2, sent: 1, capped: true });
 			expect(sentTo()).toHaveLength(1);
+		});
+
+		it('counts a slow sweep by the moments of its claims, so a later sweep still sees them', async () => {
+			// Each send of the first sweep takes 12 s: its batch is claimed over almost four minutes
+			await dueRows(2 * EMAIL_RETRY_BATCH_SIZE);
+			send.mockImplementation(async () => {
+				advance(12_000);
+				return {};
+			});
+			expect(await service.sweep(at(NOW))).toMatchObject({ sent: EMAIL_RETRY_BATCH_SIZE });
+
+			// A quick sweep just over one period after the first one started. Stamped with the first sweep's start, its
+			// claims would all look a period old, and this sweep would send a whole batch on top of them; stamped when
+			// they were made, 19 of them are still in its period
+			send.mockImplementation(async () => ({}));
+			const later = await newService().sweep(at(fromNow(EMAIL_RETRY_SWEEP_MS + 1_000)));
+
+			expect(later).toMatchObject({ due: EMAIL_RETRY_BATCH_SIZE, sent: 1, capped: true });
+			expect(sentTo()).toHaveLength(EMAIL_RETRY_BATCH_SIZE + 1);
+			// No period holds more than a batch of claims
+			const stamps = (
+				await dataSource.query(`SELECT "lastRetryAt" FROM "email_sent" WHERE "lastRetryAt" IS NOT NULL`)
+			).map(({ lastRetryAt }) => new Date(`${lastRetryAt}Z`.replace(' ', 'T')).getTime());
+			for (const start of stamps) {
+				const inPeriod = stamps.filter((stamp) => stamp >= start && stamp < start + EMAIL_RETRY_SWEEP_MS);
+				expect(inPeriod.length).toBeLessThanOrEqual(EMAIL_RETRY_BATCH_SIZE);
+			}
 		});
 
 		it('stops before any claim when the count of recent claims cannot be read', async () => {
@@ -484,10 +530,159 @@ describe('EmailRetryService on SQLite', () => {
 			const before = await rowOf(id);
 			jest.spyOn(service as any, 'claimedInThePeriod').mockRejectedValue(new Error('database unavailable'));
 
-			await expect(service.sweep(NOW)).rejects.toThrow('database unavailable');
+			await expect(service.sweep(at(NOW))).rejects.toThrow('database unavailable');
 
 			expect(send).not.toHaveBeenCalled();
 			expect(await rowOf(id)).toEqual(before);
+		});
+	});
+
+	describe('the clock, read when each decision is made', () => {
+		it('does not send an email that reached the maximum age while it waited behind an earlier send', async () => {
+			const first = await aRow({ email: 'first@example.test', createdIn: -HOUR, dueIn: -2 * MINUTE });
+			// Two hours old ten seconds from now; the send before it takes twenty
+			const second = await aRow({ email: 'second@example.test', createdIn: -2 * HOUR + 10_000, dueIn: -MINUTE });
+			const before = await rowOf(second);
+			send.mockImplementationOnce(async () => {
+				advance(20_000);
+				return {};
+			});
+
+			const report = await service.sweep(at(NOW));
+
+			expect(report).toMatchObject({ due: 2, sent: 1, dropped: 1 });
+			expect(sentTo()).toEqual(['first@example.test']);
+			expect(await rowOf(first)).toMatchObject({ status: EmailStatusEnum.SENT });
+			// Never claimed, and never read again: too old for any later sweep
+			expect(await rowOf(second)).toEqual(before);
+			expect(await service.sweep(at(fromNow(MINUTE)))).toMatchObject({ due: 0 });
+		});
+
+		it('does not send an email that reached the maximum age while its mail settings were read', async () => {
+			const id = await aRow({ createdIn: -2 * HOUR + 5_000 });
+			getEmailInstance.mockImplementationOnce(async () => {
+				advance(10_000);
+				return { config: { transport: { transporter: { name: 'SMTP' }, sendMail: jest.fn() } }, send };
+			});
+
+			const report = await service.sweep(at(NOW));
+
+			expect(report).toMatchObject({ due: 1, sent: 0, dropped: 1 });
+			expect(send).not.toHaveBeenCalled();
+			// Still claimed: no retry due, and why
+			expect(await rowOf(id)).toMatchObject({
+				status: EmailStatusEnum.FAILED,
+				retryCount: 1,
+				nextRetryAt: null,
+				lastErrorCode: 'EXPIRED',
+				lastRetryAt: stored(NOW)
+			});
+		});
+
+		it('measures the next retry from the failure, not from the start of the sweep', async () => {
+			const id = await aRow();
+			send.mockImplementationOnce(async () => {
+				advance(90_000);
+				throw refused();
+			});
+
+			await service.sweep(at(NOW));
+
+			expect(await rowOf(id)).toMatchObject({
+				retryCount: 1,
+				nextRetryAt: stored(fromNow(90_000 + 30 * MINUTE)),
+				lastErrorCode: 'ESOCKET ECONNREFUSED CONN'
+			});
+		});
+
+		it('stamps each claim with the moment it is made', async () => {
+			const ids = [await aRow({ email: 'a@example.test' }), await aRow({ email: 'b@example.test' })];
+			send.mockImplementation(async () => {
+				advance(30_000);
+				return {};
+			});
+
+			await service.sweep(at(NOW));
+
+			const stamps = (await Promise.all(ids.map(rowOf))).map((row) => row.lastRetryAt).sort();
+			expect(stamps).toEqual([stored(NOW), stored(fromNow(30_000))]);
+		});
+
+		it('makes no claim once its time budget ran out during the count', async () => {
+			const id = await aRow();
+			const before = await rowOf(id);
+			jest.spyOn(service as any, 'claimedInThePeriod').mockImplementation(async () => {
+				advance(2_000);
+				return 0;
+			});
+
+			const report = await service.sweep(at(NOW), 1_000);
+
+			expect(report).toMatchObject({ due: 1, sent: 0, taken: 0, dropped: 0 });
+			expect(send).not.toHaveBeenCalled();
+			expect(await rowOf(id)).toEqual(before);
+		});
+	});
+
+	describe('recording a sent retry', () => {
+		/** The service over a repository whose SENT write fails `failures` times. */
+		function withFailingSentWrite(failures: number): EmailRetryService {
+			const repository = dataSource.getRepository(EmailHistory);
+			const update = repository.update.bind(repository);
+			let left = failures;
+			jest.spyOn(repository, 'update').mockImplementation(async (criteria: any, values: any) => {
+				if (values?.status === EmailStatusEnum.SENT && left > 0) {
+					left -= 1;
+					throw new Error('deadlock detected');
+				}
+				return update(criteria, values);
+			});
+			return newService(undefined, repository);
+		}
+
+		it('tries the SENT write again after a refusal, and never sends twice', async () => {
+			const id = await aRow();
+
+			const report = await withFailingSentWrite(1).sweep(at(NOW));
+
+			expect(report).toMatchObject({ sent: 1 });
+			expect(send).toHaveBeenCalledTimes(1);
+			expect(waits).toEqual([1_000]);
+			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 1, nextRetryAt: null });
+		});
+
+		it('gives up on the write after three attempts, logs the row id alone, and never sends twice', async () => {
+			const id = await aRow({ email: 'ada@example.test' });
+
+			const report = await withFailingSentWrite(3).sweep(at(NOW));
+
+			expect(report).toMatchObject({ sent: 1 });
+			expect(send).toHaveBeenCalledTimes(1);
+			expect(waits).toEqual([1_000, 2_000]);
+			// Claimed and failed: no sweep sends it again
+			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.FAILED, retryCount: 1, nextRetryAt: null });
+			await service.sweep(at(fromNow(HOUR)));
+			expect(send).toHaveBeenCalledTimes(1);
+			const logged = (Logger.prototype.error as unknown as jest.Mock).mock.calls.map(([message]) =>
+				String(message)
+			);
+			expect(logged).toEqual([`Email ${id} was sent on its automatic retry but could not be recorded as sent.`]);
+		});
+
+		it('leaves a row that was re-sent by hand meanwhile as it is', async () => {
+			const id = await aRow();
+			send.mockImplementationOnce(async () => {
+				// A resend by hand went through while the retry was being sent
+				await dataSource.query(`UPDATE "email_sent" SET "status" = 'SENT', "retryCount" = 5 WHERE "id" = ?`, [
+					id
+				]);
+				return {};
+			});
+
+			await service.sweep(at(NOW));
+
+			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 5 });
+			expect(waits).toEqual([]);
 		});
 	});
 
@@ -503,7 +698,7 @@ describe('EmailRetryService on SQLite', () => {
 			return {};
 		});
 
-		await service.sweep(NOW);
+		await service.sweep(at(NOW));
 
 		expect(send).toHaveBeenCalledTimes(5);
 		expect(most).toBe(1);
@@ -512,7 +707,7 @@ describe('EmailRetryService on SQLite', () => {
 	it('starts no send once its time budget is spent, and leaves the emails due and unclaimed', async () => {
 		const id = await aRow();
 
-		const report = await service.sweep(NOW, 0);
+		const report = await service.sweep(at(NOW), 0);
 
 		expect(report).toMatchObject({ due: 1, sent: 0, taken: 0 });
 		expect(send).not.toHaveBeenCalled();
@@ -524,7 +719,7 @@ describe('EmailRetryService on SQLite', () => {
 		const before = await rowOf(id);
 		process.env.EMAIL_RETRY_ENABLED = 'false';
 
-		expect(await service.sweep(NOW)).toMatchObject({ due: 0, sent: 0 });
+		expect(await service.sweep(at(NOW))).toMatchObject({ due: 0, sent: 0 });
 		expect(send).not.toHaveBeenCalled();
 		expect(await rowOf(id)).toEqual(before);
 	});
@@ -533,7 +728,7 @@ describe('EmailRetryService on SQLite', () => {
 		const password = await aRow({ template: 'password' });
 		const action = await aRow({ template: 'timesheet-action' });
 
-		const report = await service.sweep(NOW);
+		const report = await service.sweep(at(NOW));
 
 		expect(report).toMatchObject({ due: 2, dropped: 2, sent: 0 });
 		expect(send).not.toHaveBeenCalled();
@@ -544,7 +739,7 @@ describe('EmailRetryService on SQLite', () => {
 	it('takes an email with nothing to send out of the retries, unsent', async () => {
 		const id = await aRow({ content: null });
 
-		expect(await service.sweep(NOW)).toMatchObject({ dropped: 1 });
+		expect(await service.sweep(at(NOW))).toMatchObject({ dropped: 1 });
 		expect(send).not.toHaveBeenCalled();
 		expect(await rowOf(id)).toMatchObject({ nextRetryAt: null });
 	});
@@ -552,14 +747,14 @@ describe('EmailRetryService on SQLite', () => {
 	it('never retries an email that went, even one still marked due', async () => {
 		await aRow({ status: EmailStatusEnum.SENT });
 
-		expect(await service.sweep(NOW)).toMatchObject({ due: 0 });
+		expect(await service.sweep(at(NOW))).toMatchObject({ due: 0 });
 		expect(send).not.toHaveBeenCalled();
 	});
 
 	it('sends through the platform default when the row names no organization', async () => {
 		await aRow({ organizationId: null });
 
-		await service.sweep(NOW);
+		await service.sweep(at(NOW));
 
 		expect(getEmailInstance).toHaveBeenCalledWith({ organizationId: null, tenantId: TENANT });
 	});
@@ -578,7 +773,7 @@ describe('EmailRetryService on SQLite', () => {
 			await aRow({ email: 'a@example.test' });
 			await aRow({ email: 'b@example.test' });
 
-			const report = await newService(mikroOrm.orm).sweep(NOW);
+			const report = await newService(mikroOrm.orm).sweep(at(NOW));
 
 			expect(report).toMatchObject({ due: 2, sent: 2 });
 			expect(sentThrough).toHaveLength(2);

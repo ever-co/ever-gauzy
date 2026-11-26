@@ -56,8 +56,7 @@ async function fakeSmtp(script: IScript): Promise<IFakeServer> {
 		let buffer = '';
 		socket.on('data', (chunk) => {
 			buffer += chunk.toString('utf8');
-			let index: number;
-			while ((index = buffer.indexOf('\r\n')) >= 0) {
+			for (let index = buffer.indexOf('\r\n'); index >= 0; index = buffer.indexOf('\r\n')) {
 				const line = buffer.slice(0, index);
 				buffer = buffer.slice(index + 2);
 				if (inBody) {

@@ -355,7 +355,6 @@ describe('EmailService: scheduling the automatic retry of a failed email', () =>
 					createdAt: new Date(),
 					emailTemplate: { name: `${template}/html` }
 				},
-				new Date(),
 				report
 			);
 
