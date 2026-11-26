@@ -79,7 +79,10 @@ export const DocumentsHubPage = {
 	dropOverlayCss: '.docs-browse .docs-drop-overlay',
 
 	// ── Preset chips (gz-docs-preset-chips, UX spec §5) ──────────────────────────────────────────
+	// The chips live in the filter panel, which stays rendered but hidden until its toggle ("More filters") opens it.
 	presetChipCss: 'gz-docs-preset-chips .docs-presets button',
+	filterPanelToggleCss: 'gz-docs-filter-bar button.docs-filter-panel-toggle',
+	filterPanelOpenCss: 'gz-docs-filter-bar #docs-filter-panel.docs-filter-panel--open',
 	// ⚠️ FRAGILE-ish: the chips are an *ngFor over `PresetChipsComponent.chips` with no per-chip id,
 	// class or data attribute, so INDEX is the only language-proof handle. The order is fixed in the
 	// component (All, Needs review, Not in AI knowledge, Archived); if a chip is inserted these shift.
@@ -99,8 +102,7 @@ export const DocumentsHubPage = {
 	// No call site yet, but the class it used to hang off (`.docs-filter-facets`) no longer exists
 	// anywhere in docs-ui — the clear-all button now lives in the filter bar's actions field. Corrected
 	// rather than left to mislead whoever wires this up.
-	clearAllButtonCss:
-		'gz-docs-filter-bar .docs-filter-field--actions button:has(nb-icon[icon="close-circle-outline"])',
+	clearAllButtonCss: 'gz-docs-filter-bar button:has(nb-icon[icon="close-circle-outline"])',
 
 	// ── Upload flow (UX spec §7) ─────────────────────────────────────────────────────────────────
 	// Pre-upload classification dialog. NbDialogService mounts the component itself, so the component
