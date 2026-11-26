@@ -11,7 +11,7 @@ import en from '../i18n/en.json';
  *
  * Self-contained plugin that registers:
  * - An AI Playground page at `/pages/playground` (Vercel AI SDK style)
- * - The full-page chat at `/pages/ai-chat` (the chat panel's Maximize)
+ * - The full-page chat at `/pages/ai-chat` (a direct link; Maximize expands the panel in place)
  * - A per-tenant "AI Providers" (BYOK) settings page at `/pages/settings/ai`
  *   with a nav item under the core Settings section (AI_CHAT_SETTINGS permission)
  * - The AI Chat panel in the layout's dedicated chat sidebar slot

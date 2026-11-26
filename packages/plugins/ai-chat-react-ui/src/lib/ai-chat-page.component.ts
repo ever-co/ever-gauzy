@@ -1,13 +1,15 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, DOCUMENT, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { ChatSidebarService } from '@gauzy/ui-core/core';
 import { AiChatSidebarComponent } from './ai-chat-sidebar.component';
 
 /**
  * AiChatPageComponent
  *
- * Routed entry point of the FULL-PAGE chat (`/pages/ai-chat`) — what the
- * panel's Maximize button opens. It is a page inside the `/pages` shell (so
- * opening and leaving it never rebuilds the shell — see `AI_CHAT_PAGE_ROUTE`);
+ * Routed entry point of the FULL-PAGE chat (`/pages/ai-chat`) — a direct link
+ * to the chat on its own (a bookmark, `/ai-chat`). The panel's Maximize does not
+ * come here: it expands the docked chat in place, keeping the page underneath
+ * alive. This is a page inside the `/pages` shell (see `AI_CHAT_PAGE_ROUTE`);
  * while it is open the layout hides its menu, header and footer, and this page
  * covers the screen.
  *
@@ -18,8 +20,9 @@ import { AiChatSidebarComponent } from './ai-chat-sidebar.component';
  * this page, in both directions.
  *
  * The page tells `ChatSidebarService` while it is on screen, so the panel's
- * Maximize button shows Restore here, and so leaving it by ANY route — Restore,
- * Close, browser Back, or the assistant opening a page — ends maximized mode.
+ * Maximize button shows Restore here (it leaves the page), and so leaving it by
+ * ANY route — Restore, Close, browser Back, or the assistant opening a page —
+ * ends maximized mode.
  */
 @Component({
 	selector: 'gz-ai-chat-page',
@@ -56,20 +59,19 @@ import { AiChatSidebarComponent } from './ai-chat-sidebar.component';
 export class AiChatPageComponent {
 	constructor() {
 		const chatSidebar = inject(ChatSidebarService);
+		// Open = maximized: the layout hides its chrome, skips the docked chat and locks the
+		// window's scroll while this page is on screen.
 		chatSidebar.setFullPageOpen(true);
 
-		// The layout scrolls the WINDOW (Nebular window mode), and the shell under this page is
-		// still taller than the screen — so the browser drew a page scrollbar beside the chat that
-		// scrolled nothing visible. The conversation has its own scroller; the page must not scroll.
-		const { documentElement: html, body } = inject(DOCUMENT);
-		const previous = { html: html.style.overflow, body: body.style.overflow };
-		html.style.overflow = 'hidden';
-		body.style.overflow = 'hidden';
+		// The route sets the tab title to "AI Assistant" after this page is created, and a page
+		// without a title of its own would leave it there — so the title the user came from goes
+		// back when this page is left.
+		const title = inject(Title);
+		const previousTitle = title.getTitle();
 
 		inject(DestroyRef).onDestroy(() => {
-			html.style.overflow = previous.html;
-			body.style.overflow = previous.body;
 			chatSidebar.setFullPageOpen(false);
+			title.setTitle(previousTitle);
 		});
 	}
 }

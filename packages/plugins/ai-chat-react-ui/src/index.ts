@@ -36,7 +36,8 @@ export { PLAYGROUND_PATH, PLAYGROUND_ROUTE } from './lib/playground.routes';
 // header, footer). The bare `/ai-chat` redirects to the full-page chat.
 export { AI_CHAT_WINDOW_PATH, AI_CHAT_WINDOW_ROUTES } from './lib/ai-chat-window.routes';
 
-// Full-page chat (`/pages/ai-chat`, the panel's Maximize) — registered by the plugin
+// Full-page chat (`/pages/ai-chat`, a direct link; Maximize expands the docked chat in place) —
+// registered by the plugin
 export { AI_CHAT_PAGE_PATH, AI_CHAT_PAGE_ROUTE } from './lib/ai-chat-page.routes';
 export { AiChatPageComponent } from './lib/ai-chat-page.component';
 

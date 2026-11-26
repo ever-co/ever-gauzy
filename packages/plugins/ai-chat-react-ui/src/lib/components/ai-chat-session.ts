@@ -18,9 +18,9 @@ export interface IPendingSentFiles {
 /**
  * The chat state that must outlive one mounted {@link AiChatPanel}.
  *
- * The docked panel lives inside the `/pages` layout and the full-page chat
- * (`/ai-chat`, Maximize) outside it, so switching between them unmounts one
- * panel and mounts the other. Everything the user would notice losing is
+ * The docked panel and the full-page chat route (`/pages/ai-chat`, a direct
+ * link) are separate mounts — the layout drops the docked panel while the route
+ * is open — so switching between them unmounts one panel and mounts the other. Everything the user would notice losing is
  * therefore kept here rather than in component state:
  * - the AI SDK `Chat` — the messages AND any request in flight, so a reply that
  *   is still streaming keeps streaming into whichever panel is mounted;
