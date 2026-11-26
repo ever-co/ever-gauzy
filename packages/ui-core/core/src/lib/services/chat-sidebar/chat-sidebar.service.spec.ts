@@ -283,6 +283,24 @@ describe('ChatSidebarService — persisted state precedence and server sync', ()
 		router.navigated('/pages/organization/projects');
 		expect(service.maximized()).toBe(false);
 	});
+
+	it('a saved maximize applied at sign-in survives the redirect into the app', () => {
+		const { service, user$, router } = setup();
+		service.register(CONFIG);
+		// The sign-in page has loaded, then sign-in writes the user (and its saved maximize)
+		router.navigated('/auth/login');
+		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: true, maximized: true } } } as any);
+		expect(service.maximized()).toBe(true);
+
+		// The redirect into the app is not a navigation away from a maximized page: it adopts the maximize
+		router.navigated('/pages/dashboard');
+		expect(service.maximized()).toBe(true);
+		expect(localStorage.getItem('gauzy_chat_sidebar_u1_maximized')).toBe('true');
+
+		// Leaving that app page then restores, as for any maximize
+		router.navigated('/pages/organization/projects');
+		expect(service.maximized()).toBe(false);
+	});
 });
 
 describe('ChatSidebarService — Maximize / Restore', () => {

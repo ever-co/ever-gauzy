@@ -541,10 +541,11 @@ export class ChatSidebarService {
 				this.endInPlaceMaximize();
 			} else if (!this.fullPageOpen() && !this.maximized()) {
 				this.maximized.set(true);
-				// Applied over the page on screen when a navigation has already ended (preferences that
-				// arrive later, from another tab or device); on load or at sign-in, before the page is
-				// known, the next navigation adopts it.
-				this.maximizedOverPath = this.hasNavigated ? pathOf(this.router.url ?? '') : null;
+				// Applied over the app page on screen when one has already loaded (preferences that arrive
+				// later, from another tab or device). On load, or at sign-in (the sign-in page is not an
+				// app page: the chat lives in the /pages shell), the next navigation into the app adopts it.
+				const current = pathOf(this.router.url ?? '');
+				this.maximizedOverPath = this.hasNavigated && current.startsWith('/pages') ? current : null;
 			}
 			this.expanded.set(next.expanded);
 			this.position.set(next.position);
