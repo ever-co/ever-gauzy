@@ -5845,6 +5845,7 @@
 		"RETRY": "Retry",
 		"COPY": "Copy",
 		"COPIED": "Copied",
+		"COPY_FAILED": "Copy failed",
 		"READ_ALOUD": "Read aloud",
 		"STOP_READING": "Stop reading",
 		"GOOD_RESPONSE": "Good response",

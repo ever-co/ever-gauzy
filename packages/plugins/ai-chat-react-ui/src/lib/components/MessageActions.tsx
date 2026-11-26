@@ -46,8 +46,12 @@ export function toSpeechText(markdown: string): string {
 		.trim();
 }
 
-/** Copy text, with the selection fallback for a page that is not a secure context. */
-async function copyText(text: string): Promise<void> {
+/**
+ * Copy text, with the selection fallback for a page that is not a secure context. Rejects when
+ * nothing reached the clipboard — a refused permission, an unfocused document, or the fallback
+ * reporting failure — so the caller can say so instead of claiming "Copied".
+ */
+export async function copyText(text: string): Promise<void> {
 	if (navigator.clipboard?.writeText && window.isSecureContext) {
 		await navigator.clipboard.writeText(text);
 		return;
@@ -59,10 +63,14 @@ async function copyText(text: string): Promise<void> {
 	area.style.opacity = '0';
 	document.body.appendChild(area);
 	area.select();
+	let copied = false;
 	try {
-		document.execCommand('copy');
+		copied = document.execCommand('copy');
 	} finally {
 		document.body.removeChild(area);
+	}
+	if (!copied) {
+		throw new Error('The browser did not copy the text.');
 	}
 }
 
@@ -102,7 +110,8 @@ export function MessageActions({
 	feedback,
 	onFeedback
 }: MessageActionsProps) {
-	const [copied, setCopied] = useState(false);
+	/** What the Copy button shows for a moment after a click. */
+	const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
 	const [speaking, setSpeaking] = useState(false);
 	const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 	const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -119,13 +128,17 @@ export function MessageActions({
 	);
 
 	const handleCopy = () => {
-		void copyText(text)
-			.then(() => {
-				setCopied(true);
-				if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-				copiedTimerRef.current = setTimeout(() => setCopied(false), 1500);
-			})
-			.catch(() => undefined);
+		const show = (state: 'copied' | 'failed', ms: number) => {
+			setCopyState(state);
+			if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+			copiedTimerRef.current = setTimeout(() => setCopyState('idle'), ms);
+		};
+		// A failure is shown (an ✕ and "Copy failed") rather than swallowed, so the user knows to
+		// try again or select the text by hand.
+		void copyText(text).then(
+			() => show('copied', 1500),
+			() => show('failed', 2000)
+		);
 	};
 
 	const handleSpeak = () => {
@@ -172,7 +185,12 @@ export function MessageActions({
 		cursor: 'pointer'
 	};
 
-	const copyLabel = copied ? t('AI_ASSISTANT.COPIED', 'Copied') : t('AI_ASSISTANT.COPY', 'Copy');
+	const copyLabel =
+		copyState === 'copied'
+			? t('AI_ASSISTANT.COPIED', 'Copied')
+			: copyState === 'failed'
+				? t('AI_ASSISTANT.COPY_FAILED', 'Copy failed')
+				: t('AI_ASSISTANT.COPY', 'Copy');
 	const speakLabel = speaking
 		? t('AI_ASSISTANT.STOP_READING', 'Stop reading')
 		: t('AI_ASSISTANT.READ_ALOUD', 'Read aloud');
@@ -191,9 +209,14 @@ export function MessageActions({
 					title={copyLabel}
 					aria-label={copyLabel}
 				>
-					{copied ? (
+					{copyState === 'copied' ? (
 						<Icon>
 							<polyline points="20 6 9 17 4 12" />
+						</Icon>
+					) : copyState === 'failed' ? (
+						<Icon>
+							<line x1="18" y1="6" x2="6" y2="18" />
+							<line x1="6" y1="6" x2="18" y2="18" />
 						</Icon>
 					) : (
 						<Icon>

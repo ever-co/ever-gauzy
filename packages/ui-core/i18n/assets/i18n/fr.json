@@ -5282,6 +5282,7 @@
 		"RETRY": "Réessayer",
 		"COPY": "Copier",
 		"COPIED": "Copié",
+		"COPY_FAILED": "Échec de la copie",
 		"READ_ALOUD": "Lire à voix haute",
 		"STOP_READING": "Arrêter la lecture",
 		"GOOD_RESPONSE": "Bonne réponse",

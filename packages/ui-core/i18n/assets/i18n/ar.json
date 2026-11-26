@@ -5279,6 +5279,7 @@
 		"RETRY": "إعادة المحاولة",
 		"COPY": "نسخ",
 		"COPIED": "تم النسخ",
+		"COPY_FAILED": "تعذّر النسخ",
 		"READ_ALOUD": "القراءة بصوت عالٍ",
 		"STOP_READING": "إيقاف القراءة",
 		"GOOD_RESPONSE": "رد جيد",

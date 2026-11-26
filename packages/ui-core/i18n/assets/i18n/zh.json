@@ -5848,6 +5848,7 @@
 		"RETRY": "重试",
 		"COPY": "复制",
 		"COPIED": "已复制",
+		"COPY_FAILED": "复制失败",
 		"READ_ALOUD": "朗读",
 		"STOP_READING": "停止朗读",
 		"GOOD_RESPONSE": "好的回答",

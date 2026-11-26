@@ -5305,6 +5305,7 @@
 		"RETRY": "נסה שוב",
 		"COPY": "העתקה",
 		"COPIED": "הועתק",
+		"COPY_FAILED": "ההעתקה נכשלה",
 		"READ_ALOUD": "הקראה בקול",
 		"STOP_READING": "עצירת ההקראה",
 		"GOOD_RESPONSE": "תשובה טובה",

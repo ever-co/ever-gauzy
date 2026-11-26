@@ -5281,6 +5281,7 @@
 		"RETRY": "Riprova",
 		"COPY": "Copia",
 		"COPIED": "Copiato",
+		"COPY_FAILED": "Copia non riuscita",
 		"READ_ALOUD": "Leggi ad alta voce",
 		"STOP_READING": "Interrompi la lettura",
 		"GOOD_RESPONSE": "Risposta utile",
