@@ -21,11 +21,14 @@ export class ThemeToggleComponent {
 	private readonly _themeService = inject(NbThemeService);
 	private readonly _store = inject(Store);
 
-	readonly isDark = toSignal(this._themeService.onThemeChange().pipe(map(({ name }) => isDarkThemeName(name))), {
-		initialValue: isDarkThemeName(this._themeService.currentTheme)
-	});
+	protected readonly isDark = toSignal(
+		this._themeService.onThemeChange().pipe(map(({ name }) => isDarkThemeName(name))),
+		{
+			initialValue: isDarkThemeName(this._themeService.currentTheme)
+		}
+	);
 
-	toggle(): void {
+	protected toggle(): void {
 		const next = oppositeThemeName(this._themeService.currentTheme);
 		if (!next) {
 			return;

@@ -1,40 +1,39 @@
-@use 'themes' as *;
-
-@include nb-install-component() {
+:host {
   display: inline-flex;
+}
 
-  // The same square, radius and hover as the top bar's other icon actions (What's new, Quick settings).
-  .theme-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--gauzy-header-control-height, 1.75rem);
-    height: var(--gauzy-header-control-height, 1.75rem);
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: var(--gauzy-radius-sm, 6px);
-    background-color: transparent;
-    color: nb-theme(text-hint-color);
-    line-height: 0;
-    cursor: pointer;
-    transition:
-      background-color 0.12s ease-in-out,
-      color 0.12s ease-in-out;
+// The same square, radius and hover as the top bar's other icon actions (What's new, Quick settings).
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--gauzy-header-control-height, 1.75rem);
+  height: var(--gauzy-header-control-height, 1.75rem);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gauzy-radius-sm, 6px);
+  background-color: transparent;
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+  line-height: 0;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease-in-out,
+    color 0.12s ease-in-out;
 
-    svg {
-      width: 1rem;
-      height: 1rem;
-    }
+  nb-icon {
+    font-size: 1rem;
+    color: inherit;
+  }
 
-    &:hover {
-      color: nb-theme(text-basic-color);
-      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-    }
+  &:hover {
+    color: var(--gauzy-text-color-1, var(--text-basic-color));
+    // Same fallback as the header's icon actions (`.toggle-layout`), for themes without the token.
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
 
-    &:focus-visible {
-      outline: 2px solid nb-theme(color-primary-default);
-      outline-offset: 1px;
-    }
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 1px;
   }
 }
