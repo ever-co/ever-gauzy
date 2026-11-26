@@ -73,6 +73,16 @@ describe('PageRouteRegistryService — navigation-target contract', () => {
 		expect(route.canMatch).toEqual([guard]);
 	});
 
+	it('forwards a registered title to the route, and adds none when the registration has none', () => {
+		const resolveTitle = () => 'AI Assistant';
+		register({ path: 'ai-chat', component: class {} as never, title: resolveTitle });
+		register({ path: 'jobs', component: class {} as never });
+
+		const [titled, untitled] = service.getPageLocationRoutes(PAGE_SECTIONS_LOCATION);
+		expect(titled.title).toBe(resolveTitle);
+		expect('title' in untitled).toBe(false);
+	});
+
 	it('lets a component-ish target take precedence over redirectTo in the else-chain', () => {
 		const component = class {};
 		register({ path: 'jobs', component: component as never, redirectTo: 'unused' });

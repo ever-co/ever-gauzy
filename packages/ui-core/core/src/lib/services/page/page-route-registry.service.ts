@@ -257,6 +257,12 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 				route.runGuardsAndResolvers = config.runGuardsAndResolvers;
 			}
 
+			// The browser tab title (a string or a resolver). Without this a registration's `title`
+			// never reached the router. Attached only when present, like the guards above.
+			if (config.title) {
+				route.title = config.title;
+			}
+
 			// Copy the route's navigation target. `loadComponent` matters: dropping it
 			// produces a route with NO target, and Angular then throws NG04014 while
 			// RECOGNIZING the parent lazy config — which kills every navigation into the
