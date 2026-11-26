@@ -1,8 +1,9 @@
+@use './proposal-sheet-tokens' as *;
+
 // A proposal reads as a document: the proposal and job post text as headed sections
 // with no frames around them, and the proposal's properties in a sidebar beside them,
 // split off by one hairline and kept in view while the text scrolls. Colour only where
 // it carries meaning (the status dot, the tag washes).
-$hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
 :host {
   display: block;
@@ -29,7 +30,7 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     height: 1.625rem;
     padding: 0 0.625rem;
     border: 1px solid transparent;
-    border-radius: 0.375rem;
+    border-radius: calc(var(--border-radius) * 0.75);
     font-size: 0.75rem;
     line-height: 1rem;
     font-weight: 500;
@@ -141,95 +142,13 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 .pd-rich-text {
   padding: 1.5rem 1.75rem;
   border: 1px solid $hairline;
-  border-radius: 0.375rem;
+  border-radius: calc(var(--border-radius) * 0.75);
   background: var(--gauzy-card-1, var(--background-basic-color-1));
   font-size: 0.78125rem;
   font-weight: 400;
   line-height: 1.375rem;
   color: color-mix(in srgb, var(--text-basic-color) 82%, var(--text-hint-color));
   overflow-wrap: anywhere;
-
-  ::ng-deep {
-    // The app's global type gives paragraphs and list items a size of their own, which
-    // left the body text larger than its headings; they take this block's size instead.
-    p,
-    li,
-    ul,
-    ol,
-    blockquote,
-    td,
-    th,
-    span {
-      font-size: inherit;
-      line-height: inherit;
-    }
-
-    > :first-child {
-      margin-top: 0;
-    }
-
-    > :last-child {
-      margin-bottom: 0;
-    }
-
-    p {
-      margin: 0 0 0.5rem;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      margin: 0.875rem 0 0.25rem;
-      font-size: 0.84375rem;
-      font-weight: 500;
-      line-height: 1.375rem;
-      color: var(--text-basic-color);
-    }
-
-    strong,
-    b {
-      font-weight: 500;
-      color: var(--text-basic-color);
-    }
-
-    ul,
-    ol {
-      margin: 0 0 0.5rem;
-      padding-inline-start: 1.125rem;
-    }
-
-    li::marker {
-      color: var(--text-hint-color);
-    }
-
-    // The editor wraps each item's text in a paragraph; its margin made the lists loose.
-    li > p {
-      margin: 0;
-    }
-
-    li + li {
-      margin-top: 0.125rem;
-    }
-
-    blockquote {
-      margin: 0 0 0.5rem;
-      padding-inline-start: 0.75rem;
-      border-inline-start: 2px solid $hairline;
-      color: var(--text-hint-color);
-    }
-
-    a {
-      color: var(--text-primary-color);
-    }
-
-    img {
-      max-width: 100%;
-      height: auto;
-    }
-  }
 }
 
 // ── Proposal sheet ───────────────────────────────────────────────────────────
@@ -238,17 +157,7 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 // reference code and section numbers, a facts table under the title, numbered
 // sections with dash lists, and a sign-off footer.
 //
-// Every colour is a theme variable, so the sheet follows light and dark mode.
-$sheet-ink: var(--text-basic-color);
-// Body copy a step softer than headings: the text colour leaning towards the hint colour.
-$sheet-text: color-mix(in srgb, var(--text-basic-color) 82%, var(--text-hint-color));
-$sheet-muted: var(--text-hint-color);
-$sheet-rule: $hairline;
-$sheet-code-bg: color-mix(in srgb, var(--text-hint-color) 12%, transparent);
-$sheet-sign-line: color-mix(in srgb, var(--text-hint-color) 70%, transparent);
-$sheet-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
-// Body copy and lists sit in from the left edge, past the section numbers.
-$sheet-indent: 2.75rem;
+// Every colour is a theme variable (see the tokens partial), so the sheet follows light and dark mode.
 
 .pd-sheet {
   max-width: 50rem;
@@ -258,7 +167,7 @@ $sheet-indent: 2.75rem;
   background: var(--gauzy-card-1, var(--background-basic-color-1));
   color: $sheet-text;
   border: 1px solid $sheet-rule;
-  border-radius: 0.375rem;
+  border-radius: calc(var(--border-radius) * 0.75);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -295,7 +204,7 @@ $sheet-indent: 2.75rem;
   height: 2rem;
   max-width: 7rem;
   object-fit: contain;
-  border-radius: 0.25rem;
+  border-radius: calc(var(--border-radius) * 0.5);
 }
 
 .pd-sheet-org {
@@ -380,22 +289,8 @@ $sheet-indent: 2.75rem;
   color: $sheet-muted;
 }
 
-// The proposal text: every heading numbered 01, 02… in monospace, its text set in
-// under the heading; lists with dashes; code and tables as in technical docs.
-// Text with numbered sections sits in past the numbers; text without them runs full width.
-// Direct children only: the editor wraps each list item's text in a paragraph, and
-// indenting that one too opened a wide gap between the dash and its text.
-.pd-sheet-text.has-sections ::ng-deep {
-  > p,
-  > ul,
-  > ol,
-  > blockquote,
-  > pre,
-  > table {
-    margin-inline-start: $sheet-indent;
-  }
-}
-
+// The proposal text's box; the numbered headings, dash lists, code and tables inside it are
+// styled by the rich-text component.
 .pd-sheet-text {
   counter-reset: pd-section;
   font-size: 0.78125rem;
@@ -403,160 +298,6 @@ $sheet-indent: 2.75rem;
   line-height: 1.375rem;
   color: $sheet-text;
   overflow-wrap: anywhere;
-
-  ::ng-deep {
-    // The app's global type gives paragraphs and list items a size of their own, which
-    // left the body text larger than its headings; they take this block's size instead.
-    p,
-    li,
-    ul,
-    ol,
-    blockquote,
-    td,
-    th,
-    span {
-      font-size: inherit;
-      line-height: inherit;
-    }
-
-    > :first-child {
-      margin-top: 0;
-    }
-
-    > :last-child {
-      margin-bottom: 0;
-    }
-
-    p,
-    ul,
-    ol,
-    blockquote,
-    pre,
-    table {
-      margin: 0 0 0.5rem;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      position: relative;
-      counter-increment: pd-section;
-      margin: 1.25rem 0 0.25rem;
-      padding-inline-start: $sheet-indent;
-      font-size: 0.84375rem;
-      font-weight: 500;
-      line-height: 1.375rem;
-      letter-spacing: -0.005em;
-      color: $sheet-ink;
-
-      &::before {
-        content: counter(pd-section, decimal-leading-zero);
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-family: $sheet-mono;
-        font-size: 0.65625rem;
-        font-weight: 400;
-        line-height: 1.375rem;
-        color: $sheet-muted;
-      }
-    }
-
-    // Dash bullets, hung in the indent.
-    ul {
-      padding: 0;
-      list-style: none;
-
-      > li {
-        position: relative;
-        padding-inline-start: 1rem;
-
-        &::before {
-          content: '–';
-          position: absolute;
-          left: 0;
-          color: $sheet-muted;
-        }
-      }
-    }
-
-    ol {
-      padding-inline-start: 1.25rem;
-    }
-
-    li > p {
-      margin: 0;
-    }
-
-    li + li {
-      margin-top: 0.125rem;
-    }
-
-    strong,
-    b {
-      font-weight: 500;
-      color: $sheet-ink;
-    }
-
-    a {
-      color: $sheet-ink;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    code {
-      padding: 0.0625rem 0.3125rem;
-      border-radius: 0.25rem;
-      background: $sheet-code-bg;
-      font-family: $sheet-mono;
-      font-size: 0.8125em;
-      color: $sheet-ink;
-    }
-
-    pre {
-      padding: 0.75rem 1rem;
-      border-radius: 0.375rem;
-      background: $sheet-code-bg;
-      overflow-x: auto;
-
-      code {
-        padding: 0;
-        background: none;
-      }
-    }
-
-    blockquote {
-      padding-inline-start: 0.75rem;
-      border-inline-start: 2px solid $sheet-rule;
-      color: $sheet-muted;
-    }
-
-    table {
-      width: calc(100% - #{$sheet-indent});
-      border-collapse: collapse;
-      font-size: 0.8125rem;
-
-      th,
-      td {
-        padding: 0.375rem 0.75rem 0.375rem 0;
-        border-bottom: 1px solid $sheet-rule;
-        text-align: start;
-      }
-
-      th {
-        font-weight: 600;
-        color: $sheet-ink;
-      }
-    }
-
-    img {
-      max-width: 100%;
-      height: auto;
-    }
-  }
 }
 
 // Sender and contacts on the left, lines for the client to sign and date on the right.
@@ -720,7 +461,7 @@ $sheet-indent: 2.75rem;
 
 .pd-tag {
   padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
+  border-radius: calc(var(--border-radius) * 0.5);
   background-color: color-mix(in srgb, var(--tag-color, var(--text-hint-color)) 20%, transparent);
   color: var(--text-basic-color);
   font-size: 0.65625rem;

@@ -1,0 +1,272 @@
+@use './proposal-sheet-tokens' as *;
+
+// Unencapsulated (see the component): every rule below is scoped by the element's own name and
+// the variant class the page sets on it, so it reaches the inserted text and nothing else.
+//
+// The box itself (frame, padding, base size) is styled by the page; these rules style what is
+// inside it.
+
+ngx-proposal-rich-text {
+  display: block;
+}
+
+// ── Job post ─────────────────────────────────────────────────────────────────
+// The sheet's type and rhythm, its bold lines as subheadings with room above them, lists tight
+// under them.
+ngx-proposal-rich-text.pd-rich-text.rich-text-content {
+  // The app's global type gives paragraphs and list items a size of their own, which left the
+  // body text larger than its headings; they take this block's size instead.
+  p,
+  li,
+  ul,
+  ol,
+  blockquote,
+  td,
+  th,
+  span {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0.875rem 0 0.25rem;
+    font-size: 0.84375rem;
+    font-weight: 500;
+    line-height: 1.375rem;
+    color: var(--text-basic-color);
+  }
+
+  strong,
+  b {
+    font-weight: 500;
+    color: var(--text-basic-color);
+  }
+
+  ul,
+  ol {
+    margin: 0 0 0.5rem;
+    padding-inline-start: 1.125rem;
+  }
+
+  li::marker {
+    color: var(--text-hint-color);
+  }
+
+  // The editor wraps each item's text in a paragraph; its margin made the lists loose.
+  li > p {
+    margin: 0;
+  }
+
+  li + li {
+    margin-top: 0.125rem;
+  }
+
+  blockquote {
+    margin: 0 0 0.5rem;
+    padding-inline-start: 0.75rem;
+    border-inline-start: 2px solid $hairline;
+    color: var(--text-hint-color);
+  }
+
+  a {
+    color: var(--text-primary-color);
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+// ── Proposal sheet ───────────────────────────────────────────────────────────
+// Every heading numbered 01, 02… in monospace, its text set in under the heading; lists with
+// dashes; code and tables as in technical docs.
+ngx-proposal-rich-text.pd-sheet-text.rich-text-content {
+  // See the job post: the text takes this block's size, not the app's paragraph size.
+  p,
+  li,
+  ul,
+  ol,
+  blockquote,
+  td,
+  th,
+  span {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  p,
+  ul,
+  ol,
+  blockquote,
+  pre,
+  table {
+    margin: 0 0 0.5rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    position: relative;
+    counter-increment: pd-section;
+    margin: 1.25rem 0 0.25rem;
+    padding-inline-start: $sheet-indent;
+    font-size: 0.84375rem;
+    font-weight: 500;
+    line-height: 1.375rem;
+    letter-spacing: -0.005em;
+    color: $sheet-ink;
+
+    // On the start side, so the number leads the heading in right-to-left text too.
+    &::before {
+      content: counter(pd-section, decimal-leading-zero);
+      position: absolute;
+      inset-inline-start: 0;
+      top: 0;
+      font-family: $sheet-mono;
+      font-size: 0.65625rem;
+      font-weight: 400;
+      line-height: 1.375rem;
+      color: $sheet-muted;
+    }
+  }
+
+  // Dash bullets, hung in the indent on the start side.
+  ul {
+    padding: 0;
+    list-style: none;
+
+    > li {
+      position: relative;
+      padding-inline-start: 1rem;
+
+      &::before {
+        content: '–';
+        position: absolute;
+        inset-inline-start: 0;
+        color: $sheet-muted;
+      }
+    }
+  }
+
+  ol {
+    padding-inline-start: 1.25rem;
+  }
+
+  li > p {
+    margin: 0;
+  }
+
+  li + li {
+    margin-top: 0.125rem;
+  }
+
+  strong,
+  b {
+    font-weight: 500;
+    color: $sheet-ink;
+  }
+
+  a {
+    color: $sheet-ink;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  code {
+    padding: 0.0625rem 0.3125rem;
+    border-radius: calc(var(--border-radius) * 0.5);
+    background: $sheet-code-bg;
+    font-family: $sheet-mono;
+    font-size: 0.8125em;
+    color: $sheet-ink;
+  }
+
+  pre {
+    padding: 0.75rem 1rem;
+    border-radius: calc(var(--border-radius) * 0.75);
+    background: $sheet-code-bg;
+    overflow-x: auto;
+
+    code {
+      padding: 0;
+      background: none;
+    }
+  }
+
+  blockquote {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 2px solid $sheet-rule;
+    color: $sheet-muted;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+
+    th,
+    td {
+      padding-block: 0.375rem;
+      padding-inline: 0 0.75rem;
+      border-bottom: 1px solid $sheet-rule;
+      text-align: start;
+    }
+
+    th {
+      font-weight: 600;
+      color: $sheet-ink;
+    }
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  // Text with numbered sections sits in past the numbers; text without them runs full width.
+  // Direct children only: the editor wraps each list item's text in a paragraph, and indenting
+  // that one too opened a wide gap between the dash and its text.
+  &.has-sections {
+    > p,
+    > ul,
+    > ol,
+    > blockquote,
+    > pre,
+    > table {
+      margin-inline-start: $sheet-indent;
+    }
+
+    > table {
+      width: calc(100% - #{$sheet-indent});
+    }
+  }
+}

@@ -120,11 +120,11 @@
 
 						<div class="pd-sheet-body">
 							@if (proposal.proposalContent) {
-								<div
+								<ngx-proposal-rich-text
 									class="pd-sheet-text rich-text-content"
 									[class.has-sections]="hasSections"
-									[innerHTML]="proposalContent"
-								></div>
+									[html]="proposalContent"
+								></ngx-proposal-rich-text>
 							} @else {
 								<p class="pd-sheet-empty">—</p>
 							}
@@ -181,7 +181,7 @@
 						{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT' | translate }}
 					</h6>
 					@if (proposal.jobPostContent) {
-						<div class="pd-rich-text rich-text-content" [innerHTML]="jobPostContent"></div>
+						<ngx-proposal-rich-text class="pd-rich-text rich-text-content" [html]="jobPostContent"></ngx-proposal-rich-text>
 					} @else {
 						<p class="pd-muted">—</p>
 					}

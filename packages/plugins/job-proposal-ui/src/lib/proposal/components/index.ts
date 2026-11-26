@@ -2,6 +2,7 @@
 import { ProposalLayoutComponent } from './proposal-layout.component';
 import { ProposalComponent } from './proposal/proposal.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
+import { ProposalRichTextComponent } from './proposal-details/proposal-rich-text.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
@@ -11,6 +12,7 @@ import { ProposalStatusComponent } from './table-components/proposal-status/prop
 export { ProposalLayoutComponent } from './proposal-layout.component';
 export { ProposalComponent } from './proposal/proposal.component';
 export { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
+export { ProposalRichTextComponent } from './proposal-details/proposal-rich-text.component';
 export { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 export { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 export { JobTitleComponent } from './table-components/job-title/job-title.component';
@@ -21,6 +23,7 @@ export const COMPONENTS = [
 	ProposalComponent,
 	ProposalRegisterComponent,
 	ProposalDetailsComponent,
+	ProposalRichTextComponent,
 	ProposalEditComponent,
 	ProposalStatusComponent,
 	JobTitleComponent
