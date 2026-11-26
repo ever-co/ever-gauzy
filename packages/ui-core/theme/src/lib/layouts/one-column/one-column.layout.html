@@ -1,6 +1,7 @@
-<!-- While the full-page chat (/pages/ai-chat, the chat's Maximize) is open, the menu, header and
-     footer are hidden (see .gz-chat-full-page in the scss) and the docked chat is not rendered: the
-     page itself covers the screen, and the shell stays alive underneath so leaving is instant. -->
+<!-- While the chat is maximized the menu, header and footer are hidden (.gz-chat-full-page in the
+     scss) and the chat covers the screen. Maximize expands the DOCKED chat in place, so the page
+     underneath — a half-filled form included — stays alive until Restore. Only on the full-page chat
+     route (/pages/ai-chat, a direct link) is the docked chat not rendered: that page is the chat. -->
 <nb-layout windowMode [class.gz-chat-full-page]="chatSidebarService.maximized()">
 	<!-- Header — spans everything right of the nav menu, INCLUDING the chat column.
 	     Nebular renders a `fixed` header at full width, so the BAND ITSELF is inset to the menu
@@ -131,7 +132,7 @@
 	     Single @if (like the menu sidebar above): nesting control-flow blocks breaks
 	     nb-layout's select-based content projection for nb-sidebar. -->
 	@if (
-		user() && chatSidebarService.available() && !chatSidebarService.maximized() && chatSidebarComponent();
+		user() && chatSidebarService.available() && !chatSidebarService.fullPageOpen() && chatSidebarComponent();
 		as chatComponent
 	) {
 		<!-- A column that starts UNDER the fixed header band (top = the band's measured height)
@@ -142,6 +143,7 @@
 			class="chat-sidebar"
 			[class]="chatSidebarService.config()?.class ?? ''"
 			[class.chat-sidebar-end]="chatSidebarService.position() === 'end'"
+			[class.chat-sidebar-maximized]="chatSidebarService.maximized()"
 			[style.--gz-chat-width]="chatSidebarService.width() + 'px'"
 			tag="chat-sidebar"
 			[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"

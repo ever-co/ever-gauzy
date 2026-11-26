@@ -88,6 +88,28 @@ export class OneColumnLayoutComponent {
 
 		this.themeLanguageSelectorService.initialize();
 
+		// While the chat covers the screen the WINDOW must not scroll: the layout scrolls the window
+		// (Nebular window mode), and the shell under the chat is taller than the screen, so a page
+		// scrollbar would show beside the chat and scroll nothing visible.
+		const { documentElement: html, body } = document;
+		let unlockScroll: (() => void) | null = null;
+		effect(() => {
+			const maximized = this.chatSidebarService.maximized();
+			if (maximized && !unlockScroll) {
+				const previous = { html: html.style.overflow, body: body.style.overflow };
+				html.style.overflow = 'hidden';
+				body.style.overflow = 'hidden';
+				unlockScroll = () => {
+					html.style.overflow = previous.html;
+					body.style.overflow = previous.body;
+					unlockScroll = null;
+				};
+			} else if (!maximized && unlockScroll) {
+				unlockScroll();
+			}
+		});
+		this.destroyRef.onDestroy(() => unlockScroll?.());
+
 		// No ResizeObserver mirroring the chat width any more: the panel takes its width straight from
 		// `--gz-chat-width` (the persisted user width), so there is a single source of truth and
 		// nothing that can go stale. See one-column.layout.scss.

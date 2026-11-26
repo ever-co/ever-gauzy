@@ -80,8 +80,25 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       width: var(--gz-chat-width, 24rem) !important;
     }
 
-    // Maximize is not a layout state of this sidebar: it opens the full-page chat route
-    // (`/pages/ai-chat`), so the docked panel only ever has its own width.
+    // Maximized: the panel covers the whole screen IN PLACE — no navigation, so the page underneath
+    // stays alive (unsaved form input included) and Restore simply gives it back. The host keeps its
+    // place in the flex row; only the fixed panel grows, above the hidden menu, header and footer
+    // (see .gz-chat-full-page below). The selector repeats the class to outrank the docked pinning
+    // (top under the header band, the user's width), which is !important too.
+    &.chat-sidebar-maximized.chat-sidebar-maximized ::ng-deep .main-container {
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 1030;
+      transition: none;
+
+      .scrollable {
+        border: none;
+        background: nb-theme(layout-background-color);
+      }
+    }
 
     // COLLAPSED MUST REMOVE THE PANEL, not merely narrow it.
     //
@@ -808,9 +825,9 @@ nb-sidebar[tag='menu-sidebar'] {
   }
 }
 
-// Full-page chat (/pages/ai-chat, the chat's Maximize): the page covers the screen, so the shell's
-// chrome is hidden rather than torn down — leaving the page then shows it again instantly, with
-// nothing to reload. The docked chat is not rendered meanwhile (see the template).
+// Maximized chat (the docked chat expanded in place, or the /pages/ai-chat route): the chat covers the
+// screen, so the shell's chrome is hidden rather than torn down — Restore shows it again instantly,
+// with nothing to reload. The window's scroll is locked meanwhile by the layout component.
 :host ::ng-deep nb-layout.gz-chat-full-page {
   nb-layout-header,
   nb-layout-footer,

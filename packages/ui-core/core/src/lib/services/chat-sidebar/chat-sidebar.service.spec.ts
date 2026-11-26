@@ -9,12 +9,12 @@ jest.mock('../users/users.service', () => ({ UsersService: class UsersService {}
 
 import { Injector, runInInjectionContext } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { NavigationEnd, Router } from '@angular/router';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
 import { UsersService } from '../users/users.service';
-import { CHAT_FULL_PAGE_PATH, ChatSidebarService, MAX_CHAT_WIDTH } from './chat-sidebar.service';
+import { ChatSidebarService, MAX_CHAT_WIDTH } from './chat-sidebar.service';
 
 interface StoreMock {
 	user$: BehaviorSubject<IUser | null>;
@@ -36,7 +36,17 @@ function setup() {
 	const updateUiPreferences = jest.fn(async (patch: any) => ({ ...(store.user?.uiPreferences ?? {}), ...patch }));
 	const usersService = { updateUiPreferences };
 	const location = { prepareExternalUrl: (path: string) => path };
-	const router = { url: '/pages/tasks?view=board', navigateByUrl: jest.fn(async (_url: string) => true) };
+	const events = new Subject<unknown>();
+	const router = {
+		url: '/pages/tasks?view=board',
+		events,
+		navigateByUrl: jest.fn(async (_url: string) => true),
+		/** Simulate a finished navigation to `url`. */
+		navigated(url: string) {
+			this.url = url;
+			events.next(new NavigationEnd(1, url, url));
+		}
+	};
 
 	// A bare injector + `runInInjectionContext` is enough for the service's
 	// `inject()` calls and keeps this spec off `TestBed` (which needs the full
@@ -254,7 +264,7 @@ describe('ChatSidebarService — persisted state precedence and server sync', ()
 	});
 });
 
-describe('ChatSidebarService — full-page chat (Maximize / Restore)', () => {
+describe('ChatSidebarService — Maximize / Restore', () => {
 	beforeEach(() => {
 		jest.useFakeTimers();
 		localStorage.clear();
@@ -264,18 +274,17 @@ describe('ChatSidebarService — full-page chat (Maximize / Restore)', () => {
 		jest.useRealTimers();
 	});
 
-	it('Maximize opens the full page and remembers the page it came from', () => {
+	it('Maximize expands the chat in place and never navigates, so the page underneath stays alive', () => {
 		const { service, router } = setup();
 		service.register(CONFIG);
 		service.toggleMaximized();
-		expect(router.navigateByUrl).toHaveBeenCalledWith(CHAT_FULL_PAGE_PATH);
-
-		service.setFullPageOpen(true);
 		expect(service.maximized()).toBe(true);
+		expect(router.navigateByUrl).not.toHaveBeenCalled();
 
 		service.toggleMaximized(); // Restore
-		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/tasks?view=board');
+		expect(service.maximized()).toBe(false);
 		expect(service.expanded()).toBe(true);
+		expect(router.navigateByUrl).not.toHaveBeenCalled();
 	});
 
 	it('Maximize from a closed panel marks it expanded, so Restore shows the docked chat', () => {
@@ -286,36 +295,45 @@ describe('ChatSidebarService — full-page chat (Maximize / Restore)', () => {
 		expect(service.expanded()).toBe(true);
 	});
 
-	it('Close on the full page goes back with the docked panel closed', () => {
+	it('Close while maximized hands the screen back to the page with the chat closed', () => {
 		const { service, router } = setup();
 		service.register(CONFIG);
 		service.maximize();
-		service.setFullPageOpen(true);
+		service.collapse();
+		expect(service.maximized()).toBe(false);
+		expect(service.expanded()).toBe(false);
+		expect(router.navigateByUrl).not.toHaveBeenCalled();
+	});
+
+	it('a navigation to another page while maximized restores the docked chat', () => {
+		const { service, router } = setup();
+		service.register(CONFIG);
+		service.maximize();
+
+		router.navigated('/pages/tasks?view=list'); // same page, new query: stays maximized
+		expect(service.maximized()).toBe(true);
+
+		router.navigated('/pages/organization/projects'); // the assistant opened a page
+		expect(service.maximized()).toBe(false);
+		expect(service.expanded()).toBe(true);
+	});
+
+	it('the full-page chat route counts as maximized, and Restore / Close leave it', () => {
+		const { service, router } = setup();
+		service.register(CONFIG);
+		service.setFullPageOpen(true); // e.g. a bookmark of /pages/ai-chat
+		expect(service.maximized()).toBe(true);
+		expect(service.fullPageOpen()).toBe(true);
+
+		service.restore();
+		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/dashboard');
 
 		service.collapse();
-		expect(service.expanded()).toBe(false);
-		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/tasks?view=board');
-	});
+		expect(router.navigateByUrl).toHaveBeenCalledTimes(2);
 
-	it('Restore on a full page opened directly lands on the dashboard', () => {
-		const { service, router } = setup();
-		service.register(CONFIG);
-		service.setFullPageOpen(true); // e.g. a bookmark — no Maximize click before it
-		service.restore();
-		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/dashboard');
-	});
-
-	it('leaving the full page any other way clears the maximized state and the stale return URL', () => {
-		const { service, router } = setup();
-		service.register(CONFIG);
-		service.maximize();
-		service.setFullPageOpen(true);
-		service.setFullPageOpen(false); // browser Back, or the assistant opened a page
+		service.setFullPageOpen(false); // the route was left
 		expect(service.maximized()).toBe(false);
-
-		service.setFullPageOpen(true);
-		service.restore();
-		expect(router.navigateByUrl).toHaveBeenLastCalledWith('/pages/dashboard');
+		expect(service.fullPageOpen()).toBe(false);
 	});
 
 	it('Maximize is never persisted', async () => {
@@ -323,7 +341,6 @@ describe('ChatSidebarService — full-page chat (Maximize / Restore)', () => {
 		service.register({ ...CONFIG, defaultExpanded: false });
 		user$.next({ id: 'u1' } as any);
 		service.maximize();
-		service.setFullPageOpen(true);
 		await flushPersist();
 		expect(updateUiPreferences).toHaveBeenCalledWith({
 			aiChat: { expanded: true, position: 'start', width: 384, maximized: false }

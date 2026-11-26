@@ -1,6 +1,6 @@
 import { inject, Injectable, signal, Type } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
 import { UsersService } from '../users/users.service';
@@ -27,9 +27,9 @@ export type ChatSidebarPosition = 'start' | 'end';
  * the user's preference).
  *
  * `maximized` stays in the shape for compatibility with what is already
- * stored, but it is no longer a preference: maximizing opens the full-page
- * chat route, a place the user navigates to rather than a layout to restore on
- * the next visit. It is always written as `false` and never read back.
+ * stored, but it is no longer a preference: maximizing is a moment's view of
+ * the chat, not a layout to restore on the next visit. It is always written as
+ * `false` and never read back.
  */
 export type IChatSidebarState = {
 	expanded: boolean;
@@ -77,15 +77,20 @@ const PERSIST_DEBOUNCE_MS = 600;
 export const CHAT_DETACHED_WINDOW_PATH = '/ai-chat/window';
 
 /**
- * Router path of the full-page ("maximized") chat. It is a page INSIDE the
- * `/pages` shell, so opening and leaving it never rebuilds the shell; while it
- * is open (`maximized`) the layout hides its menu, header and footer and the
- * page covers the screen.
+ * Router path of the full-page chat — a direct link to the chat on its own
+ * (a bookmark, `/ai-chat`). Maximize does NOT navigate here: it expands the
+ * docked chat over the screen in place, so the page underneath stays alive
+ * with anything typed into it.
  */
 export const CHAT_FULL_PAGE_PATH = '/pages/ai-chat';
 
-/** Where Restore lands when the full page was opened directly (bookmark, reload). */
+/** Where Restore / Close land when leaving the full-page chat route. */
 const CHAT_FULL_PAGE_FALLBACK_URL = '/pages/dashboard';
+
+/** The path of an in-app URL, without its query string or fragment. */
+function pathOf(url: string): string {
+	return url.split(/[?#]/)[0];
+}
 
 /**
  * `window.open` target name. A constant (not `_blank`) so re-opening reuses
@@ -141,12 +146,18 @@ export class ChatSidebarService {
 	readonly width = signal<number>(DEFAULT_CHAT_WIDTH);
 
 	/**
-	 * Maximized: the full-page chat route (`/pages/ai-chat`) is on screen. Set by
-	 * that page itself; Maximize navigates there and Restore navigates back to the
-	 * page the user maximized from, with the docked panel open. The layout reads
-	 * it to hide its menu, header, footer and docked chat meanwhile.
+	 * Maximized: the chat covers the screen. Either the docked chat expanded in
+	 * place (Maximize — the page underneath stays alive, unsaved edits and all) or
+	 * the full-page chat route is open (`fullPageOpen`). The layout hides its
+	 * menu, header and footer meanwhile.
 	 */
 	readonly maximized = signal<boolean>(false);
+
+	/**
+	 * The full-page chat ROUTE (`/pages/ai-chat`) is on screen — set by that page.
+	 * The layout then does not render the docked chat, since the page is the chat.
+	 */
+	readonly fullPageOpen = signal<boolean>(false);
 
 	/**
 	 * Whether the chat is available for the current user — set by the
@@ -170,11 +181,11 @@ export class ChatSidebarService {
 	/** Angular's Location — used to build the detached window's external URL. */
 	private readonly location = inject(Location);
 
-	/** Router — Maximize / Restore navigate to and from the full-page chat. */
+	/** Router — leaving the full-page chat route, and noticing navigation while maximized. */
 	private readonly router = inject(Router);
 
-	/** The in-app URL the full-page chat was opened from — where Restore goes back to. */
-	private returnUrl: string | null = null;
+	/** The page path the chat was maximized over — a navigation away from it restores the chat. */
+	private maximizedOverPath: string | null = null;
 
 	/** App store — source of the current user (and its server-side `uiPreferences`). */
 	private readonly store = inject(Store);
@@ -205,6 +216,9 @@ export class ChatSidebarService {
 	constructor() {
 		// Root-scoped service: lives as long as the app, so no teardown needed.
 		this.store.user$?.subscribe((user: IUser | null | undefined) => this.onUser(user));
+		this.router.events?.subscribe((event) => {
+			if (event instanceof NavigationEnd) this.onNavigated(event.urlAfterRedirects);
+		});
 	}
 
 	/** Update chat availability (permission + backend configuration). */
@@ -253,19 +267,19 @@ export class ChatSidebarService {
 
 	/**
 	 * Set the expand state and persist the user's preference.
-	 * Collapsing from the full-page chat (Close, Esc, Detach) also leaves that
-	 * page, back to where it was opened from — with the docked panel closed.
+	 * Collapsing a maximized chat (Close, Esc, Detach) also ends maximized mode —
+	 * and on the full-page chat route, leaves that page.
 	 */
 	setExpanded(expanded: boolean): void {
 		this.expanded.set(expanded);
 		this.writeStored('expanded', String(expanded));
 		this.schedulePersist();
 		if (!expanded && this.maximized()) {
-			this.leaveFullPage();
+			this.endMaximized();
 		}
 	}
 
-	/** Open the full-page chat, or go back to the docked panel when it is already open. */
+	/** Maximize the chat, or bring it back to the docked panel when it is maximized. */
 	toggleMaximized(): void {
 		if (this.maximized()) {
 			this.restore();
@@ -275,9 +289,8 @@ export class ChatSidebarService {
 	}
 
 	/**
-	 * Open the chat as a full page (`/pages/ai-chat`), remembering the current page so
-	 * Restore can bring the user back to it. The panel is marked expanded first,
-	 * so coming back always shows the docked chat again.
+	 * Expand the chat over the whole screen, IN PLACE: no navigation, so the page
+	 * underneath — a half-filled form included — stays alive until Restore.
 	 */
 	maximize(): void {
 		if (this.maximized()) {
@@ -286,16 +299,16 @@ export class ChatSidebarService {
 		if (!this.expanded()) {
 			this.setExpanded(true);
 		}
-		this.returnUrl = this.router.url;
-		void this.router.navigateByUrl(CHAT_FULL_PAGE_PATH);
+		this.maximizedOverPath = pathOf(this.router.url ?? '');
+		this.maximized.set(true);
 	}
 
-	/** Leave the full-page chat for the page it was opened from, with the docked panel open. */
+	/** Back to the docked panel (open) — leaving the full-page chat route when that is where we are. */
 	restore(): void {
 		if (!this.expanded()) {
 			this.setExpanded(true);
 		}
-		this.leaveFullPage();
+		this.endMaximized();
 	}
 
 	/**
@@ -305,17 +318,35 @@ export class ChatSidebarService {
 	 * the buttons.
 	 */
 	setFullPageOpen(open: boolean): void {
+		this.fullPageOpen.set(open);
 		this.maximized.set(open);
-		if (!open) {
-			this.returnUrl = null;
-		}
+		this.maximizedOverPath = null;
 	}
 
-	/** Navigate from the full-page chat back to the page it was opened from. */
-	private leaveFullPage(): void {
-		const target = this.returnUrl || CHAT_FULL_PAGE_FALLBACK_URL;
-		this.returnUrl = null;
-		void this.router.navigateByUrl(target);
+	/** End maximized mode: leave the full-page route, or simply hand the screen back to the page. */
+	private endMaximized(): void {
+		this.maximizedOverPath = null;
+		if (this.fullPageOpen()) {
+			void this.router.navigateByUrl(CHAT_FULL_PAGE_FALLBACK_URL);
+			return;
+		}
+		this.maximized.set(false);
+	}
+
+	/**
+	 * A navigation to another page while the chat is maximized over the current one —
+	 * the assistant's `open_page` tool, a citation link — restores the docked chat,
+	 * so the page that was just opened is actually seen. A query-string change on
+	 * the same page (a filter writing the URL) leaves the chat as it is.
+	 */
+	private onNavigated(url: string): void {
+		if (!this.maximized() || this.fullPageOpen() || this.maximizedOverPath === null) {
+			return;
+		}
+		if (pathOf(url) !== this.maximizedOverPath) {
+			this.maximizedOverPath = null;
+			this.maximized.set(false);
+		}
 	}
 
 	/**
