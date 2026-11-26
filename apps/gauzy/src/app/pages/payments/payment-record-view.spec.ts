@@ -1,4 +1,5 @@
 import { runInThisContext } from 'node:vm';
+import * as moment from 'moment';
 import { IPayment } from '@gauzy/contracts';
 import { PaymentService } from '@gauzy/ui-core/core';
 import { IRecordViewScope } from '@gauzy/ui-core/shared';
@@ -76,61 +77,87 @@ describe('payment chart reads east of UTC', () => {
 });
 
 describe('the contact chart read', () => {
-	const scope = { organizationId: 'org-1', tenantId: 'tenant-1' } as IRecordViewScope;
-
-	it('counts a payment whose contact is only known through its invoice', async () => {
-		// Recorded from an invoice before the record form saved its contact: no contact of its own.
-		const older = {
-			id: 'older',
-			paymentDate: new Date(2026, 3, 10),
-			currency: 'EUR',
-			invoice: { toContactId: 'c-1' }
-		};
-		const own = { id: 'own', paymentDate: new Date(2026, 4, 2), currency: 'EUR', organizationContactId: 'c-1' };
-		const other = { id: 'other', paymentDate: new Date(2026, 4, 3), currency: 'EUR', organizationContactId: 'c-2' };
+	it('keeps the contact filter in the read, ahead of the page ceiling', async () => {
 		const queries: Array<{ where: Record<string, unknown>; relations?: string[] }> = [];
 		const service = {
 			pagination: jest.fn(async (query: { where: Record<string, unknown>; relations?: string[] }) => {
 				queries.push(query);
-				return { items: [older, own, other], total: 3 };
-			})
-		} as unknown as PaymentService;
-		const payment = { id: 'own', paymentDate: new Date(2026, 4, 2), currency: 'EUR', organizationContactId: 'c-1' };
-
-		const payments = await loadContactMonthsPayments(service, scope, payment as IPayment, 3);
-
-		// The contact is matched on the answer (through the invoice when needed), so the read names no contact and
-		// brings the invoice along.
-		expect(queries[0].where).not.toHaveProperty('organizationContactId');
-		expect(queries[0].relations).toEqual(['invoice']);
-		expect(payments.map((item) => item.id)).toEqual(['older', 'own']);
-	});
-});
-
-describe('the neighbour reads', () => {
-	const scope = { organizationId: 'org-1', tenantId: 'tenant-1' } as IRecordViewScope;
-
-	it('read the whole current second around a payment date with milliseconds', async () => {
-		const bounds: Array<{ startDate: string; endDate: string }> = [];
-		const service = {
-			pagination: jest.fn(async (query: { where: { paymentDate: { startDate: string; endDate: string } } }) => {
-				bounds.push(query.where.paymentDate);
 				return { items: [], total: 0 };
 			})
 		} as unknown as PaymentService;
-		const payment = { id: 'p', paymentDate: new Date('2026-05-01T10:00:05.300Z') } as IPayment;
+		const payment = { id: 'p', paymentDate: new Date(2026, 4, 2), currency: 'EUR', organizationContactId: 'c-1' };
 
-		await loadPaymentNeighbours(service, scope, payment);
+		await loadContactMonthsPayments(service, SCOPE, payment as IPayment, 3);
 
-		expect(bounds).toEqual(
-			expect.arrayContaining([
-				// The same date: the whole of 10:00:05, so 10:00:05.700 is read.
-				{ startDate: '2026-05-01 10:00:05', endDate: '2026-05-01 10:00:06' },
-				// Before: up to 10:00:05, so 10:00:04.700 is read.
-				{ startDate: '1970-01-01 00:00:00', endDate: '2026-05-01 10:00:05' },
-				// After: from the next second.
-				{ startDate: '2026-05-01 10:00:06', endDate: '9999-12-31 23:59:59' }
-			])
+		// Filtered by the server: the 2,000-payment ceiling counts this contact's payments, not the organization's.
+		expect(queries[0].where).toMatchObject({ organizationContactId: 'c-1', currency: 'EUR' });
+	});
+});
+
+/**
+ * The payments endpoint as the neighbour reads meet it: `Between` on whole-second bounds, both ends included, the
+ * requested order, and `take` rows of page `skip` (counted from 1).
+ */
+function endpointOver(rows: IPayment[]): PaymentService {
+	const at = (value: Date | string | undefined) => (value ? new Date(value).getTime() : 0);
+	return {
+		pagination: jest.fn(
+			async (query: {
+				where: { paymentDate: { startDate: string; endDate: string } };
+				order?: { paymentDate?: 'ASC' | 'DESC' };
+				take?: number;
+				skip?: number;
+			}) => {
+				const low = moment.utc(query.where.paymentDate.startDate, 'YYYY-MM-DD HH:mm:ss').valueOf();
+				const high = moment.utc(query.where.paymentDate.endDate, 'YYYY-MM-DD HH:mm:ss').valueOf();
+				const direction = query.order?.paymentDate === 'DESC' ? -1 : 1;
+				const matching = rows
+					.filter((row) => at(row.paymentDate) >= low && at(row.paymentDate) <= high)
+					.sort(
+						(a, b) =>
+							direction * (at(a.paymentDate) - at(b.paymentDate) || at(a.createdAt) - at(b.createdAt))
+					);
+				const take = query.take ?? matching.length;
+				const page = query.skip ?? 1;
+				return { items: matching.slice((page - 1) * take, page * take), total: matching.length };
+			}
+		)
+	} as unknown as PaymentService;
+}
+
+const SCOPE = { organizationId: 'org-1', tenantId: 'tenant-1' } as IRecordViewScope;
+
+describe('the neighbour reads', () => {
+	const row = (id: string, paymentDate: string, createdAt = paymentDate) =>
+		({ id, paymentDate: new Date(paymentDate), createdAt: new Date(createdAt) }) as IPayment;
+
+	it('find the payments a part of a second away', async () => {
+		const payment = row('current', '2026-05-01T10:00:05.300Z');
+		const service = endpointOver([
+			row('far-before', '2026-05-01T09:00:00.000Z'),
+			row('just-before', '2026-05-01T10:00:04.700Z'),
+			payment,
+			row('just-after', '2026-05-01T10:00:05.700Z'),
+			row('far-after', '2026-05-01T11:00:00.000Z')
+		]);
+
+		const { previous, next } = await loadPaymentNeighbours(service, SCOPE, payment);
+
+		expect(previous?.id).toBe('just-before');
+		expect(next?.id).toBe('just-after');
+	});
+
+	it('keep the previous payment when many share the second of the current one', async () => {
+		// The current payment was recorded first of eleven at midnight; yesterday's payment comes right before it.
+		const payment = row('current', '2026-05-01T00:00:00.000Z', '2026-05-01T08:00:00.000Z');
+		const sameMidnight = Array.from({ length: 10 }, (_, index) =>
+			row(`midnight-${index}`, '2026-05-01T00:00:00.000Z', `2026-05-01T09:0${index}:00.000Z`)
 		);
+		const service = endpointOver([row('yesterday', '2026-04-30T09:00:00.000Z'), payment, ...sameMidnight]);
+
+		const { previous, next } = await loadPaymentNeighbours(service, SCOPE, payment);
+
+		expect(previous?.id).toBe('yesterday');
+		expect(next?.id).toBe('midnight-0');
 	});
 });
