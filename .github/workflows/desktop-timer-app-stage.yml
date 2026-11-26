@@ -1054,6 +1054,12 @@ jobs:
           fi
   release-windows:
     needs: check-release-tag
+    # Signing: the Azure subscription behind Trusted Signing is disabled (403 "SignerSign() failed" since 2026-11-02), which
+    # fails this leg after the whole build. The repo variable SKIP_WINDOWS_SIGNING=true builds and publishes these STAGE
+    # installers unsigned instead: the publisher name and both signing paths (Azure profile, PFX) are left empty, so
+    # .scripts/bump-version-electron.js configures no signer. Only the stage files have this switch; prod stays signed.
+    # Unsigned means SmartScreen warns on install, and an installed signed stage app does not take an unsigned update by
+    # itself (install the new one by hand). Clear the variable once signing works again.
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -1202,8 +1208,8 @@ jobs:
             console.log(script.desktopTimer(false))
         env:
           # Windows signing config must be visible to the BUMP step: this script writes build.win.azureSignOptions into package.json, which electron-builder reads later.
-          WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
-          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          WINDOWS_PUBLISHER_NAME: ${{ vars.SKIP_WINDOWS_SIGNING != 'true' && secrets.WINDOWS_PUBLISHER_NAME || '' }}
+          AZURE_CERT_PROFILE_NAME: ${{ vars.SKIP_WINDOWS_SIGNING != 'true' && secrets.AZURE_CERT_PROFILE_NAME || '' }}
           AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
           AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
           GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
@@ -1279,15 +1285,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           # Windows Authenticode signing (electron-builder auto-signs when WIN_CSC_LINK is set;
           # empty secret => skipped). Verification engages only when WINDOWS_PUBLISHER_NAME is set.
-          WIN_CSC_LINK: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WIN_CSC_LINK: ${{ vars.SKIP_WINDOWS_SIGNING != 'true' && secrets.WINDOWS_CERT_PFX_BASE64 || '' }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
-          WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
+          WINDOWS_PUBLISHER_NAME: ${{ vars.SKIP_WINDOWS_SIGNING != 'true' && secrets.WINDOWS_PUBLISHER_NAME || '' }}
           # Azure Artifact Signing (preferred once a certificate profile exists). Engaged only when
           # AZURE_CERT_PROFILE_NAME is set; otherwise the PFX path above is used.
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          AZURE_CERT_PROFILE_NAME: ${{ vars.SKIP_WINDOWS_SIGNING != 'true' && secrets.AZURE_CERT_PROFILE_NAME || '' }}
           AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
           AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
           EP_GH_IGNORE_TIME: true
@@ -1645,11 +1651,11 @@ jobs:
           # that does not exist for ARM64 in its bundled winCodeSign package:
           #   spawn ...\winCodeSign-2.6.0\windows-10\arm64\signtool.exe ENOENT
           # ARM64 therefore ships unsigned (see the Bump step). x64 still signs via Azure.
-          WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
+          WINDOWS_PUBLISHER_NAME: ${{ vars.SKIP_WINDOWS_SIGNING != 'true' && secrets.WINDOWS_PUBLISHER_NAME || '' }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          AZURE_CERT_PROFILE_NAME: ${{ vars.SKIP_WINDOWS_SIGNING != 'true' && secrets.AZURE_CERT_PROFILE_NAME || '' }}
           AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
           AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
           EP_GH_IGNORE_TIME: true
