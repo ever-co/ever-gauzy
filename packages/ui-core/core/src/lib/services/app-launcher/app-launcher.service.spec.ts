@@ -70,6 +70,8 @@ function setup(options: SetupOptions = {}) {
 		store,
 		matchMedia: defaultView.matchMedia,
 		resize: (wide: boolean) => mediaListener?.({ matches: wide }),
+		/** Delivers a storage notification only, as a late event would: the storage keeps what it holds. */
+		notify: (key: string | null, newValue: string | null) => windowListeners.get('storage')?.({ key, newValue }),
 		/** Another tab wrote `newValue` under `key` (`null` key: it cleared the storage), then the event arrives. */
 		storageEvent: (key: string | null, newValue: string | null) => {
 			if (key === null) {
@@ -153,13 +155,13 @@ describe('AppLauncherService', () => {
 	});
 
 	it('reads what is stored when the event arrives, not the event value', () => {
-		const { service, store, storageEvent } = setup();
-		storageEvent(APP_LAUNCHER_PLACEMENT_STORAGE_KEY, '"header"');
+		const { service, store, notify } = setup();
+		// Another tab stored "rail" after it sent an event that still says "header": the storage wins.
 		store.set(APP_LAUNCHER_PLACEMENT_STORAGE_KEY, '"rail"');
-		storageEvent('unrelated', 'x');
-		expect(service.placement()).toBe('header');
-		storageEvent(null, null);
-		expect(service.placement()).toBe('sidebar');
+		notify(APP_LAUNCHER_PLACEMENT_STORAGE_KEY, '"header"');
+		expect(service.placement()).toBe('rail');
+		notify('unrelated', '"header"');
+		expect(service.placement()).toBe('rail');
 	});
 
 	it('shows nothing when the deployment links no other app', () => {

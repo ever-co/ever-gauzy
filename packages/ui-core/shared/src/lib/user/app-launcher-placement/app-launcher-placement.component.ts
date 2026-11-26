@@ -26,7 +26,7 @@ const LABEL_KEYS: Readonly<Record<AppLauncherPlacement, string>> = {
 	host: { '[attr.hidden]': 'launcher.isAvailable ? null : ""' }
 })
 export class AppLauncherPlacementComponent {
-	readonly launcher = inject(AppLauncherService);
+	protected readonly launcher = inject(AppLauncherService);
 
 	/**
 	 * Whether the tiles carry their own title and description. Off where the page already shows them beside the
@@ -34,14 +34,14 @@ export class AppLauncherPlacementComponent {
 	 */
 	@Input() showHeading = true;
 
-	readonly placements = APP_LAUNCHER_PLACEMENTS;
-	readonly labelKeys = LABEL_KEYS;
-	readonly groupName = `ga-app-launcher-placement-${++nextGroupNumber}`;
+	protected readonly placements = APP_LAUNCHER_PLACEMENTS;
+	protected readonly labelKeys = LABEL_KEYS;
+	protected readonly groupName = `ga-app-launcher-placement-${++nextGroupNumber}`;
 
 	/** The browser refused to keep the last pick (private mode, storage full): it lasts until the page reloads. */
-	readonly notSaved = signal(false);
+	protected readonly notSaved = signal(false);
 
-	pick(placement: AppLauncherPlacement): void {
+	protected pick(placement: AppLauncherPlacement): void {
 		const isStored = this.launcher.setPlacement(placement);
 		this.notSaved.set(!isStored);
 	}

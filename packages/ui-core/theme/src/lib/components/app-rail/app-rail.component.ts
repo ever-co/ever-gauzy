@@ -19,9 +19,9 @@ export class AppRailComponent {
 	private readonly _launcher = inject(AppLauncherService);
 	private readonly _translate = inject(TranslateService);
 
-	readonly apps: ReadonlyArray<IEverApp> = this._launcher.apps;
+	protected readonly apps: ReadonlyArray<IEverApp> = this._launcher.apps;
 
-	isCurrent(app: IEverApp): boolean {
+	protected isCurrent(app: IEverApp): boolean {
 		return isCurrentEverApp(app);
 	}
 
@@ -29,7 +29,7 @@ export class AppRailComponent {
 	 * The app's name for its tooltip and its link's label, with "Soon" / "Beta" after it when the app is not generally
 	 * available: the rail shows only the icon, so the status travels in the name.
 	 */
-	displayName(app: IEverApp): string {
+	protected displayName(app: IEverApp): string {
 		const statusKey = this.statusKey(app);
 		if (!statusKey) {
 			return app.shortName;
@@ -48,7 +48,7 @@ export class AppRailComponent {
 		}
 	}
 
-	onAppPick(event: MouseEvent, app: IEverApp): void {
+	protected onAppPick(event: MouseEvent, app: IEverApp): void {
 		this._launcher.openApp(event, app);
 	}
 }
