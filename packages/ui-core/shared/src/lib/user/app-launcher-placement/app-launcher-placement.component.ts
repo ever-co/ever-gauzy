@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { APP_LAUNCHER_PLACEMENTS, AppLauncherPlacement } from '@gauzy/ui-core/common';
 import { AppLauncherService } from '@gauzy/ui-core/core';
@@ -13,9 +13,9 @@ const LABEL_KEYS: Readonly<Record<AppLauncherPlacement, string>> = {
 };
 
 /**
- * Where the person keeps the App Launcher, as three picture tiles: Sidebar, Top bar, Left rail. A pick applies at
- * once and is kept in this browser (Ever Teams' preference: same key, same values). Shown only when the deployment
- * links another Ever app.
+ * Where the person keeps the App Launcher, as three picture tiles: Sidebar, Top bar, Left rail (Settings › General ›
+ * Preferences). A pick applies at once and is kept in this browser (Ever Teams' preference: same key, same values).
+ * Shown only when the deployment links another Ever app.
  */
 @Component({
 	selector: 'ga-app-launcher-placement',
@@ -27,6 +27,12 @@ const LABEL_KEYS: Readonly<Record<AppLauncherPlacement, string>> = {
 })
 export class AppLauncherPlacementComponent {
 	readonly launcher = inject(AppLauncherService);
+
+	/**
+	 * Whether the tiles carry their own title and description. Off where the page already shows them beside the
+	 * tiles (a settings row): the title then stays for screen readers only.
+	 */
+	@Input() showHeading = true;
 
 	readonly placements = APP_LAUNCHER_PLACEMENTS;
 	readonly labelKeys = LABEL_KEYS;

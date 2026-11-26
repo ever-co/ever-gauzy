@@ -1,6 +1,8 @@
 <fieldset class="placement" [attr.aria-describedby]="groupName + '-description'">
-	<legend class="label">{{ 'APP_LAUNCHER.PLACEMENT_TITLE' | translate }}</legend>
-	<p class="placement__description" [id]="groupName + '-description'">
+	<legend class="label" [class.placement__sr-only]="!showHeading">
+		{{ 'APP_LAUNCHER.PLACEMENT_TITLE' | translate }}
+	</legend>
+	<p class="placement__description" [class.placement__sr-only]="!showHeading" [id]="groupName + '-description'">
 		{{ 'APP_LAUNCHER.PLACEMENT_DESCRIPTION' | translate }}
 	</p>
 

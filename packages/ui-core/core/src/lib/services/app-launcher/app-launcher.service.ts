@@ -68,10 +68,12 @@ export class AppLauncherService {
 	});
 
 	constructor() {
-		// Another tab of this browser changed the position: follow it, as the choice is per browser.
+		// Another tab of this browser changed the position, or cleared the storage (`key` is null then): follow it,
+		// as the choice is per browser. Read what is stored now, as at start, rather than the event's own value.
 		this._document.defaultView?.addEventListener('storage', (event: StorageEvent) => {
-			if (event.key === APP_LAUNCHER_PLACEMENT_STORAGE_KEY) {
-				this._storedPlacement.set(parseAppLauncherPlacement(event.newValue));
+			const isOurs = event.key === null || event.key === APP_LAUNCHER_PLACEMENT_STORAGE_KEY;
+			if (isOurs) {
+				this._storedPlacement.set(this._readStoredPlacement());
 			}
 		});
 	}

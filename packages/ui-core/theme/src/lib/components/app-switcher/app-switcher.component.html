@@ -92,12 +92,13 @@
 							<span class="app-chip here">{{ 'APP_LAUNCHER.YOU_ARE_HERE' | translate }}</span>
 						</div>
 					} @else {
+						<!-- Named by what it shows (name, address, "Soon" / "Beta"); the footer says it opens a new tab. -->
 						<a
 							class="app-row"
 							[href]="app.url"
 							target="_blank"
 							rel="noopener noreferrer"
-							[attr.aria-label]="'APP_LAUNCHER.OPEN_APP' | translate: { app: app.shortName }"
+							[attr.aria-describedby]="panelId + '-footer'"
 							(click)="onAppPick($event, app)"
 						>
 							<img class="app-tile" [src]="app.logo" alt="" width="28" height="28" draggable="false" />
@@ -113,6 +114,6 @@
 				</li>
 			}
 		</ul>
-		<p class="app-switcher-footer">{{ 'APP_LAUNCHER.FOOTER' | translate }}</p>
+		<p class="app-switcher-footer" [id]="panelId + '-footer'">{{ 'APP_LAUNCHER.FOOTER' | translate }}</p>
 	</nav>
 </ng-template>

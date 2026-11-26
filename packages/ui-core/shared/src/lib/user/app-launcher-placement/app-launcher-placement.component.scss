@@ -29,6 +29,19 @@
   margin: 0.5rem 0 0;
 }
 
+// Read by screen readers, not drawn: the page shows the same title and description beside the tiles.
+.placement__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .placement__tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -81,8 +94,8 @@
   display: block;
   width: 100%;
   height: auto;
-  // Nested in the tile: its 0.625rem radius less its 0.5rem padding, floored at 4px.
-  border-radius: 4px;
+  // Nested in the tile: the tile's radius less its 0.5rem padding, never under 4px.
+  border-radius: max(4px, calc(var(--gauzy-radius-md, 0.625rem) - 0.5rem));
 
   .frame {
     fill: var(--background-basic-color-1, #ffffff);

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { IEverApp, isCurrentEverApp } from '@gauzy/ui-core/common';
 import { AppLauncherService } from '@gauzy/ui-core/core';
 
@@ -16,6 +17,7 @@ import { AppLauncherService } from '@gauzy/ui-core/core';
 })
 export class AppRailComponent {
 	private readonly _launcher = inject(AppLauncherService);
+	private readonly _translate = inject(TranslateService);
 
 	readonly apps: ReadonlyArray<IEverApp> = this._launcher.apps;
 
@@ -23,8 +25,19 @@ export class AppRailComponent {
 		return isCurrentEverApp(app);
 	}
 
-	/** The tooltip: the app's name, and "Soon" / "Beta" after it when the app is not generally available. */
-	tooltipKey(app: IEverApp): string | null {
+	/**
+	 * The app's name for its tooltip and its link's label, with "Soon" / "Beta" after it when the app is not generally
+	 * available: the rail shows only the icon, so the status travels in the name.
+	 */
+	displayName(app: IEverApp): string {
+		const statusKey = this.statusKey(app);
+		if (!statusKey) {
+			return app.shortName;
+		}
+		return `${app.shortName} · ${this._translate.instant(statusKey)}`;
+	}
+
+	private statusKey(app: IEverApp): string | null {
 		switch (app.status) {
 			case 'soon':
 				return 'APP_LAUNCHER.SOON';

@@ -70,7 +70,17 @@ function setup(options: SetupOptions = {}) {
 		store,
 		matchMedia: defaultView.matchMedia,
 		resize: (wide: boolean) => mediaListener?.({ matches: wide }),
-		storageEvent: (key: string, newValue: string | null) => windowListeners.get('storage')?.({ key, newValue })
+		/** Another tab wrote `newValue` under `key` (`null` key: it cleared the storage), then the event arrives. */
+		storageEvent: (key: string | null, newValue: string | null) => {
+			if (key === null) {
+				store.clear();
+			} else if (newValue === null) {
+				store.delete(key);
+			} else {
+				store.set(key, newValue);
+			}
+			windowListeners.get('storage')?.({ key, newValue });
+		}
 	};
 }
 
@@ -132,6 +142,23 @@ describe('AppLauncherService', () => {
 		storageEvent('some-other-key', '"rail"');
 		expect(service.placement()).toBe('header');
 		storageEvent(APP_LAUNCHER_PLACEMENT_STORAGE_KEY, null);
+		expect(service.placement()).toBe('sidebar');
+	});
+
+	it('goes back to the default when another tab clears the storage', () => {
+		const { service, storageEvent } = setup({ stored: '"rail"' });
+		expect(service.placement()).toBe('rail');
+		storageEvent(null, null);
+		expect(service.placement()).toBe('sidebar');
+	});
+
+	it('reads what is stored when the event arrives, not the event value', () => {
+		const { service, store, storageEvent } = setup();
+		storageEvent(APP_LAUNCHER_PLACEMENT_STORAGE_KEY, '"header"');
+		store.set(APP_LAUNCHER_PLACEMENT_STORAGE_KEY, '"rail"');
+		storageEvent('unrelated', 'x');
+		expect(service.placement()).toBe('header');
+		storageEvent(null, null);
 		expect(service.placement()).toBe('sidebar');
 	});
 

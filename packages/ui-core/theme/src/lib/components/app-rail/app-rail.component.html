@@ -19,10 +19,8 @@
 						[href]="app.url"
 						target="_blank"
 						rel="noopener noreferrer"
-						[attr.aria-label]="'APP_LAUNCHER.OPEN_APP' | translate: { app: app.shortName }"
-						[nbTooltip]="
-							tooltipKey(app) ? app.shortName + ' · ' + (tooltipKey(app) | translate) : app.shortName
-						"
+						[attr.aria-label]="'APP_LAUNCHER.OPEN_APP' | translate: { app: displayName(app) }"
+						[nbTooltip]="displayName(app)"
 						nbTooltipPlacement="end"
 						(click)="onAppPick($event, app)"
 					>
