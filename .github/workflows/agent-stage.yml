@@ -184,10 +184,12 @@ jobs:
 
     strategy:
       matrix:
-        # Flatpak (bwrap) and Snapcraft (snapd) cannot run inside the k8s ARC container
-        # runners - this packaging job needs a VM-class runner. Override with the
-        # RUNNER_LINUX_APPS_X64 org/repo variable to use a self-hosted VM.
-        os: ["${{ vars.RUNNER_LINUX_APPS_X64 || 'ubuntu-24.04' }}"]
+        # Our ARC runners (ever-co org variable RUNNER_LINUX_X64_8), as Ever Teams' desktop builds do: GitHub's
+        # own runners do not start for ever-co. An ARC runner is a container without snapd or a flatpak sandbox,
+        # so the snap and flatpak steps and targets are skipped there (see "Detect snapd and the flatpak sandbox")
+        # and deb, rpm, tar.gz and AppImage are still made. RUNNER_LINUX_APPS_X64 names a VM-class runner, where
+        # every target is made. A fork has neither variable, so there it runs on GitHub's runner as before.
+        os: ["${{ vars.RUNNER_LINUX_APPS_X64 || vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}"]
 
     steps:
       - name: Check out Git repository
@@ -222,10 +224,36 @@ jobs:
       # them the rebuild dies on "X11/keysym.h: No such file or directory" (stage-apps 2026-10-23).
       # Same list as release-linux-arm64, whose identical rebuild passes; uiohook links X11, Xrandr,
       # Xtst and Xt.
+      # rpm: rpmbuild, which the rpm target needs. GitHub's runner images ship it; our ARC runner image does not.
       - name: Install system dependencies
-        run: 'sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev flatpak flatpak-builder'
+        run: 'sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev flatpak flatpak-builder rpm'
+
+      # snapd only exists on VM runners, and flatpak-builder's sandbox needs its own user and pid namespaces and a /proc mount,
+      # which a container runner (ARC, or in-cluster) does not allow. There the snap and flatpak steps and targets are skipped
+      # instead of failing the build, and deb, rpm, tar.gz and AppImage are still made. On a VM runner both stay on.
+      - name: Detect snapd and the flatpak sandbox
+        id: toolchain
+        shell: bash
+        env:
+          CI_IN_CLUSTER: ${{ vars.CI_IN_CLUSTER }}
+        run: |
+          # the client alone is not enough: `snap list` needs a running snapd
+          snapd=false; command -v snap >/dev/null 2>&1 && snap list >/dev/null 2>&1 && snapd=true
+          # try the sandbox itself: bwrap (it comes with the flatpak package) with its own user, pid and /proc
+          flatpak=false
+          if [ "$CI_IN_CLUSTER" != true ] && command -v bwrap >/dev/null 2>&1 \
+            && bwrap --unshare-user --unshare-pid --ro-bind / / --proc /proc --dev /dev true >/dev/null 2>&1; then
+            flatpak=true
+          fi
+          echo "snapd=$snapd" >> "$GITHUB_OUTPUT"
+          echo "flatpak=$flatpak" >> "$GITHUB_OUTPUT"
+          echo "snapd: $snapd, flatpak sandbox: $flatpak"
+          if [ "$snapd" != true ] || [ "$flatpak" != true ]; then
+            echo "::notice title=Linux targets::This runner cannot make every Linux package (snapd: $snapd, flatpak sandbox: $flatpak); those targets are skipped."
+          fi
 
       - name: Initialize Flatpak
+        if: ${{ steps.toolchain.outputs.flatpak == 'true' }}
         run: |
           export XDG_DATA_DIRS=$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -235,6 +263,7 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
+        if: ${{ steps.toolchain.outputs.snapd == 'true' }}
         # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
         # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
         # the `snap` command and still supports the core22 base.
@@ -300,6 +329,36 @@ jobs:
       - name: Ensure dist directory exists
         shell: bash
         run: mkdir -p dist/packages
+
+      # Build only the Linux targets this runner can make (see "Detect snapd and the flatpak sandbox").
+      - name: Adapt Linux targets to the runner toolchain
+        shell: bash
+        env:
+          HAS_SNAP: ${{ steps.toolchain.outputs.snapd }}
+          HAS_FLATPAK: ${{ steps.toolchain.outputs.flatpak }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "apps/agent/src/package.json";
+            const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+            const linux = pkg.build && pkg.build.linux;
+            if (!linux || !Array.isArray(linux.target)) {
+              console.log("linux.target is not a list; leaving it untouched");
+              process.exit(0);
+            }
+            const unavailable = [];
+            if (process.env.HAS_SNAP !== "true") unavailable.push("snap");
+            if (process.env.HAS_FLATPAK !== "true") unavailable.push("flatpak");
+            const name = (t) => (typeof t === "string" ? t : t && t.target);
+            const kept = linux.target.filter((t) => !unavailable.includes(name(t)));
+            if (kept.length !== linux.target.length) {
+              linux.target = kept;
+              fs.writeFileSync(file, JSON.stringify(pkg, null, 4));
+              console.log("Linux targets for this runner:", JSON.stringify(kept));
+            } else {
+              console.log("All configured Linux targets are buildable here:", JSON.stringify(kept));
+            }
+          '
 
       - name: Build Agent
         # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
@@ -739,12 +798,16 @@ jobs:
           fi
   release-mac:
     needs: check-release-tag
+    # The macOS runner we used (Cirrus Labs) has lapsed. The repo variable SKIP_MACOS_BUILD=true skips this leg instead of
+    # leaving it queued for a day and then cancelled; RUNNER_MACOS names another macOS runner (a Mac of our own). A fork
+    # has neither variable, so nothing changes there.
+    if: ${{ vars.SKIP_MACOS_BUILD != 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
     strategy:
       matrix:
-        os: [ghcr.io/cirruslabs/macos-runner:tahoe]
+        os: ["${{ vars.RUNNER_MACOS || 'ghcr.io/cirruslabs/macos-runner:tahoe' }}"]
 
     steps:
       - name: Check out Git repository
@@ -1333,12 +1396,16 @@ jobs:
           fi
   release-windows-arm64:
     needs: check-release-tag
+    # GitHub's windows-11-arm runner does not start for ever-co, and our Windows PCs cannot build arm64 yet. The repo
+    # variable SKIP_WINDOWS_ARM64_BUILD=true skips this leg instead of failing it; RUNNER_WINDOWS_ARM64 names another
+    # runner. A fork has neither variable, so nothing changes there.
+    if: ${{ vars.SKIP_WINDOWS_ARM64_BUILD != 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
     strategy:
       matrix:
-        os: [windows-11-arm]
+        os: ["${{ vars.RUNNER_WINDOWS_ARM64 || 'windows-11-arm' }}"]
 
     steps:
       - name: Check out Git repository
