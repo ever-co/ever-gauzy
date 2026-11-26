@@ -301,7 +301,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			}
 			// A run stopped (and maybe started again) while `keep()` resolved records nothing into the new run's state.
 			if (!guards.current()) return false;
-			await this.afterMembershipResync(outcome);
+			// The debt's write is fenced on the lease: one that changed no row means another process holds it now. And a
+			// stop while it was written ends this read here, before any request of the feed (nothing would abort it).
+			if (!(await this.afterMembershipResync(outcome)) || (await stale())) return false;
 		}
 		this.feedAbort = new AbortController();
 		const waitS = this.config.feedMode === 'longpoll' ? FEED_WAIT_S : 0;
@@ -503,8 +505,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			if (outcome === 'lease_lost' || !(await guards.keep()) || !guards.current()) {
 				return false;
 			}
-			// Kept on the row before the position moves on: a process that stops after the move leaves it owed.
-			await this.afterMembershipResync(outcome);
+			// Kept on the row before the position moves on: a process that stops after the move leaves it owed. A write
+			// that changed no row (the lease passed on) leaves the position, as a lost lease does.
+			if (!(await this.afterMembershipResync(outcome))) {
+				return false;
+			}
 			// Kept in one compare-and-set on the lease holder, by the current run only: a process that lost the lease
 			// in between cannot move the position the next holder reads.
 			const cursor =
@@ -537,29 +542,41 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * The debt is kept on the connection row too (`membershipResyncDueAt`, written by the lease holder only), so a lease
 	 * taken over by another process meanwhile runs it at that process's next read of the feed once it is due, instead of
 	 * at its next start or `410`: a removal or a demotion the skipped part of the feed held is never left waiting. A
-	 * resync that worked clears it. A write that fails throws, before the feed moves on (the debt stays owed here).
+	 * resync that worked clears it. A write that fails throws, before the feed moves on (the debt stays owed here). The
+	 * column is only ever written by the lease holder (each write is fenced on `leasedBy`), which is what lets this
+	 * process trust the value it last read or wrote.
+	 *
+	 * @returns false when the fenced write changed no row: the lease passed to another process, so the caller goes no
+	 * further (the debt stays owed in this process too).
 	 */
-	private async afterMembershipResync(outcome: MembershipResyncOutcome): Promise<void> {
+	private async afterMembershipResync(outcome: MembershipResyncOutcome): Promise<boolean> {
 		if (outcome !== 'failed') {
 			// Done (or nothing to do): no longer owed, also when an earlier failure had it owed and a 410 ran it first.
 			this.membershipResyncOwed = false;
 			this.membershipResyncFailures = 0;
 			this.membershipResyncNotBefore = 0;
-			if (this.membershipResyncDueOnRow !== null) {
-				await this.store.updateConnection({ membershipResyncDueAt: null }, { leasedBy: this.holder });
-				this.membershipResyncDueOnRow = null;
+			if (this.membershipResyncDueOnRow === null) {
+				return true;
 			}
-			return;
+			if ((await this.store.updateConnection({ membershipResyncDueAt: null }, { leasedBy: this.holder })) !== 1) {
+				return false;
+			}
+			this.membershipResyncDueOnRow = null;
+			return true;
 		}
 		this.membershipResyncOwed = true;
 		this.membershipResyncFailures += 1;
 		const wait = Math.min(FEED_RETRY_MS * 2 ** (this.membershipResyncFailures - 1), FEED_INTERVAL_MS);
 		this.membershipResyncNotBefore = this.now() + wait;
-		await this.store.updateConnection(
+		const kept = await this.store.updateConnection(
 			{ membershipResyncDueAt: this.membershipResyncNotBefore },
 			{ leasedBy: this.holder }
 		);
+		if (kept !== 1) {
+			return false;
+		}
 		this.membershipResyncDueOnRow = this.membershipResyncNotBefore;
+		return true;
 	}
 
 	/**

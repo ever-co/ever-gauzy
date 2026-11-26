@@ -656,7 +656,13 @@ describe('Ever Platform feed dispatcher', () => {
 				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
 				await instance.readFeed();
 
-				store.updateConnection.mockRejectedValueOnce(new Error('database unavailable'));
+				// Only the debt's write fails; every attempted write is recorded, so a cursor written first would show.
+				const attempted: string[] = [];
+				store.updateConnection.mockImplementation(async (values: Record<string, unknown>) => {
+					attempted.push(Object.keys(values).join(','));
+					if ('membershipResyncDueAt' in values) throw new Error('database unavailable');
+					return 1;
+				});
 				membership.resync.mockResolvedValueOnce('failed');
 				client.instances.events.mockRejectedValueOnce(
 					new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000047')
@@ -664,8 +670,62 @@ describe('Ever Platform feed dispatcher', () => {
 				order.length = 0;
 
 				await expect(instance.readFeed()).rejects.toThrow('database unavailable');
+				expect(attempted).toEqual(['membershipResyncDueAt']);
 				expect(order).toEqual([]);
 				expect(client.instances.ackEvents).not.toHaveBeenCalled();
+			});
+
+			it('a debt write that changed no row (another process holds the lease now): the 410 position stays', async () => {
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValueOnce('done') };
+				const { instance, client, store } = scheduler(membership, { now: () => T0 });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+				await instance.readFeed();
+
+				const attempted: string[] = [];
+				store.updateConnection.mockImplementation(async (values: Record<string, unknown>) => {
+					attempted.push(Object.keys(values).join(','));
+					return 'membershipResyncDueAt' in values ? 0 : 1;
+				});
+				membership.resync.mockResolvedValueOnce('failed');
+				client.instances.events.mockRejectedValueOnce(
+					new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000048')
+				);
+
+				expect(await instance.readFeed()).toBe(false);
+				expect(attempted).toEqual(['membershipResyncDueAt']);
+				expect(client.instances.ackEvents).not.toHaveBeenCalled();
+			});
+
+			it('a debt write that changed no row after a startup resync: the feed is not read, the debt stays owed here', async () => {
+				let now = T0;
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('failed') };
+				const { instance, client, store } = scheduler(membership, { now: () => now });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+				store.updateConnection.mockResolvedValueOnce(0);
+
+				expect(await instance.readFeed()).toBe(false);
+				expect(client.instances.events).not.toHaveBeenCalled();
+
+				// Still owed in this process, after its wait.
+				now += 30_000;
+				await instance.readFeed();
+				expect(membership.resync).toHaveBeenCalledTimes(2);
+			});
+
+			it('stopped while the debt was written: the read goes no further and gives the lease back', async () => {
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('failed') };
+				const { instance, client, store } = scheduler(membership, { now: () => T0 });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+				instance.start();
+				store.updateConnection.mockImplementationOnce(async () => {
+					instance.stop();
+					return 1;
+				});
+				store.releaseLease.mockClear();
+
+				expect(await instance.readFeed()).toBe(false);
+				expect(client.instances.events).not.toHaveBeenCalled();
+				expect(store.releaseLease).toHaveBeenCalled();
 			});
 
 			it('with the membership sync off, a debt on the row runs nothing and is left as it is', async () => {

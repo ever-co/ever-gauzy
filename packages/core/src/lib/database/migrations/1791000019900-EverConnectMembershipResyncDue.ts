@@ -17,7 +17,9 @@ const COLUMN = 'membershipResyncDueAt';
  *
  * Safe to run on a live database: one nullable column on the plugin's own one-row table, added only when missing (so
  * running `up` twice is harmless), no default, no index, no statement per row. On Postgres a transaction-scoped
- * advisory lock serialises two API processes that boot at the same time.
+ * advisory lock serialises two API processes that boot at the same time, when the migration runs in a transaction (as
+ * TypeORM runs migrations by default, and as the plugin's other migrations do); without one, `ADD COLUMN IF NOT EXISTS`
+ * still makes a second run change nothing.
  *
  * `down` drops the column.
  */
