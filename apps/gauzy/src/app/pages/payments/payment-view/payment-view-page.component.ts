@@ -515,7 +515,7 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 		this.setBusy(true);
 		try {
 			const saved = await this.paymentService.update(payment.id, edited);
-			const invoice: IInvoice = edited.invoice ?? saved?.invoice ?? payment.invoice;
+			const invoice = await this.invoiceAfterEdit(payment, edited, saved);
 			if (invoice) {
 				await this.createInvoiceHistory(this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT'), invoice, origin);
 			}
@@ -1005,6 +1005,28 @@ export class PaymentViewPageComponent extends TranslationBaseComponent implement
 			} catch (error) {
 				console.error('Error updating the invoice after a payment change:', error);
 			}
+		}
+	}
+
+	/**
+	 * The invoice an edited payment pays. The form answers only `invoiceId`, and the saved row carries no relation:
+	 * an edit that attached a payment to an invoice (or moved it to another) is read by that id, so the invoice gets
+	 * its history line and its paid state like the one it already had.
+	 */
+	private async invoiceAfterEdit(
+		payment: IPayment,
+		edited: IPayment,
+		saved?: IPayment
+	): Promise<IInvoice | undefined> {
+		const known = edited.invoice ?? saved?.invoice;
+		if (known) return known;
+		const invoiceId = edited.invoiceId ?? saved?.invoiceId;
+		if (!invoiceId || invoiceId === payment.invoice?.id) return payment.invoice;
+		try {
+			return await this.invoicesService.getById(invoiceId);
+		} catch (error) {
+			console.error('Error reading the invoice an edited payment pays:', error);
+			return payment.invoice;
 		}
 	}
 

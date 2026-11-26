@@ -149,7 +149,9 @@ export async function loadContactMonthsPayments(
 	payment: IPayment,
 	months: number
 ): Promise<IPayment[]> {
-	const month = moment.utc(payment.paymentDate);
+	// Local months, as `categoryMonthBars` groups them: the form saves local midnight, so a UTC month would read the
+	// 1st of a month east of UTC as the month before.
+	const month = moment(payment.paymentDate);
 	const contactId = paymentContactId(payment);
 	return loadPaymentsBetween(
 		service,
@@ -169,7 +171,8 @@ export async function loadMonthPayments(
 	scope: IRecordViewScope,
 	payment: IPayment
 ): Promise<IPayment[]> {
-	const month = moment.utc(payment.paymentDate);
+	// Local month, as `monthShareOf` compares it (see loadContactMonthsPayments).
+	const month = moment(payment.paymentDate);
 	return loadPaymentsBetween(service, scope, month.clone().startOf('month'), month.clone().endOf('month'), {
 		...(payment.currency ? { currency: payment.currency } : {})
 	});
