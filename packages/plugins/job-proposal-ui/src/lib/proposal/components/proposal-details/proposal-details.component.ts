@@ -58,6 +58,16 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	}
 
 	/** The organization's website for the sheet's footer: its own, else the one on its contact record. */
+	/**
+	 * The author's name as signed on the sheet: first and last name in full when both are known,
+	 * since the stored display name can be shortened (e.g. "Jane D.").
+	 */
+	protected get authorName(): string {
+		const user = this.proposal?.author?.user;
+		const fullName = [user?.firstName, user?.lastName].filter((part) => !!part?.trim()).join(' ');
+		return fullName || this.proposal?.author?.fullName || user?.name || '';
+	}
+
 	protected get organizationWebsite(): string {
 		return this.organization?.website || this.organization?.contact?.website || '';
 	}
@@ -194,12 +204,16 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 			return;
 		}
 		frameDoc.open();
-		frameDoc.write('<!doctype html><html><head></head><body></body></html>');
+		frameDoc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>');
 		frameDoc.close();
-		frameDoc.title = this.documentCode;
-		frameDoc.body.className = document.body.className;
+		// The title is the PDF's suggested file name.
+		frameDoc.title = this.documentCode || 'proposal';
+		// The page's language and direction, so right-to-left translations print the right way round.
+		frameDoc.documentElement.lang = document.documentElement.lang;
+		frameDoc.documentElement.dir = document.documentElement.dir || getComputedStyle(sheet).direction;
 
-		// The app's stylesheets, then the print rules on top of them.
+		// The app's stylesheets carry the sheet's own (component) styles. The body is left without
+		// the app's theme classes, so no page chrome or theme frame comes along.
 		const pending: Promise<unknown>[] = [];
 		document.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
 			const copy = frameDoc.importNode(node, true) as HTMLElement;
@@ -213,26 +227,83 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 			}
 			frameDoc.head.appendChild(copy);
 		});
+
+		/*
+		 * The page has no margin of its own (`@page { margin: 0 }`), which keeps the browser from
+		 * printing its date / title / URL header and footer. The margins are drawn instead: the
+		 * body's side padding on every page, and a table whose header and footer rows — repeated
+		 * by the browser on every printed page — give each page its top and bottom space, the
+		 * footer carrying the reference.
+		 */
+		const reference = this.documentCode.replace(/[^A-Z0-9-]/g, '');
+		const fontFamily = getComputedStyle(sheet).fontFamily;
 		const printStyles = frameDoc.createElement('style');
 		printStyles.textContent = `
-			@page { size: A4; margin: 16mm 14mm; }
-			html, body { margin: 0; height: auto; overflow: visible; background: #fff !important; }
-			* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-			.pd-sheet {
-				--text-basic-color: #111827;
-				--text-hint-color: #6b7280;
-				--gauzy-card-1: #fff;
-				--gauzy-overlay-border-color: #e5e7eb;
-				max-width: none !important;
+			@page { size: A4; margin: 0; }
+			html, body {
+				margin: 0 !important;
 				padding: 0 !important;
+				height: auto !important;
+				overflow: visible !important;
 				border: 0 !important;
+				outline: 0 !important;
 				box-shadow: none !important;
 				background: #fff !important;
 			}
+			body { padding: 0 16mm !important; font-family: ${fontFamily}; color: #111827; }
+			* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+			table.pd-print { width: 100%; border: 0; border-collapse: collapse; }
+			table.pd-print > * > tr > td { padding: 0; border: 0; vertical-align: top; }
+			.pd-print-top { height: 16mm; }
+			.pd-print-bottom { height: 16mm; vertical-align: bottom !important; }
+			.pd-print-reference {
+				display: block;
+				padding: 4mm 0 7mm;
+				font: 500 7.5pt/1 ui-monospace, 'Cascadia Code', Consolas, monospace;
+				letter-spacing: 0.04em;
+				text-align: end;
+				color: #9ca3af;
+			}
+
+			html body .pd-print .pd-sheet {
+				--text-basic-color: #111827;
+				--text-hint-color: #6b7280;
+				--gauzy-card-1: #fff;
+				--background-basic-color-1: #fff;
+				--gauzy-overlay-border-color: #e5e7eb;
+				max-width: none !important;
+				min-height: 0 !important;
+				margin: 0 !important;
+				padding: 0 !important;
+				border: 0 !important;
+				border-radius: 0 !important;
+				box-shadow: none !important;
+				background: #fff !important;
+			}
+
+			/* Lists exactly as on screen: dashes hung 1rem before the text, nothing else. */
+			html body .pd-print .pd-sheet-text ul { padding: 0 !important; list-style: none !important; }
+			html body .pd-print .pd-sheet-text ul > li { margin: 0 !important; padding: 0 0 0 1rem !important; }
+			html body .pd-print .pd-sheet-text li + li { margin-top: 0.25rem !important; }
+
+			/* Clean breaks: a heading never ends a page; items, rows and the sign-off never split. */
+			h1, h2, h3, h4, h5, h6 { break-after: avoid; page-break-after: avoid; }
+			li, tr, img, pre, blockquote, .pd-sheet-facts, .pd-sheet-footer { break-inside: avoid; page-break-inside: avoid; }
+			p { orphans: 3; widows: 3; }
 		`;
 		frameDoc.head.appendChild(printStyles);
+
+		const table = frameDoc.createElement('table');
+		table.className = 'pd-print';
+		table.innerHTML =
+			'<thead><tr><td class="pd-print-top"></td></tr></thead>' +
+			'<tbody><tr><td class="pd-print-content"></td></tr></tbody>' +
+			'<tfoot><tr><td class="pd-print-bottom"><span class="pd-print-reference"></span></td></tr></tfoot>';
+		(table.querySelector('.pd-print-reference') as HTMLElement).textContent = reference;
 		const copy = frameDoc.importNode(sheet, true) as HTMLElement;
-		frameDoc.body.appendChild(copy);
+		(table.querySelector('.pd-print-content') as HTMLElement).appendChild(copy);
+		frameDoc.body.appendChild(table);
 		copy.querySelectorAll('img').forEach((image) => {
 			if (!image.complete) {
 				pending.push(new Promise((done) => (image.onload = image.onerror = done)));
