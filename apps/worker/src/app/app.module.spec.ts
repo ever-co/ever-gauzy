@@ -12,6 +12,7 @@
 jest.mock('@gauzy/core', () => ({
 	ActivityLogModule: class ActivityLogModule {},
 	DatabaseModule: class DatabaseModule {},
+	EmailRetryScheduleModule: class EmailRetryScheduleModule {},
 	EventOutboxDispatchScheduleModule: class EventOutboxDispatchScheduleModule {},
 	EventOutboxMaintenanceModule: class EventOutboxMaintenanceModule {},
 	IdempotencyMaintenanceModule: class IdempotencyMaintenanceModule {},
@@ -278,6 +279,23 @@ describe('worker AppModule', () => {
 			expect(order).toContain(core.IdempotencyMaintenanceModule);
 			expect(order).toContain(core.InvoiceReminderScheduleModule);
 			expect(order).not.toContain(core.InvoiceReminderMaintenanceModule);
+		});
+	});
+
+	/**
+	 * The email retries follow the payment reminders' split: the sweep sends through the mail settings and the provider
+	 * transports the API hosts, so this process fires the five-minute schedule and never takes a sweep.
+	 */
+	it('fires the email retry schedule wherever a queue exists, and never hosts the sweep', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const core = await import('@gauzy/core');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+			expect(order).toContain(core.EmailRetryScheduleModule);
+			expect(order).not.toContain((core as any).EmailRetryMaintenanceModule);
 		});
 	});
 

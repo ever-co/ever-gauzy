@@ -1,6 +1,7 @@
 import {
 	ActivityLogModule,
 	DatabaseModule,
+	EmailRetryScheduleModule,
 	EventOutboxDispatchScheduleModule,
 	IdempotencyMaintenanceModule,
 	InvoiceReminderScheduleModule,
@@ -116,6 +117,13 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		 * organization turns the reminders on, so a sweep sends nothing until one does.
 		 */
 		...(WORKER_QUEUE_ENABLED ? [InvoiceReminderScheduleModule] : []),
+		/**
+		 * The five-minute schedule of the email retry sweep, and only the schedule: the sweep sends through the mail
+		 * settings and the provider transports the API hosts, so the API consumes the queue (`EmailRetryMaintenanceModule`).
+		 * The queue holds one sweep at a time, and the cap of retries per period is counted in the database for the
+		 * whole installation. `EMAIL_RETRY_ENABLED=false` makes every sweep a no-op.
+		 */
+		...(WORKER_QUEUE_ENABLED ? [EmailRetryScheduleModule] : []),
 		/**
 		 * The hourly schedule of the clients billed on a schedule, and only the schedule: the sweep runs in the API,
 		 * which consumes the queue (`InvoiceScheduleMaintenanceModule`) and saves, renders and sends the invoices.
