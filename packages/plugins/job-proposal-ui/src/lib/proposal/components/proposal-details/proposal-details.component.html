@@ -18,11 +18,15 @@
 			<button
 				nbButton
 				size="small"
-				status="primary"
-				class="pd-action"
+				status="basic"
+				class="pd-action pd-action-secondary"
 				type="button"
-				(click)="edit()"
+				(click)="print()"
 			>
+				<nb-icon icon="printer-outline"></nb-icon>
+				<span>{{ 'BUTTONS.PRINT' | translate }}</span>
+			</button>
+			<button nbButton size="small" status="primary" class="pd-action" type="button" (click)="edit()">
 				<nb-icon icon="edit-outline"></nb-icon>
 				<span>{{ 'BUTTONS.EDIT' | translate }}</span>
 			</button>
@@ -30,132 +34,207 @@
 	}
 
 	@if (proposal) {
-		<div class="pd-columns">
-			<div class="pd-col">
-				<section class="pd-panel">
-					<header class="pd-panel-header">
-						<h6 class="pd-panel-title">
-							<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
-							{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT' | translate }}
-						</h6>
-					</header>
-					@if (proposal.proposalContent) {
-						<div class="pd-rich-text rich-text-content" [innerHTML]="proposalContent"></div>
-					} @else {
-						<div class="pd-empty">—</div>
-					}
+		<div class="pd-layout">
+			<!-- The writing, as a document: no frames, just headed sections. -->
+			<div class="pd-main">
+				<section class="pd-section">
+					<h6 class="pd-section-title">
+						{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT' | translate }}
+					</h6>
+					<!-- The proposal as the client receives it, laid out as an engineering spec: reference
+						 code, title, a facts table, the text with numbered sections, and a sign-off footer. -->
+					<article class="pd-sheet" #sheet>
+						<header class="pd-sheet-header">
+							<div class="pd-sheet-meta">
+								<span class="pd-sheet-brand">
+									@if (organization?.imageUrl) {
+										<img class="pd-sheet-logo" [src]="organization.imageUrl" alt="" />
+									}
+									@if (organization?.name) {
+										<span class="pd-sheet-org">{{ organization.name }}</span>
+									}
+								</span>
+								<span class="pd-sheet-code">{{ documentCode }}</span>
+							</div>
+							<h2 class="pd-sheet-title">
+								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROJECT_PROPOSAL' | translate }}
+							</h2>
+							<dl class="pd-sheet-facts">
+								<div class="pd-sheet-fact">
+									<dt>{{ 'SM_TABLE.CLIENT' | translate }}</dt>
+									<dd>{{ proposal.organizationContact?.name || '—' }}</dd>
+								</div>
+								<div class="pd-sheet-fact">
+									<dt>{{ 'SM_TABLE.DATE' | translate }}</dt>
+									<dd>
+										@if (proposal.valueDate) {
+											{{ proposal.valueDate | date : 'shortDate' | dateFormat }}
+										} @else {
+											—
+										}
+									</dd>
+								</div>
+								<div class="pd-sheet-fact">
+									<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}</dt>
+									<dd>{{ proposal.author?.fullName || '—' }}</dd>
+								</div>
+								<div class="pd-sheet-fact">
+									<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate }}</dt>
+									<dd>
+										<span class="pd-status pd-sheet-status" [class.is-accepted]="isAccepted">
+											<span class="pd-dot" aria-hidden="true"></span>
+											{{ (isAccepted ? 'BUTTONS.ACCEPTED' : 'BUTTONS.SENT') | translate }}
+										</span>
+									</dd>
+								</div>
+							</dl>
+						</header>
+
+						<div class="pd-sheet-body">
+							@if (proposal.proposalContent) {
+								<div
+									class="pd-sheet-text rich-text-content"
+									[class.has-sections]="hasSections"
+									[innerHTML]="proposalContent"
+								></div>
+							} @else {
+								<p class="pd-sheet-empty">—</p>
+							}
+						</div>
+
+						<footer class="pd-sheet-footer">
+							<address class="pd-sheet-company">
+								@if (organization?.name) {
+									<span class="pd-sheet-company-name">{{ organization.name }}</span>
+								}
+								@if (organizationWebsite) {
+									<span>{{ organizationWebsite }}</span>
+								}
+								@if (proposal.author?.user?.email) {
+									<span>{{ proposal.author.user.email }}</span>
+								}
+								@if (proposal.author?.user?.phoneNumber) {
+									<span>{{ proposal.author.user.phoneNumber }}</span>
+								}
+							</address>
+							<!-- Blank lines for the client to sign and date. -->
+							<div class="pd-sheet-signoff">
+								<div class="pd-sheet-sign">
+									<span class="pd-sheet-sign-label">{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.ACCEPTED_BY' | translate }}</span>
+									<span class="pd-sheet-sign-line" aria-hidden="true"></span>
+								</div>
+								<div class="pd-sheet-sign">
+									<span class="pd-sheet-sign-label">{{ 'SM_TABLE.DATE' | translate }}</span>
+									<span class="pd-sheet-sign-line" aria-hidden="true"></span>
+								</div>
+							</div>
+						</footer>
+					</article>
 				</section>
 
-				<section class="pd-panel">
-					<header class="pd-panel-header">
-						<h6 class="pd-panel-title">
-							<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
-							{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT' | translate }}
-						</h6>
-					</header>
+				<section class="pd-section">
+					<h6 class="pd-section-title">
+						{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT' | translate }}
+					</h6>
 					@if (proposal.jobPostContent) {
 						<div class="pd-rich-text rich-text-content" [innerHTML]="jobPostContent"></div>
 					} @else {
-						<div class="pd-empty">—</div>
+						<p class="pd-muted">—</p>
 					}
 				</section>
 			</div>
 
-			<div class="pd-col">
-				<section class="pd-panel">
-					<header class="pd-panel-header">
-						<h6 class="pd-panel-title">
-							<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
-							{{ 'BUTTONS.DETAILS' | translate }}
-						</h6>
-					</header>
-					<dl class="pd-details">
-						<div class="pd-detail">
-							<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON' | translate }}</dt>
+			<!-- The proposal's properties, beside the text and kept in view while it scrolls. -->
+			<aside class="pd-side" [attr.aria-label]="'BUTTONS.DETAILS' | translate">
+				<dl class="pd-props">
+					<div class="pd-prop">
+						<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON' | translate }}</dt>
+						<dd>
+							@if (proposal.valueDate) {
+								{{ proposal.valueDate | date : 'shortDate' | dateFormat }}
+							} @else {
+								<span class="pd-muted">—</span>
+							}
+						</dd>
+					</div>
+					@if (!employee?.id) {
+						<div class="pd-prop">
+							<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}</dt>
 							<dd>
-								@if (proposal.valueDate) {
-									{{ proposal.valueDate | date : 'shortDate' | dateFormat }}
+								@if (proposal.author) {
+									<span class="pd-person">
+										@if (proposal.author.user?.imageUrl) {
+											<img class="pd-avatar" [src]="proposal.author.user.imageUrl" alt="" />
+										} @else {
+											<span class="pd-avatar pd-avatar-initials" aria-hidden="true">{{
+												proposal.author.fullName?.charAt(0)
+											}}</span>
+										}
+										<span class="pd-person-name">{{ proposal.author.fullName }}</span>
+									</span>
 								} @else {
 									<span class="pd-muted">—</span>
 								}
 							</dd>
 						</div>
-						@if (!employee?.id) {
-							<div class="pd-detail">
-								<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}</dt>
-								<dd>
-									@if (proposal.author) {
-										<span class="pd-person">
-											@if (proposal.author.user?.imageUrl) {
-												<img class="pd-avatar" [src]="proposal.author.user.imageUrl" alt="" />
-											} @else {
-												<span class="pd-avatar pd-avatar-initials" aria-hidden="true">{{
-													proposal.author.fullName?.charAt(0)
-												}}</span>
-											}
-											<span class="pd-person-name">{{ proposal.author.fullName }}</span>
-										</span>
-									} @else {
-										<span class="pd-muted">—</span>
-									}
-								</dd>
-							</div>
-						}
-						@if (proposal.organizationContact) {
-							<div class="pd-detail">
-								<dt>{{ 'SM_TABLE.CONTACT' | translate }}</dt>
-								<dd>{{ proposal.organizationContact.name }}</dd>
-							</div>
-						}
-						<div class="pd-detail">
-							<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL' | translate }}</dt>
-							<dd>
-								@if (jobPostLink) {
-									<a class="pd-link" [href]="jobPostLink" target="_blank" rel="noopener noreferrer">
-										{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST' | translate }}
-										<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
-									</a>
-								} @else {
-									<span class="pd-muted">—</span>
+					}
+					@if (proposal.organizationContact) {
+						<div class="pd-prop">
+							<dt>{{ 'SM_TABLE.CONTACT' | translate }}</dt>
+							<dd>{{ proposal.organizationContact.name }}</dd>
+						</div>
+					}
+					<div class="pd-prop">
+						<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL' | translate }}</dt>
+						<dd>
+							@if (jobPostLink) {
+								<a class="pd-link" [href]="jobPostLink" target="_blank" rel="noopener noreferrer">
+									{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST' | translate }}
+									<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+								</a>
+							} @else {
+								<span class="pd-muted">—</span>
+							}
+						</dd>
+					</div>
+					@if (proposal.tags?.length) {
+						<div class="pd-prop">
+							<dt>{{ 'SM_TABLE.TAGS' | translate }}</dt>
+							<dd class="pd-tags">
+								@for (tag of proposal.tags; track tag.id) {
+									<span class="pd-tag" [style.--tag-color]="tag.color">{{
+										tag.name
+									}}</span>
 								}
 							</dd>
 						</div>
-						@if (proposal.tags?.length) {
-							<div class="pd-detail">
-								<dt>{{ 'SM_TABLE.TAGS' | translate }}</dt>
-								<dd class="pd-tags">
-									@for (tag of proposal.tags; track tag.id) {
-										<span class="pd-tag" [style.background]="tag.color" [style.color]="tagTextColor(tag)">{{
-											tag.name
-										}}</span>
-									}
-								</dd>
-							</div>
-						}
-						<!-- When the record was entered and last changed, set apart from the proposal's own facts. -->
-						<div class="pd-detail pd-detail-group">
-							<dt>{{ 'SM_TABLE.CREATED_AT' | translate }}</dt>
-							<dd>
-								@if (proposal.createdAt) {
-									{{ proposal.createdAt | dateTimeFormat }}
-								} @else {
-									<span class="pd-muted">—</span>
-								}
-							</dd>
-						</div>
-						<div class="pd-detail">
-							<dt>{{ 'SM_TABLE.LAST_UPDATED' | translate }}</dt>
-							<dd>
-								@if (proposal.updatedAt) {
-									{{ proposal.updatedAt | dateTimeFormat }}
-								} @else {
-									<span class="pd-muted">—</span>
-								}
-							</dd>
-						</div>
-					</dl>
-				</section>
-			</div>
+					}
+				</dl>
+
+				<!-- When the record was entered and last changed, set apart from the proposal's own facts. -->
+				<dl class="pd-props pd-props-record">
+					<div class="pd-prop">
+						<dt>{{ 'SM_TABLE.CREATED_AT' | translate }}</dt>
+						<dd>
+							@if (proposal.createdAt) {
+								{{ proposal.createdAt | dateTimeFormat }}
+							} @else {
+								<span class="pd-muted">—</span>
+							}
+						</dd>
+					</div>
+					<div class="pd-prop">
+						<dt>{{ 'SM_TABLE.LAST_UPDATED' | translate }}</dt>
+						<dd>
+							@if (proposal.updatedAt) {
+								{{ proposal.updatedAt | dateTimeFormat }}
+							} @else {
+								<span class="pd-muted">—</span>
+							}
+						</dd>
+					</div>
+				</dl>
+			</aside>
 		</div>
 	}
 </ngx-record-view-page>
