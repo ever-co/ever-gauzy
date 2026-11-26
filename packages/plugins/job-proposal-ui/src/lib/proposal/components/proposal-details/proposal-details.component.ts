@@ -12,9 +12,20 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { BaseEntityEnum, IEmployee, IOrganization, IProposal, IUser, ProposalStatusEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	IEmployee,
+	IOrganization,
+	IProposal,
+	IProposalFindInput,
+	IUser,
+	ProposalStatusEnum
+} from '@gauzy/contracts';
 import { ProposalsService, Store } from '@gauzy/ui-core/core';
 import { RecordViewPageState } from '@gauzy/ui-core/shared';
+
+/** Proposals read per request while looking for a proposal's neighbours: the endpoint's maximum. */
+const NEIGHBOUR_PAGE_SIZE = 100;
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,7 +47,12 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	/** The page's back button leads to the proposals list (the routes file imports this component, so not its constant). */
 	public readonly backLink = '/pages/sales/proposals';
 	public state: RecordViewPageState = 'loading';
-	public organization: IOrganization;
+	/**
+	 * The proposal's own organization, loaded with it: the sheet's sender. Never the organization
+	 * selected in the header, which can be another one (a bookmarked proposal, or a switch while the
+	 * page is open).
+	 */
+	public organization: IOrganization | null = null;
 	/** The proposal text has headings, so the sheet numbers its sections and indents their text. */
 	public hasSections = false;
 
@@ -74,9 +90,9 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		return fullName || this.proposal?.author?.fullName || user?.name || '';
 	}
 
-	/** The organization's website for the sheet's footer: its own, else the one on its contact record. */
+	/** The sender's website for the sheet's footer. */
 	protected get organizationWebsite(): string {
-		return this.organization?.website || this.organization?.contact?.website || '';
+		return this.organization?.website || '';
 	}
 
 	protected get isAccepted(): boolean {
@@ -97,13 +113,6 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
 				tap((user: IUser) => (this.employee = user?.employee)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		// The proposal sheet's footer is signed with the organization it was sent for.
-		this.store.selectedOrganization$
-			.pipe(
-				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -140,6 +149,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	 * Sets the proposal data.
 	 */
 	setProposal() {
+		this.organization = this.proposal.organization ?? null;
 		this.jobPostLink = this.proposal.jobPostUrl;
 		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(
 			this.withSectionHeadings(this.proposal.jobPostContent)
@@ -152,11 +162,13 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	}
 
 	/**
-	 * Reads the proposals around this one, in the order the proposals list shows them: newest sent
-	 * first, then newest entered, then by id so equal dates keep a fixed order. Scoped as the list is,
-	 * to the proposal's organization and, when one is selected in the header, to that employee. Only
-	 * ids and dates are read (no relations). While it reads, or if the read fails, the buttons stay
-	 * disabled.
+	 * Finds the proposals around this one in the order the proposals list shows them: newest sent
+	 * first, then newest entered, then by id so equal dates keep a fixed order. The server applies
+	 * that order and the list's scope (the proposal's organization and, when one is selected in the
+	 * header, that employee); the pages are read in turn, ids and dates only, until this proposal is
+	 * found. Its neighbours are then the rows either side of it — the last row of the page before,
+	 * or the first of the page after, when it sits at a page edge. While it reads, or if a read
+	 * fails, the buttons stay disabled.
 	 */
 	private async loadNeighbours(proposal: IProposal): Promise<void> {
 		const sequence = ++this.neighboursSequence;
@@ -167,28 +179,42 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 			return;
 		}
 		const employeeId = this.store.selectedEmployee?.id;
+		const where = { organizationId, tenantId, ...(employeeId ? { employeeId } : {}) } as IProposalFindInput;
+		const readPage = (page: number) =>
+			this.proposalsService.getPage(where, {
+				order: { valueDate: 'DESC', createdAt: 'DESC', id: 'ASC' },
+				select: { id: true, valueDate: true, createdAt: true },
+				take: NEIGHBOUR_PAGE_SIZE,
+				skip: page
+			});
+		const stale = () => sequence !== this.neighboursSequence;
 		try {
-			const { items = [] } = await this.proposalsService.getAll([], {
-				organizationId,
-				tenantId,
-				...(employeeId ? { employeeId } : {})
-			} as any);
-			if (sequence !== this.neighboursSequence) {
-				return;
+			let lastOfPreviousPage: IProposal | null = null;
+			for (let page = 1; ; page++) {
+				const { items = [], total = 0 } = await readPage(page);
+				if (stale()) {
+					return;
+				}
+				const index = items.findIndex((item) => item.id === proposal.id);
+				if (index >= 0) {
+					const previous = index > 0 ? items[index - 1] : lastOfPreviousPage;
+					let next: IProposal | null = items[index + 1] ?? null;
+					if (!next && page * NEIGHBOUR_PAGE_SIZE < total) {
+						const following = await readPage(page + 1);
+						if (stale()) {
+							return;
+						}
+						next = following.items?.[0] ?? null;
+					}
+					this.previousProposal = previous;
+					this.nextProposal = next;
+					return;
+				}
+				if (!items.length || page * NEIGHBOUR_PAGE_SIZE >= total) {
+					return;
+				}
+				lastOfPreviousPage = items[items.length - 1];
 			}
-			const time = (value: Date | string | undefined) => (value ? new Date(value).getTime() || 0 : 0);
-			const ordered = [...items].sort(
-				(a, b) =>
-					time(b.valueDate) - time(a.valueDate) ||
-					time(b.createdAt) - time(a.createdAt) ||
-					(a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
-			);
-			const index = ordered.findIndex((item) => item.id === proposal.id);
-			if (index < 0) {
-				return;
-			}
-			this.previousProposal = ordered[index - 1] ?? null;
-			this.nextProposal = ordered[index + 1] ?? null;
 		} catch {
 			// The buttons stay disabled: the page itself is unaffected.
 		}
@@ -261,11 +287,20 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 			while (next && isBlank(next)) {
 				next = next.nextSibling;
 			}
+			if (next && next.nodeName !== 'BR') {
+				continue;
+			}
+			// The heading takes the bold run's own nodes — a link or a line break inside it stays —
+			// less a trailing colon.
 			const heading = doc.createElement('h3');
-			heading.textContent = title;
+			heading.append(...Array.from(bold.childNodes));
+			const last = heading.lastChild;
+			if (last?.nodeType === Node.TEXT_NODE) {
+				last.textContent = (last.textContent || '').replace(/:\s*$/, '');
+			}
 			if (!next) {
 				paragraph.replaceWith(heading);
-			} else if (next.nodeName === 'BR') {
+			} else {
 				// "Availability<br>I can start…": the heading, then the rest as its paragraph.
 				next.remove();
 				bold.remove();
@@ -310,7 +345,9 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		const pending: Promise<unknown>[] = [];
 		document.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
 			const copy = frameDoc.importNode(node, true) as HTMLElement;
-			if (copy instanceof HTMLLinkElement) {
+			// `copy` belongs to the iframe's document, so it is never an instance of this window's
+			// HTMLLinkElement: the original's tag says whether it is a stylesheet link to wait for.
+			if (node.tagName === 'LINK') {
 				pending.push(
 					new Promise((done) => {
 						copy.addEventListener('load', done);
@@ -377,7 +414,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 
 			/* Lists exactly as on screen: dashes hung 1rem before the text, nothing else. */
 			html body .pd-print .pd-sheet-text ul { padding: 0 !important; list-style: none !important; }
-			html body .pd-print .pd-sheet-text ul > li { margin: 0 !important; padding: 0 0 0 1rem !important; }
+			html body .pd-print .pd-sheet-text ul > li { margin: 0 !important; padding-block: 0 !important; padding-inline: 1rem 0 !important; }
 			html body .pd-print .pd-sheet-text li + li { margin-top: 0.25rem !important; }
 
 			/* Clean breaks: a heading never ends a page; items, rows and the sign-off never split. */
