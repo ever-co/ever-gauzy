@@ -20,9 +20,19 @@ const account = (id: string, overrides: Partial<Account> = {}): Account => ({
 	...overrides
 });
 
-function build(options: { accounts?: Account[]; role?: string; sessionUserId?: string | null } = {}) {
+function build(
+	options: {
+		accounts?: Account[];
+		role?: string;
+		sessionUserId?: string | null;
+		/** The account's employee in the invitation's organization. */
+		employee?: object;
+		/** The employee the account's session finds (another organization's). */
+		elsewhere?: object;
+	} = {}
+) {
 	const roleName = options.role ?? RolesEnum.EMPLOYEE;
-	const invite = { id: 'invite-1', email: INVITED_EMAIL, tenantId: TENANT };
+	const invite = { id: 'invite-1', email: INVITED_EMAIL, tenantId: TENANT, organizationId: 'org-invited' };
 	const inviteService = {
 		validateByCode: jest.fn(async () => invite),
 		validateByToken: jest.fn(async () => invite),
@@ -37,7 +47,9 @@ function build(options: { accounts?: Account[]; role?: string; sessionUserId?: s
 	const userRepository = {
 		find: jest.fn(async ({ where }) => {
 			const invitedEmail = where.email.objectLiteralParameters.email;
-			return accounts.filter((row) => row.tenantId === where.tenantId && row.email.toLowerCase() === invitedEmail);
+			return accounts.filter(
+				(row) => row.tenantId === where.tenantId && row.email.toLowerCase() === invitedEmail
+			);
 		}),
 		findOneOrFail: jest.fn(async () => accepted)
 	};
@@ -48,7 +60,10 @@ function build(options: { accounts?: Account[]; role?: string; sessionUserId?: s
 		getJwtRefreshToken: jest.fn(async () => 'refresh-token')
 	};
 	const userService = { setCurrentRefreshToken: jest.fn(async () => undefined) };
-	const employeeService = { findOneByUserId: jest.fn(async () => null) };
+	const employeeService = {
+		findOneByUserId: jest.fn(async (..._args: unknown[]) => options.elsewhere ?? null),
+		typeOrmEmployeeRepository: { findOne: jest.fn(async (..._args: unknown[]) => options.employee ?? null) }
+	};
 
 	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(options.sessionUserId ?? null);
 
@@ -68,7 +83,7 @@ function build(options: { accounts?: Account[]; role?: string; sessionUserId?: s
 			)
 		);
 
-	return { accept, commandBus };
+	return { accept, commandBus, employeeService, authService };
 }
 
 describe('accepting an invitation for an address that already has an account', () => {
@@ -138,5 +153,71 @@ describe('accepting an invitation for an address that already has an account', (
 		await accept();
 
 		expect(commandBus.execute).toHaveBeenCalledTimes(1);
+	});
+
+	// CodeRabbit on #12140: the employee answered with the session was looked up by account alone, so someone already
+	// employed in another organization got that employee (and its organization) back. CodeRabbit on #12196: the tokens
+	// name the same organization, and the lookup keeps the invitation's tenant.
+	it.each([RolesEnum.EMPLOYEE, RolesEnum.CANDIDATE, RolesEnum.MANAGER])(
+		"answers a %s invitation with the account's employee in the invitation's organization, and tokens for it",
+		async (role) => {
+			const invited = {
+				id: 'employee-invited',
+				organizationId: 'org-invited',
+				isActive: true,
+				isArchived: false
+			};
+			const elsewhere = {
+				id: 'employee-elsewhere',
+				organizationId: 'org-elsewhere',
+				isActive: true,
+				isArchived: false
+			};
+			const { accept, employeeService, authService } = build({ role, employee: invited, elsewhere });
+
+			const answer = await accept();
+
+			expect(employeeService.typeOrmEmployeeRepository.findOne).toHaveBeenCalledWith({
+				where: {
+					userId: 'user-accepted',
+					organizationId: 'org-invited',
+					tenantId: TENANT,
+					isActive: true,
+					isArchived: false
+				}
+			});
+			expect(answer).toMatchObject({ user: { employee: { id: 'employee-invited' } } });
+			expect(authService.getJwtAccessToken).toHaveBeenCalledWith(
+				expect.objectContaining({ id: 'user-accepted' }),
+				'org-invited'
+			);
+			expect(authService.getJwtRefreshToken).toHaveBeenCalledWith(
+				expect.objectContaining({ id: 'user-accepted' }),
+				'org-invited'
+			);
+		}
+	);
+
+	it("without an employee in the invitation's organization, answers as before: the session's employee and tokens", async () => {
+		const elsewhere = {
+			id: 'employee-elsewhere',
+			organizationId: 'org-elsewhere',
+			isActive: true,
+			isArchived: false
+		};
+		const { accept, employeeService, authService } = build({ role: RolesEnum.CANDIDATE, elsewhere });
+
+		const answer = await accept();
+
+		expect(employeeService.findOneByUserId).toHaveBeenCalledWith('user-accepted');
+		expect(answer).toMatchObject({ user: { employee: { id: 'employee-elsewhere' } } });
+		expect(authService.getJwtAccessToken).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'user-accepted' }),
+			undefined
+		);
+		expect(authService.getJwtRefreshToken).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'user-accepted' }),
+			undefined
+		);
 	});
 });
