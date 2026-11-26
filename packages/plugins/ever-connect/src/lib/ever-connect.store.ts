@@ -21,6 +21,8 @@ export interface ConnectionRecord {
 	leasedBy: string | null;
 	leaseUntil: number | null;
 	feedCursor: string | null;
+	/** A membership resync that failed is owed again from this time, by the lease holder then; null: none owed. */
+	membershipResyncDueAt: number | null;
 	envCodeConsumedHash: string | null;
 	envCodeAttempts: number;
 	envCodeNextAttemptAt: number | null;
@@ -110,6 +112,7 @@ function toConnection(row: Row): ConnectionRecord {
 		leasedBy: str(row['leasedBy']),
 		leaseUntil: num(row['leaseUntil']),
 		feedCursor: str(row['feedCursor']),
+		membershipResyncDueAt: num(row['membershipResyncDueAt']),
 		envCodeConsumedHash: str(row['envCodeConsumedHash']),
 		envCodeAttempts: num(row['envCodeAttempts']) ?? 0,
 		envCodeNextAttemptAt: num(row['envCodeNextAttemptAt']),
