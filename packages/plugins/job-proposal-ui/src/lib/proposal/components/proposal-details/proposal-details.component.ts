@@ -3,6 +3,7 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	ElementRef,
+	HostListener,
 	OnDestroy,
 	OnInit,
 	ViewChild
@@ -12,7 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BaseEntityEnum, IEmployee, IOrganization, IProposal, IUser, ProposalStatusEnum } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/core';
+import { ProposalsService, Store } from '@gauzy/ui-core/core';
 import { RecordViewPageState } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -39,6 +40,12 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	/** The proposal text has headings, so the sheet numbers its sections and indents their text. */
 	public hasSections = false;
 
+	/** The proposals either side of this one, in the list's order (newest sent first). */
+	public previousProposal: IProposal | null = null;
+	public nextProposal: IProposal | null = null;
+	/** Bumped by every neighbour read; a read that is no longer the latest when it answers is dropped. */
+	private neighboursSequence = 0;
+
 	/** The printable proposal sheet. */
 	@ViewChild('sheet') private readonly sheetRef?: ElementRef<HTMLElement>;
 
@@ -57,7 +64,6 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		return `PRP-${day}${this.proposal.id.slice(0, 4).toUpperCase()}`;
 	}
 
-	/** The organization's website for the sheet's footer: its own, else the one on its contact record. */
 	/**
 	 * The author's name as signed on the sheet: first and last name in full when both are known,
 	 * since the stored display name can be shortened (e.g. "Jane D.").
@@ -68,6 +74,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		return fullName || this.proposal?.author?.fullName || user?.name || '';
 	}
 
+	/** The organization's website for the sheet's footer: its own, else the one on its contact record. */
 	protected get organizationWebsite(): string {
 		return this.organization?.website || this.organization?.contact?.website || '';
 	}
@@ -80,7 +87,8 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		private readonly route: ActivatedRoute,
 		private readonly store: Store,
 		private readonly sanitizer: DomSanitizer,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly proposalsService: ProposalsService
 	) {}
 
 	ngOnInit(): void {
@@ -137,9 +145,92 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 			this.withSectionHeadings(this.proposal.jobPostContent)
 		);
 		const proposalHtml = this.withSectionHeadings(this.proposal.proposalContent);
-		this.hasSections = /<h[1-6][s>]/i.test(proposalHtml);
+		this.hasSections = /<h[1-6][\s>]/i.test(proposalHtml);
 		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(proposalHtml);
 		this.state = 'ready';
+		void this.loadNeighbours(this.proposal);
+	}
+
+	/**
+	 * Reads the proposals around this one, in the order the proposals list shows them: newest sent
+	 * first, then newest entered, then by id so equal dates keep a fixed order. Scoped as the list is,
+	 * to the proposal's organization and, when one is selected in the header, to that employee. Only
+	 * ids and dates are read (no relations). While it reads, or if the read fails, the buttons stay
+	 * disabled.
+	 */
+	private async loadNeighbours(proposal: IProposal): Promise<void> {
+		const sequence = ++this.neighboursSequence;
+		this.previousProposal = null;
+		this.nextProposal = null;
+		const { organizationId, tenantId } = proposal;
+		if (!proposal.id || !organizationId || !tenantId) {
+			return;
+		}
+		const employeeId = this.store.selectedEmployee?.id;
+		try {
+			const { items = [] } = await this.proposalsService.getAll([], {
+				organizationId,
+				tenantId,
+				...(employeeId ? { employeeId } : {})
+			} as any);
+			if (sequence !== this.neighboursSequence) {
+				return;
+			}
+			const time = (value: Date | string | undefined) => (value ? new Date(value).getTime() || 0 : 0);
+			const ordered = [...items].sort(
+				(a, b) =>
+					time(b.valueDate) - time(a.valueDate) ||
+					time(b.createdAt) - time(a.createdAt) ||
+					(a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+			);
+			const index = ordered.findIndex((item) => item.id === proposal.id);
+			if (index < 0) {
+				return;
+			}
+			this.previousProposal = ordered[index - 1] ?? null;
+			this.nextProposal = ordered[index + 1] ?? null;
+		} catch {
+			// The buttons stay disabled: the page itself is unaffected.
+		}
+	}
+
+	/** Opens another proposal's page: the previous or the next one. */
+	openProposal(proposal: IProposal | null): void {
+		if (proposal?.id) {
+			void this.router.navigate(['/pages/sales/proposals/details', proposal.id]);
+		}
+	}
+
+	/**
+	 * K and J step to the previous and next proposal, as on the payment page; not while the viewer
+	 * types, holds a modifier, or has a dialog or menu open.
+	 */
+	@HostListener('document:keydown', ['$event'])
+	onKeydown(event: KeyboardEvent): void {
+		if (!this.proposal || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+			return;
+		}
+		const target = event.target as HTMLElement | null;
+		if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) {
+			return;
+		}
+		if (document.querySelector('.cdk-overlay-backdrop')) {
+			return;
+		}
+		switch ((event.key || '').toLowerCase()) {
+			case 'k':
+				if (this.previousProposal) {
+					event.preventDefault();
+					this.openProposal(this.previousProposal);
+				}
+				break;
+			case 'j':
+				if (this.nextProposal) {
+					event.preventDefault();
+					this.openProposal(this.nextProposal);
+				}
+				break;
+		}
 	}
 
 	/**
