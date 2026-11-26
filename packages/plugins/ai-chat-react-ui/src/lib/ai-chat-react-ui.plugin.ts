@@ -61,8 +61,8 @@ export const AiChatReactUiPlugin = defineDeclarativePlugin(AI_CHAT_REACT_UI_PLUG
 
 	// ── Plugin Settings (auto-generated UI) ──────────────────────
 	settings: {
-		title: 'AI Chat',
-		description: 'Configure the AI Chat assistant widget in the sidebar.',
+		title: 'Ever SI',
+		description: 'Configure Ever SI, the AI that works in the side panel.',
 		category: 'ai',
 		// `chatEnabled` is read by `provideAiChatSidebar`. Whether the chat opens expanded is
 		// not a plugin setting: it is the user's own persisted preference (`ChatSidebarService`),
@@ -71,7 +71,7 @@ export const AiChatReactUiPlugin = defineDeclarativePlugin(AI_CHAT_REACT_UI_PLUG
 			{
 				key: 'chatEnabled',
 				type: 'boolean',
-				label: 'Enable AI Chat',
+				label: 'Enable Ever SI',
 				defaultValue: true,
 				order: 1
 			}

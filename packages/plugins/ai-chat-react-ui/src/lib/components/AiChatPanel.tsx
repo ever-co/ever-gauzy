@@ -431,9 +431,9 @@ export function AiChatPanel() {
 			case AiChatErrorCode.NOT_CONFIGURED:
 				return actionable(
 					'AI_ASSISTANT.ERROR_NOT_CONFIGURED',
-					'AI chat needs a configured provider. Add one on the AI Providers settings page.',
+					'Ever SI needs a configured provider. Add one on the AI Providers settings page.',
 					'AI_ASSISTANT.ERROR_NOT_CONFIGURED_ASK_ADMIN',
-					'AI chat needs a configured provider — ask an administrator to add one in Settings → AI Providers.'
+					'Ever SI needs a configured provider — ask an administrator to add one in Settings → AI Providers.'
 				);
 			case AiChatErrorCode.PROVIDER_UNAVAILABLE:
 				return actionable(
@@ -1184,7 +1184,7 @@ export function AiChatPanel() {
 					<path d="M15 13v2" />
 					<path d="M9 13v2" />
 				</svg>
-				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
+				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'Ever SI')}</span>
 
 				<span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
 					{/* On the full page History is a dropdown (the button toggles it); in the narrow
@@ -1393,8 +1393,8 @@ export function AiChatPanel() {
 								onClick={handleCollapse}
 								className="gz-ai-chat-head-btn"
 								style={headerBtnStyle}
-								title={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
-								aria-label={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
+								title={t('AI_ASSISTANT.CLOSE', 'Close Ever SI')}
+								aria-label={t('AI_ASSISTANT.CLOSE', 'Close Ever SI')}
 							>
 								{/* The chevron points the way the panel actually leaves — it used
 								    to point left even when the chat was docked on the right. */}
