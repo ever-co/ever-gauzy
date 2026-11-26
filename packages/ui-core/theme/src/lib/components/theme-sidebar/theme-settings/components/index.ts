@@ -8,3 +8,4 @@ export * from './theme-selector/switch-theme/switch-theme.component';
 export * from './theme-selector/theme-selector-image/theme-selector-image.component';
 export * from './theme-selector/theme-selector.component';
 export * from './theme-selector/theme-selector.module';
+export * from './theme-selector/theme-toggle/theme-toggle.component';
