@@ -81,7 +81,8 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 0.375rem;
+  // Nested in the tile: its 0.625rem radius less its 0.5rem padding, floored at 4px.
+  border-radius: 4px;
 
   .frame {
     fill: var(--background-basic-color-1, #ffffff);
