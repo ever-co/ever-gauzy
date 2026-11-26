@@ -69,4 +69,53 @@ describe('stripLeakedToolCalls', () => {
 		const text = 'Use {curly braces} for placeholders.';
 		expect(stripLeakedToolCalls(text)).toBe(text);
 	});
+
+	it('keeps a JSON object that is the answer, even when it is the whole reply', () => {
+		expect(stripLeakedToolCalls('{"total":19}')).toBe('{"total":19}');
+		expect(stripLeakedToolCalls('Here is the count:\n\n{"total": 19}')).toBe('Here is the count:\n\n{"total": 19}');
+	});
+
+	it('keeps JSON written in inline code, call-shaped or not', () => {
+		expect(stripLeakedToolCalls('`{"total": 19}`')).toBe('`{"total": 19}`');
+		expect(stripLeakedToolCalls('Pass `{"path": "/pages/tasks"}` to the tool.')).toBe(
+			'Pass `{"path": "/pages/tasks"}` to the tool.'
+		);
+		expect(stripLeakedToolCalls('`{"path": "/pages/tasks"}`')).toBe('`{"path": "/pages/tasks"}`');
+	});
+
+	it('removes a tool-call envelope, but not data that merely has a name', () => {
+		expect(
+			stripLeakedToolCalls('Opening it.\n{"name": "open_page", "arguments": {"path": "/pages/tasks"}}')
+		).toBe('Opening it.');
+		expect(stripLeakedToolCalls('Opening it.\n{"function": {"name": "fill_form", "arguments": "{}"}}')).toBe(
+			'Opening it.'
+		);
+		const data = 'The user:\n{"name": "Alice", "input": "hello"}';
+		expect(stripLeakedToolCalls(data)).toBe(data);
+	});
+
+	it('keeps a line that is only inline-code JSON', () => {
+		expect(stripLeakedToolCalls('An example:\n`{"example":1}`')).toBe('An example:\n`{"example":1}`');
+	});
+
+	it('closes a code block only on a matching fence', () => {
+		// A ``` line inside a ```` block is content: the JSON after it is still code.
+		const longer = 'Markdown:\n\n````md\n```\n{"path": "/pages/tasks"}\n```\n````';
+		expect(stripLeakedToolCalls(longer)).toBe(longer);
+		// A backtick fence does not close a tilde block.
+		const tilde = 'Example:\n\n~~~\n```\n{"path": "/pages/tasks"}\n~~~';
+		expect(stripLeakedToolCalls(tilde)).toBe(tilde);
+		// A fence with text after it is not a closer.
+		const info = 'Example:\n\n```\n``` not a closer\n{"path": "/pages/tasks"}\n```';
+		expect(stripLeakedToolCalls(info)).toBe(info);
+	});
+
+	it('keeps blank lines inside code exactly as written', () => {
+		const text = 'Code:\n\n```js\nconst s = `a\n\n\n\nb`;\n```';
+		expect(stripLeakedToolCalls(text)).toBe(text);
+	});
+
+	it('only hides a half-streamed object when it opens like a call', () => {
+		expect(stripLeakedToolCalls('Total:\n{"total": 1', true)).toBe('Total:\n{"total": 1');
+	});
 });
