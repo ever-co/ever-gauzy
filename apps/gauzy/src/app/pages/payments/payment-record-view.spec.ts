@@ -219,4 +219,18 @@ describe('the neighbour reads', () => {
 
 		expect(previous?.id).toBe('tied-100');
 	});
+
+	it('get past a full read of payments on the same second to the one just before them', async () => {
+		// 2,000 payments on 10:00:05.000, as many as the full same-date read takes, this one recorded first among them:
+		// the second before is scanned past all of them to the payment half a second earlier.
+		const payment = row('current', '2026-05-01T10:00:05.000Z', '2026-05-01T08:00:00.000Z');
+		const others = Array.from({ length: 1999 }, (_, index) =>
+			row(`same-${String(index).padStart(4, '0')}`, '2026-05-01T10:00:05.000Z', '2026-05-01T09:00:00.000Z')
+		);
+		const service = endpointOver([row('half-second-before', '2026-05-01T10:00:04.500Z'), payment, ...others]);
+
+		const { previous } = await loadPaymentNeighbours(service, SCOPE, payment);
+
+		expect(previous?.id).toBe('half-second-before');
+	});
 });

@@ -190,7 +190,9 @@ async function readSecondBefore(
 	date: moment.Moment
 ): Promise<IPayment[]> {
 	const payments: IPayment[] = [];
-	for (let page = 1; page <= PAYMENT_READ_MAX_PAGES; page++) {
+	// The same-date read takes at most PAYMENT_READ_MAX_PAGES pages of rows on `date` (it fails past them), so one page
+	// more always gets past those rows.
+	for (let page = 1; page <= PAYMENT_READ_MAX_PAGES + 1; page++) {
 		const { items = [] } = await service.pagination({
 			where: {
 				organizationId: scope.organizationId,
@@ -204,9 +206,12 @@ async function readSecondBefore(
 		});
 		payments.push(...items);
 		const reachedEarlier = items.some((item) => moment.utc(item.paymentDate).isBefore(date));
-		if (items.length < PAYMENT_PAGE_SIZE || reachedEarlier) break;
+		if (items.length < PAYMENT_PAGE_SIZE || reachedEarlier) {
+			return payments;
+		}
 	}
-	return payments;
+	// Every page full and none reached past `date`: a neighbour from these rows could skip the nearest one.
+	throw new Error('PAYMENTS_READ_INCOMPLETE: the second before a payment holds more payments than a read takes.');
 }
 
 /**
