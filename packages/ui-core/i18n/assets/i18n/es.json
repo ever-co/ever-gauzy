@@ -5255,7 +5255,9 @@
 		"EVER_APPS": "Aplicaciones",
 		"SWITCH_EVER_APP": "Cambiar a otra aplicación de Ever",
 		"WORKSPACE": "Espacio de trabajo",
-		"SWITCH_WORKSPACE": "Cambiar de espacio de trabajo"
+		"SWITCH_WORKSPACE": "Cambiar de espacio de trabajo",
+		"SWITCH_TO_DARK_THEME": "Cambiar al tema oscuro",
+		"SWITCH_TO_LIGHT_THEME": "Cambiar al tema claro"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Asistente de IA",

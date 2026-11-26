@@ -362,6 +362,11 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   }
 }
 
+// The light / dark switch draws its own square (the size of the icon actions before it).
+:host .actions nb-action.theme-toggle-action {
+  padding: 0;
+}
+
 .employee-selector,
 .team-selector,
 .project-selector,

@@ -5253,7 +5253,9 @@
 		"EVER_APPS": "Apps",
 		"SWITCH_EVER_APP": "Naar een andere Ever-app gaan",
 		"WORKSPACE": "Werkruimte",
-		"SWITCH_WORKSPACE": "Van werkruimte wisselen"
+		"SWITCH_WORKSPACE": "Van werkruimte wisselen",
+		"SWITCH_TO_DARK_THEME": "Overschakelen naar donker thema",
+		"SWITCH_TO_LIGHT_THEME": "Overschakelen naar licht thema"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI-assistent",

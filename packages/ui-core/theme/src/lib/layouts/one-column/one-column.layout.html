@@ -97,7 +97,12 @@
 				</div>
 
 				<div class="sidebar-footer" [class.compacted]="!isExpanded()">
-					<gauzy-user [user$]="user$" [showIdentity]="isExpanded()" (clicked)="toggleUserMenu()"></gauzy-user>
+					<gauzy-user
+						[user$]="user$"
+						[showIdentity]="isExpanded()"
+						[showChevrons]="true"
+						(clicked)="toggleUserMenu()"
+					></gauzy-user>
 					<!-- Downloads page (full screen, outside this layout): desktop, mobile and browser-extension apps. -->
 					<a
 						class="footer-icon-button"

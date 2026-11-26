@@ -12,6 +12,8 @@ import { Observable } from 'rxjs';
 })
 export class UserComponent implements OnInit {
 	@Input() showIdentity = false;
+	/** Up / down chevrons after the name: the block opens the account menu (the sidebar's footer). */
+	@Input() showChevrons = false;
 	@Input() user$: Observable<IUser>;
 
 	@Output() clicked: EventEmitter<any> = new EventEmitter<boolean>();
