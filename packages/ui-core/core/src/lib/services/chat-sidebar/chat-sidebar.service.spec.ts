@@ -442,4 +442,24 @@ describe('ChatSidebarService — Maximize / Restore', () => {
 			aiChat: { expanded: false, position: 'end', width: 384, maximized: false }
 		});
 	});
+
+	it('the full-page chat route replaces a stored in-place maximize, so a reload after it maximizes nothing', async () => {
+		const { service, user$, updateUiPreferences } = setup();
+		service.register({ ...CONFIG, defaultExpanded: false });
+		user$.next({ id: 'u1' } as any);
+		service.maximize();
+		await flushPersist();
+		expect(localStorage.getItem('gauzy_chat_sidebar_u1_maximized')).toBe('true');
+
+		// The full-page route opens (from the maximize, or a direct link) and is then left
+		service.setFullPageOpen(true);
+		service.setFullPageOpen(false);
+		await flushPersist();
+
+		expect(service.maximized()).toBe(false);
+		expect(localStorage.getItem('gauzy_chat_sidebar_u1_maximized')).toBe('false');
+		expect(updateUiPreferences).toHaveBeenLastCalledWith(
+			expect.objectContaining({ aiChat: expect.objectContaining({ maximized: false }) })
+		);
+	});
 });

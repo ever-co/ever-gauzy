@@ -330,6 +330,9 @@ export class ChatSidebarService {
 		this.fullPageOpen.set(open);
 		this.maximized.set(open);
 		this.maximizedOverPath = null;
+		// The full-page route replaces an in-place maximize and is never stored as one: clear the stored
+		// value, so a reload after leaving it does not bring a maximize back over the next page.
+		this.persistMaximized(false);
 	}
 
 	/** End maximized mode: leave the full-page route, or simply hand the screen back to the page. */
