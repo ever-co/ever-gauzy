@@ -185,6 +185,9 @@ export class ChatSidebarService {
 	/** The page path the chat was maximized over — a navigation away from it restores the chat. */
 	private maximizedOverPath: string | null = null;
 
+	/** Whether a navigation has ended yet, i.e. whether the router's current URL is a page that is on screen. */
+	private hasNavigated = false;
+
 	/** App store — source of the current user (and its server-side `uiPreferences`). */
 	private readonly store = inject(Store);
 
@@ -366,6 +369,7 @@ export class ChatSidebarService {
 	 * the same page (a filter writing the URL) leaves the chat as it is.
 	 */
 	private onNavigated(url: string): void {
+		this.hasNavigated = true;
 		if (!this.maximized() || this.fullPageOpen()) {
 			return;
 		}
@@ -537,8 +541,10 @@ export class ChatSidebarService {
 				this.endInPlaceMaximize();
 			} else if (!this.fullPageOpen() && !this.maximized()) {
 				this.maximized.set(true);
-				// Applied on load or at sign-in, before the page is known: the next navigation adopts it.
-				this.maximizedOverPath = null;
+				// Applied over the page on screen when a navigation has already ended (preferences that
+				// arrive later, from another tab or device); on load or at sign-in, before the page is
+				// known, the next navigation adopts it.
+				this.maximizedOverPath = this.hasNavigated ? pathOf(this.router.url ?? '') : null;
 			}
 			this.expanded.set(next.expanded);
 			this.position.set(next.position);

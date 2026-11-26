@@ -95,7 +95,9 @@ function isFormFields(value: unknown): boolean {
 	return (
 		Array.isArray(value) &&
 		value.length > 0 &&
-		value.every((item) => !!item && typeof item === 'object' && !Array.isArray(item) && 'field' in item)
+		value.every(
+			(item) => !!item && typeof item === 'object' && !Array.isArray(item) && 'field' in item && 'value' in item
+		)
 	);
 }
 

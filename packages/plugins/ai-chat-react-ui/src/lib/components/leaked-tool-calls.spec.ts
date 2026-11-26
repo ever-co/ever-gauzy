@@ -99,7 +99,9 @@ describe('stripLeakedToolCalls', () => {
 			'The field definition:\n{"name": "first_name", "type": "string", "input": "text"}',
 			'Config:\n{"tool": "hammer_drill", "params": 3}',
 			'The endpoint:\n{"path": "/api/tasks"}',
-			'Your form schema:\n{"fields": ["title", "dueDate"]}'
+			'Your form schema:\n{"fields": ["title", "dueDate"]}',
+			// Field definitions, not `fill_form`'s `{ field, value }` pairs
+			'The form has:\n{"fields": [{"field": "title", "type": "string"}]}'
 		];
 		for (const text of answers) {
 			expect(stripLeakedToolCalls(text)).toBe(text);

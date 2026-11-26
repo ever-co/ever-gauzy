@@ -269,6 +269,20 @@ describe('ChatSidebarService — persisted state precedence and server sync', ()
 		router.navigated('/pages/organization/projects');
 		expect(service.maximized()).toBe(false);
 	});
+
+	it('a maximize that preferences apply after a page has loaded covers that page, and leaving it restores', () => {
+		const { service, user$, router } = setup();
+		service.register(CONFIG);
+		router.navigated('/pages/tasks');
+
+		// Preferences that maximize the chat arrive between two completed navigations (another tab or device)
+		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: true, maximized: true } } } as any);
+		expect(service.maximized()).toBe(true);
+
+		// The page it was applied over is the one it covers: opening another one shows that page
+		router.navigated('/pages/organization/projects');
+		expect(service.maximized()).toBe(false);
+	});
 });
 
 describe('ChatSidebarService — Maximize / Restore', () => {
