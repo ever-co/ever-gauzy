@@ -336,6 +336,22 @@ describe('ChatSidebarService — Maximize / Restore', () => {
 		expect(service.fullPageOpen()).toBe(false);
 	});
 
+	it('preferences that close the chat end an in-place maximize, but not the full-page route', () => {
+		const { service, user$ } = setup();
+		service.register(CONFIG);
+		user$.next({ id: 'u1' } as any);
+
+		service.maximize();
+		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: false } } } as any); // another tab
+		expect(service.expanded()).toBe(false);
+		expect(service.maximized()).toBe(false);
+
+		service.setFullPageOpen(true);
+		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: true } } } as any);
+		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: false } } } as any);
+		expect(service.maximized()).toBe(true); // the route page is the chat
+	});
+
 	it('Maximize is never persisted', async () => {
 		const { service, user$, updateUiPreferences } = setup();
 		service.register({ ...CONFIG, defaultExpanded: false });

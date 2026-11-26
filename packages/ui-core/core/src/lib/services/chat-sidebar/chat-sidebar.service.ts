@@ -479,8 +479,8 @@ export class ChatSidebarService {
 	 * server (`remote`) > local mirror > defaults. Writes nothing to the
 	 * server; the local mirror is refreshed to what was applied.
 	 *
-	 * `maximized` is left alone: it says whether the full-page chat is on
-	 * screen right now, which only that page knows.
+	 * `maximized` is not a stored field; it only ends here when the applied
+	 * state closes a chat that is maximized in place.
 	 */
 	private applyState(remote: Partial<IChatSidebarState> | null): void {
 		const next = {
@@ -491,6 +491,13 @@ export class ChatSidebarService {
 
 		this.applying = true;
 		try {
+			// Preferences that close the chat (from another tab or device, via `user$`) also end an
+			// in-place maximize — otherwise the shell chrome would stay hidden and the window scroll
+			// locked with no chat on screen. The full-page route keeps its state: that page IS the chat.
+			if (!next.expanded && this.maximized() && !this.fullPageOpen()) {
+				this.maximizedOverPath = null;
+				this.maximized.set(false);
+			}
 			this.expanded.set(next.expanded);
 			this.position.set(next.position);
 			this.width.set(next.width);
