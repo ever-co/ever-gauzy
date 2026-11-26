@@ -27,6 +27,30 @@ export class ProposalsService {
 	}
 
 	/**
+	 * Reads one page of proposals in a given order. The endpoint returns 10 rows unless `take` says
+	 * otherwise (at most 100), and `skip` is the page number, starting at 1.
+	 *
+	 * @param where - The conditions the proposals must match (organization and tenant at least).
+	 * @param options - The order, the page size (`take`), the page number (`skip`), and the fields to select.
+	 * @returns A promise that resolves to that page and the total number of matching proposals.
+	 */
+	getPage(
+		where: IProposalFindInput,
+		options: {
+			order?: Partial<Record<keyof IProposal, 'ASC' | 'DESC'>>;
+			take?: number;
+			skip?: number;
+			select?: Partial<Record<keyof IProposal, boolean>>;
+		} = {}
+	): Promise<IPagination<IProposal>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IProposal>>(`${API_PREFIX}/proposal/pagination`, {
+				params: toParams({ where, ...options })
+			})
+		);
+	}
+
+	/**
 	 * Creates a new proposal with the given input data.
 	 *
 	 * @param input - The data required to create a new proposal, conforming to the IProposalCreateInput interface.
