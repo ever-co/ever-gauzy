@@ -1,3 +1,4 @@
+// cspell:ignore functioncall
 /**
  * Hide tool calls a model WROTE OUT as text instead of making them.
  *
@@ -73,18 +74,42 @@ const TOOL_NAME = /^[a-z][a-z0-9]*(_[a-z0-9]+)+$/;
 const NAME_KEYS = ['name', 'tool', 'tool_name', 'toolName', 'function'];
 const ARGUMENT_KEYS = ['arguments', 'args', 'input', 'parameters', 'params'];
 
+/** Keys an envelope may carry besides its name and arguments: an id, and the provider's `type`. */
+const ENVELOPE_EXTRA_KEYS = ['id', 'type'];
+/** The `type` values providers put on a call envelope. */
+const ENVELOPE_TYPES = ['function', 'tool_use', 'tool_call'];
+
 /** Every key of `value` is one of `allowed`. */
 function onlyKeys(value: Record<string, unknown>, allowed: string[]): boolean {
 	return Object.keys(value).every((key) => allowed.includes(key));
 }
 
+/** Tool arguments as models write them: an object, or (OpenAI style) a JSON string holding one. */
+function isArgumentsValue(value: unknown): boolean {
+	if (value && typeof value === 'object' && !Array.isArray(value)) return true;
+	return typeof value === 'string' && parseJsonObject(value) !== null;
+}
+
+/** `fill_form`'s `fields`: a non-empty list of `{ field, value }` pairs. */
+function isFormFields(value: unknown): boolean {
+	return (
+		Array.isArray(value) &&
+		value.length > 0 &&
+		value.every((item) => !!item && typeof item === 'object' && !Array.isArray(item) && 'field' in item)
+	);
+}
+
 /**
  * Does this object look like a tool call rather than data? Only these shapes count:
- * - an envelope: a snake_case tool name plus its arguments —
- *   `{"name": "open_page", "arguments": {…}}`, also wrapped as `{"function": {…}}`;
+ * - an envelope: a snake_case tool name plus its arguments (an object, or a JSON string of one) and
+ *   nothing else but an id or a provider `type` — `{"name": "open_page", "arguments": {…}}`, also
+ *   wrapped as `{"function": {…}}`;
  * - the canvas tools' own arguments — `{"path": "/pages/…"}` (open_page, optionally with
- *   `queryParams`), `{"fields": […]}` (fill_form), `{"formIndex": 0}` (submit_form).
- * Anything else — `{"total": 19}`, `{"name": "Alice", "input": "…"}` — is an answer and stays.
+ *   `queryParams`; every in-app route lives under `/pages`), `{"fields": [{"field": …}]}`
+ *   (fill_form), `{"formIndex": 0}` (submit_form).
+ * Anything else is an answer and stays: `{"total": 19}`, `{"name": "Alice", "input": "…"}`, a field
+ * definition `{"name": "first_name", "type": "string", "input": "text"}`, `{"path": "/api/tasks"}`,
+ * `{"fields": ["title", "dueDate"]}`.
  */
 export function isToolCallShape(value: Record<string, unknown>): boolean {
 	const keys = Object.keys(value);
@@ -97,12 +122,22 @@ export function isToolCallShape(value: Record<string, unknown>): boolean {
 	) {
 		return isToolCallShape(nested as Record<string, unknown>);
 	}
-	const named = NAME_KEYS.some((key) => typeof value[key] === 'string' && TOOL_NAME.test(value[key] as string));
-	if (named && ARGUMENT_KEYS.some((key) => key in value)) return true;
-	if (typeof value['path'] === 'string' && (value['path'] as string).startsWith('/')) {
+	const nameKey = NAME_KEYS.find((key) => typeof value[key] === 'string' && TOOL_NAME.test(value[key] as string));
+	const argumentKey = ARGUMENT_KEYS.find((key) => key in value);
+	const type = value['type'];
+	if (
+		nameKey &&
+		argumentKey &&
+		isArgumentsValue(value[argumentKey]) &&
+		onlyKeys(value, [...NAME_KEYS, ...ARGUMENT_KEYS, ...ENVELOPE_EXTRA_KEYS]) &&
+		(type === undefined || (typeof type === 'string' && ENVELOPE_TYPES.includes(type)))
+	) {
+		return true;
+	}
+	if (typeof value['path'] === 'string' && /^\/pages(\/|$)/.test(value['path'] as string)) {
 		return onlyKeys(value, ['path', 'queryParams']);
 	}
-	if (Array.isArray(value['fields'])) return onlyKeys(value, ['fields', 'formIndex']);
+	if (isFormFields(value['fields'])) return onlyKeys(value, ['fields', 'formIndex']);
 	if (typeof value['formIndex'] === 'number') return onlyKeys(value, ['formIndex']);
 	return false;
 }

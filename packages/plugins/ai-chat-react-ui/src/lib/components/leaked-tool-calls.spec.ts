@@ -94,6 +94,32 @@ describe('stripLeakedToolCalls', () => {
 		expect(stripLeakedToolCalls(data)).toBe(data);
 	});
 
+	it('keeps data that only resembles a call: extra keys, non-object arguments, paths outside /pages', () => {
+		const answers = [
+			'The field definition:\n{"name": "first_name", "type": "string", "input": "text"}',
+			'Config:\n{"tool": "hammer_drill", "params": 3}',
+			'The endpoint:\n{"path": "/api/tasks"}',
+			'Your form schema:\n{"fields": ["title", "dueDate"]}'
+		];
+		for (const text of answers) {
+			expect(stripLeakedToolCalls(text)).toBe(text);
+		}
+	});
+
+	it('still removes provider envelopes and fill_form arguments', () => {
+		expect(
+			stripLeakedToolCalls(
+				'Opening it.\n{"type": "tool_use", "id": "call_1", "name": "open_page", "input": {"path": "/pages/tasks"}}'
+			)
+		).toBe('Opening it.');
+		expect(stripLeakedToolCalls('Filling it.\n{"name": "fill_form", "arguments": "{\\"fields\\": []}"}')).toBe(
+			'Filling it.'
+		);
+		expect(stripLeakedToolCalls('Filling it.\n{"fields": [{"field": "Title", "value": "Demo"}]}')).toBe(
+			'Filling it.'
+		);
+	});
+
 	it('keeps a JSON answer whole, even when a value inside it looks like a call', () => {
 		const text = 'An example:\n{"example":\n{"path":"/pages/tasks"}\n}';
 		expect(stripLeakedToolCalls(text)).toBe(text);

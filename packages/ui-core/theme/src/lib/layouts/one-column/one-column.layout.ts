@@ -88,9 +88,10 @@ export class OneColumnLayoutComponent {
 
 		this.themeLanguageSelectorService.initialize();
 
-		// While the chat covers the screen the WINDOW must not scroll: the layout scrolls the window
-		// (Nebular window mode), and the shell under the chat is taller than the screen, so a page
-		// scrollbar would show beside the chat and scroll nothing visible.
+		// While the full-page chat route covers the screen the WINDOW must not scroll: the layout scrolls
+		// the window (Nebular window mode), and the shell under the chat is taller than the screen, so a
+		// page scrollbar would show beside the chat and scroll nothing visible. (Maximize of the docked
+		// chat keeps the shell on screen — Menu | Chat — so the window keeps its own scroll then.)
 		/** Lock the window's scroll; the returned function puts back exactly what was there. */
 		const lockWindowScroll = (): (() => void) => {
 			const { documentElement: html, body } = document;
@@ -108,10 +109,10 @@ export class OneColumnLayoutComponent {
 			unlockScroll = null;
 		};
 		effect(() => {
-			const maximized = this.chatSidebarService.maximized();
-			if (maximized && !unlockScroll) {
+			const fullPage = this.chatSidebarService.fullPageOpen();
+			if (fullPage && !unlockScroll) {
 				unlockScroll = lockWindowScroll();
-			} else if (!maximized) {
+			} else if (!fullPage) {
 				releaseScroll();
 			}
 		});

@@ -80,23 +80,21 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       width: var(--gz-chat-width, 24rem) !important;
     }
 
-    // Maximized: the panel covers the whole screen IN PLACE — no navigation, so the page underneath
-    // stays alive (unsaved form input included) and Restore simply gives it back. The host keeps its
-    // place in the flex row; only the fixed panel grows, above the hidden menu, header and footer
-    // (see .gz-chat-full-page below). The selector repeats the class to outrank the docked pinning
-    // (top under the header band, the user's width), which is !important too.
-    &.chat-sidebar-maximized.chat-sidebar-maximized ::ng-deep .main-container {
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      z-index: 1030;
-      transition: none;
+    // Maximized: take all space except the nav menu (Menu | Chat), still under the header band;
+    // the canvas is hidden (components stay alive, unsaved form input included) until restored.
+    //
+    // The fixed panel's horizontal start is its STATIC position — i.e. wherever the host lands in
+    // the flex row — so pinning `right: 0` and letting the width compute keeps it exactly between
+    // the nav menu and the viewport edge, with no measured width to mirror.
+    &.chat-sidebar-maximized {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      min-width: 0 !important;
+      max-width: none !important;
 
-      .scrollable {
-        border: none;
-        background: nb-theme(layout-background-color);
+      ::ng-deep .main-container {
+        right: 0;
+        width: auto !important;
       }
     }
 
@@ -538,6 +536,21 @@ nb-sidebar[tag='menu-sidebar'] {
   nb-layout .layout .layout-container nb-sidebar[tag='menu-sidebar'] .main-container-fixed > .scrollable {
     min-height: 0;
   }
+
+  // While the AI chat is maximized the canvas SHRINKS to zero width instead
+  // of being covered or display:none'd — the page stays alive and restoring
+  // simply gives the space back. (All nb-sidebars are projected before the
+  // .content column inside .layout-container.)
+  // flex-grow is 0 (not just a 0 basis) and max-width clamps the result, so
+  // the canvas cannot claim any leftover space back — "fully hidden" has to
+  // hold even when the chat host stops growing for whatever reason.
+  nb-layout .layout .layout-container nb-sidebar.chat-sidebar.chat-sidebar-maximized ~ .content {
+    flex: 0 0 0% !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+  }
 }
 
 .custom-box {
@@ -825,9 +838,9 @@ nb-sidebar[tag='menu-sidebar'] {
   }
 }
 
-// Maximized chat (the docked chat expanded in place, or the /pages/ai-chat route): the chat covers the
-// screen, so the shell's chrome is hidden rather than torn down — Restore shows it again instantly,
-// with nothing to reload. The window's scroll is locked meanwhile by the layout component.
+// The full-page chat route (/pages/ai-chat): that page covers the screen, so the shell's chrome is
+// hidden rather than torn down — leaving the page shows it again instantly, with nothing to reload.
+// The window's scroll is locked meanwhile by the layout component.
 :host ::ng-deep nb-layout.gz-chat-full-page {
   nb-layout-header,
   nb-layout-footer,

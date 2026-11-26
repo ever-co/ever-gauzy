@@ -26,10 +26,8 @@ export type ChatSidebarPosition = 'start' | 'end';
  * `detachedView` is deliberately NOT part of it (it describes the window, not
  * the user's preference).
  *
- * `maximized` stays in the shape for compatibility with what is already
- * stored, but it is no longer a preference: maximizing is a moment's view of
- * the chat, not a layout to restore on the next visit. It is always written as
- * `false` and never read back.
+ * `maximized` is the in-place maximize of the docked chat (it implies
+ * `expanded`); the full-page chat route is never stored as maximized.
  */
 export type IChatSidebarState = {
 	expanded: boolean;
@@ -221,9 +219,15 @@ export class ChatSidebarService {
 		});
 	}
 
-	/** Update chat availability (permission + backend configuration). */
+	/**
+	 * Update chat availability (permission + backend configuration). The layout stops rendering the
+	 * docked chat when it is unavailable, so an in-place maximize ends with it.
+	 */
 	setAvailable(available: boolean): void {
 		this.available.set(available);
+		if (!available) {
+			this.endInPlaceMaximize();
+		}
 	}
 
 	/**
@@ -248,6 +252,7 @@ export class ChatSidebarService {
 		this.cancelAllTimers();
 		this.config.set(null);
 		this.expanded.set(false);
+		this.endInPlaceMaximize();
 	}
 
 	/** Toggle the sidebar between expanded and collapsed. */
@@ -301,6 +306,7 @@ export class ChatSidebarService {
 		}
 		this.maximizedOverPath = pathOf(this.router.url ?? '');
 		this.maximized.set(true);
+		this.persistMaximized(true);
 	}
 
 	/** Back to the docked panel (open) — leaving the full-page chat route when that is where we are. */
@@ -331,6 +337,26 @@ export class ChatSidebarService {
 			return;
 		}
 		this.maximized.set(false);
+		this.persistMaximized(false);
+	}
+
+	/** Mirror and persist an in-place maximize (the full-page route is never stored). */
+	private persistMaximized(maximized: boolean): void {
+		this.writeStored('maximized', String(maximized));
+		this.schedulePersist();
+	}
+
+	/**
+	 * End a maximize of the DOCKED chat without navigating, when the docked chat is about to leave
+	 * the screen (closed by preferences, unavailable, unregistered): the layout would otherwise keep
+	 * its menu, header and footer hidden and the window scroll locked with no chat to restore from.
+	 * The full-page route keeps its state — that page is the chat.
+	 */
+	private endInPlaceMaximize(): void {
+		if (this.maximized() && !this.fullPageOpen()) {
+			this.maximizedOverPath = null;
+			this.maximized.set(false);
+		}
 	}
 
 	/**
@@ -340,12 +366,19 @@ export class ChatSidebarService {
 	 * the same page (a filter writing the URL) leaves the chat as it is.
 	 */
 	private onNavigated(url: string): void {
-		if (!this.maximized() || this.fullPageOpen() || this.maximizedOverPath === null) {
+		if (!this.maximized() || this.fullPageOpen()) {
+			return;
+		}
+		// A maximize restored from the stored preferences before the first navigation ended adopts
+		// the page that navigation opened.
+		if (this.maximizedOverPath === null) {
+			this.maximizedOverPath = pathOf(url);
 			return;
 		}
 		if (pathOf(url) !== this.maximizedOverPath) {
 			this.maximizedOverPath = null;
 			this.maximized.set(false);
+			this.persistMaximized(false);
 		}
 	}
 
@@ -409,16 +442,16 @@ export class ChatSidebarService {
 	}
 
 	/**
-	 * Snapshot of the persisted slice of the current state. `maximized` is
-	 * always `false`: the full-page chat is a route, not a stored layout (see
-	 * {@link IChatSidebarState}).
+	 * Snapshot of the persisted slice of the current state. `maximized` is the
+	 * in-place maximize only: the full-page chat is a route, not a stored layout
+	 * (see {@link IChatSidebarState}).
 	 */
 	snapshot(): IChatSidebarState {
 		return {
 			expanded: this.expanded(),
 			position: this.position(),
 			width: this.width(),
-			maximized: false
+			maximized: this.maximized() && !this.fullPageOpen()
 		};
 	}
 
@@ -470,7 +503,7 @@ export class ChatSidebarService {
 		if (typeof raw.width === 'number' && raw.width >= MIN_CHAT_WIDTH && raw.width <= MAX_CHAT_WIDTH) {
 			remote.width = Math.round(raw.width);
 		}
-		// `maximized` is deliberately not read: it is no longer a stored preference.
+		if (typeof raw.maximized === 'boolean') remote.maximized = raw.maximized;
 		return Object.keys(remote).length ? remote : null;
 	}
 
@@ -479,14 +512,20 @@ export class ChatSidebarService {
 	 * server (`remote`) > local mirror > defaults. Writes nothing to the
 	 * server; the local mirror is refreshed to what was applied.
 	 *
-	 * `maximized` is not a stored field; it only ends here when the applied
-	 * state closes a chat that is maximized in place.
+	 * Maximized implies expanded. A stored maximize is applied IN PLACE over
+	 * the current page; on the full-page chat route nothing changes (that page
+	 * is the chat).
 	 */
 	private applyState(remote: Partial<IChatSidebarState> | null): void {
+		// A server state that closes the chat outranks a maximize kept only in the local mirror.
+		const maximized =
+			remote?.maximized ?? (remote?.expanded === false ? false : this.readStoredMaximized()) ?? false;
 		const next = {
-			expanded: remote?.expanded ?? this.readStoredExpanded() ?? this.config()?.defaultExpanded ?? false,
+			expanded:
+				maximized || (remote?.expanded ?? this.readStoredExpanded() ?? this.config()?.defaultExpanded ?? false),
 			position: remote?.position ?? this.readStoredPosition() ?? ('start' as ChatSidebarPosition),
-			width: remote?.width ?? this.readStoredWidth() ?? DEFAULT_CHAT_WIDTH
+			width: remote?.width ?? this.readStoredWidth() ?? DEFAULT_CHAT_WIDTH,
+			maximized
 		};
 
 		this.applying = true;
@@ -494,9 +533,12 @@ export class ChatSidebarService {
 			// Preferences that close the chat (from another tab or device, via `user$`) also end an
 			// in-place maximize — otherwise the shell chrome would stay hidden and the window scroll
 			// locked with no chat on screen. The full-page route keeps its state: that page IS the chat.
-			if (!next.expanded && this.maximized() && !this.fullPageOpen()) {
+			if (!next.maximized) {
+				this.endInPlaceMaximize();
+			} else if (!this.fullPageOpen() && !this.maximized()) {
+				this.maximized.set(true);
+				// Applied on load or at sign-in, before the page is known: the next navigation adopts it.
 				this.maximizedOverPath = null;
-				this.maximized.set(false);
 			}
 			this.expanded.set(next.expanded);
 			this.position.set(next.position);
@@ -504,8 +546,7 @@ export class ChatSidebarService {
 			this.writeStored('expanded', String(next.expanded));
 			this.writeStored('position', next.position);
 			this.writeStored('width', String(next.width));
-			// Clears a `true` left behind by the old in-layout maximize.
-			this.writeStored('maximized', 'false');
+			this.writeStored('maximized', String(next.maximized));
 		} finally {
 			this.applying = false;
 		}
@@ -582,15 +623,14 @@ export class ChatSidebarService {
 		}
 	}
 
-	/**
-	 * True when both states agree on the stored preferences. `maximized` is not
-	 * compared: it is always written as `false` and never read back.
-	 */
+	/** True when every field present in `b` equals the corresponding field in `a`. */
 	private sameState(a: Partial<IChatSidebarState> | null, b: Partial<IChatSidebarState> | null): boolean {
 		if (!a || !b) {
 			return false;
 		}
-		return a.expanded === b.expanded && a.position === b.position && a.width === b.width;
+		return (
+			a.expanded === b.expanded && a.position === b.position && a.width === b.width && a.maximized === b.maximized
+		);
 	}
 
 	/*
@@ -648,6 +688,12 @@ export class ChatSidebarService {
 	/** Read the mirrored expand state; null when never set. */
 	private readStoredExpanded(): boolean | null {
 		const stored = this.readStored('expanded');
+		return stored === null ? null : stored === 'true';
+	}
+
+	/** Read the mirrored maximized state; null when never set. */
+	private readStoredMaximized(): boolean | null {
+		const stored = this.readStored('maximized');
 		return stored === null ? null : stored === 'true';
 	}
 

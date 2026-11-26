@@ -254,13 +254,20 @@ describe('ChatSidebarService — persisted state precedence and server sync', ()
 		warn.mockRestore();
 	});
 
-	it('a stored maximized flag is ignored: it no longer opens anything on load', () => {
-		const { service, user$ } = setup();
+	it('maximized is persisted and implies expanded when applied from the server', () => {
+		const { service, user$, router } = setup();
 		service.register(CONFIG);
 		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: false, maximized: true } } } as any);
+		expect(service.maximized()).toBe(true);
+		expect(service.expanded()).toBe(true);
+		expect(localStorage.getItem('gauzy_chat_sidebar_u1_maximized')).toBe('true');
+		expect(router.navigateByUrl).not.toHaveBeenCalled();
+
+		// Applied before the page is known: the first navigation adopts it, the next one away restores.
+		router.navigated('/pages/tasks');
+		expect(service.maximized()).toBe(true);
+		router.navigated('/pages/organization/projects');
 		expect(service.maximized()).toBe(false);
-		expect(service.expanded()).toBe(false);
-		expect(localStorage.getItem('gauzy_chat_sidebar_u1_maximized')).toBe('false');
 	});
 });
 
@@ -352,14 +359,55 @@ describe('ChatSidebarService — Maximize / Restore', () => {
 		expect(service.maximized()).toBe(true); // the route page is the chat
 	});
 
-	it('Maximize is never persisted', async () => {
+	it('the docked chat leaving the screen (unavailable, unregistered) ends an in-place maximize', () => {
+		const { service } = setup();
+		service.register(CONFIG);
+		service.setAvailable(true);
+
+		service.maximize();
+		service.setAvailable(false); // e.g. the "Enable AI Chat" setting switched off, a permission lost
+		expect(service.maximized()).toBe(false);
+
+		service.setAvailable(true);
+		service.maximize();
+		service.unregister();
+		expect(service.maximized()).toBe(false);
+	});
+
+	it('losing availability leaves the full-page route as it is: that page is the chat', () => {
+		const { service } = setup();
+		service.register(CONFIG);
+		service.setFullPageOpen(true);
+		service.setAvailable(false);
+		expect(service.maximized()).toBe(true);
+	});
+
+	it('Maximize and Restore are persisted', async () => {
 		const { service, user$, updateUiPreferences } = setup();
 		service.register({ ...CONFIG, defaultExpanded: false });
 		user$.next({ id: 'u1' } as any);
 		service.maximize();
 		await flushPersist();
-		expect(updateUiPreferences).toHaveBeenCalledWith({
+		expect(updateUiPreferences).toHaveBeenLastCalledWith({
+			aiChat: { expanded: true, position: 'start', width: 384, maximized: true }
+		});
+
+		service.restore();
+		await flushPersist();
+		expect(updateUiPreferences).toHaveBeenLastCalledWith({
 			aiChat: { expanded: true, position: 'start', width: 384, maximized: false }
+		});
+	});
+
+	it('the full-page chat route is never persisted as maximized', async () => {
+		const { service, user$, updateUiPreferences } = setup();
+		service.register({ ...CONFIG, defaultExpanded: false });
+		user$.next({ id: 'u1' } as any);
+		service.setFullPageOpen(true);
+		service.setPosition('end');
+		await flushPersist();
+		expect(updateUiPreferences).toHaveBeenLastCalledWith({
+			aiChat: { expanded: false, position: 'end', width: 384, maximized: false }
 		});
 	});
 });
