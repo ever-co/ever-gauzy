@@ -76,4 +76,29 @@
     user-select: none;
     box-shadow: 0 0 0 1px var(--border-basic-color-4, rgba(143, 155, 179, 0.32));
   }
+
+  // "+": the last slot, under a hairline, a plus on a quiet tile the size of the logos.
+  .app-rail-add {
+    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--gauzy-overlay-border-color);
+  }
+
+  .app-rail-add-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gauzy-card-2);
+    color: var(--gauzy-text-color-2);
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  a.app-rail-slot:hover .app-rail-add-tile,
+  a.app-rail-slot:focus-visible .app-rail-add-tile {
+    color: var(--gauzy-text-color-1);
+  }
 }

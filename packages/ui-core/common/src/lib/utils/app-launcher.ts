@@ -1,4 +1,10 @@
-import { CURRENT_EVER_APP_ID, IEverApp, isCurrentEverApp } from '../constants/ever-apps.constants';
+import {
+	CURRENT_EVER_APP_ID,
+	EVER_PLATFORM_ADD_APP_PATH,
+	EVER_PLATFORM_APP_ID,
+	IEverApp,
+	isCurrentEverApp
+} from '../constants/ever-apps.constants';
 import { withEverAppLinks } from './ever-app-links';
 
 /**
@@ -100,4 +106,29 @@ export function resolveEverApps(
 	return withEverAppLinks(catalog, everAppLinks, [CURRENT_EVER_APP_ID]).map((app) =>
 		withDeploymentAddress(app, clientBaseUrl)
 	);
+}
+
+/**
+ * Where the launcher's "+ Add" row goes: the page of Ever Platform where a person adds their own apps
+ * (`/apps?add=app`), at the Ever Platform address the list gives, so each environment reaches its own Ever
+ * Platform. `null` when the list has no Ever Platform with a web address: the row is then not shown, and a
+ * self-hosted installation shows nothing of Ever Platform.
+ *
+ * @param apps - The App Launcher's list, as this deployment serves it (`resolveEverApps`).
+ */
+export function everAppAddUrl(apps: ReadonlyArray<IEverApp>): string | null {
+	const platform = apps.find((app) => app.id === EVER_PLATFORM_APP_ID);
+	if (!platform?.url) {
+		return null;
+	}
+	try {
+		const base = new URL(platform.url);
+		const isWebAddress = base.protocol === 'https:' || base.protocol === 'http:';
+		if (!isWebAddress || !base.host) {
+			return null;
+		}
+		return new URL(EVER_PLATFORM_ADD_APP_PATH, base).href;
+	} catch {
+		return null;
+	}
 }

@@ -6,19 +6,18 @@
 					<span
 						class="app-rail-slot"
 						aria-current="page"
-						[attr.aria-label]="'APP_LAUNCHER.CURRENT_APP' | translate: { app: app.shortName }"
+						[attr.aria-label]="'APP_LAUNCHER.CURRENT_APP' | translate: { app: app.name }"
 						role="img"
-						[nbTooltip]="app.shortName"
+						[nbTooltip]="app.name"
 						nbTooltipPlacement="end"
 					>
 						<img class="app-rail-tile" [src]="app.logo" alt="" width="32" height="32" draggable="false" />
 					</span>
 				} @else {
+					<!-- Same tab, as any link (no target); the system browser inside the desktop apps. -->
 					<a
 						class="app-rail-slot"
 						[href]="app.url"
-						target="_blank"
-						rel="noopener noreferrer"
 						[attr.aria-label]="'APP_LAUNCHER.OPEN_APP' | translate: { app: displayName(app) }"
 						[nbTooltip]="displayName(app)"
 						nbTooltipPlacement="end"
@@ -27,6 +26,33 @@
 						<img class="app-rail-tile" [src]="app.logo" alt="" width="32" height="32" draggable="false" />
 					</a>
 				}
+			</li>
+		}
+		@if (addUrl) {
+			<!-- Last, under a hairline: Ever Platform's page for adding one's own apps. -->
+			<li class="app-rail-item app-rail-add">
+				<a
+					class="app-rail-slot"
+					[href]="addUrl"
+					[attr.aria-label]="'APP_LAUNCHER.ADD_HINT' | translate"
+					[nbTooltip]="'APP_LAUNCHER.ADD_HINT' | translate"
+					nbTooltipPlacement="end"
+					(click)="onAddPick($event)"
+				>
+					<span class="app-rail-tile app-rail-add-tile" aria-hidden="true">
+						<!-- lucide `plus` -->
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linecap="round"
+							focusable="false"
+						>
+							<path d="M12 5v14M5 12h14" />
+						</svg>
+					</span>
+				</a>
 			</li>
 		}
 	</ul>

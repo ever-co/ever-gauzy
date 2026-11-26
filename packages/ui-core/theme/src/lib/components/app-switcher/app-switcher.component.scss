@@ -88,10 +88,18 @@
 
 // The panel is rendered into the CDK overlay container, outside `:host`, so these rules are not nested in
 // `nb-install-component()` and resolve theme custom properties (with literal fallbacks) instead of `nb-theme()`.
+// 19.5 rem fits every line in English and nearly every locale on one line; 8 px each side on a 375 px phone.
+// Nine rows are about 470 px tall: in a shorter window (a landscape phone) the list scrolls inside the panel, so
+// "+ Add" and the footer stay reachable. The focused row scrolls into view on its own.
 .app-switcher-panel {
-  width: 17rem;
-  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+  width: 19.5rem;
+  max-width: calc(100vw - 1rem);
+  max-height: calc(100vh - 4rem);
+  max-height: calc(100dvh - 4rem);
   padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .app-switcher-title {
@@ -161,20 +169,30 @@ a.app-row {
   min-width: 0;
 }
 
+// The name with its chip ("You're here", "Soon") beside it, so the line under them has the row's full width.
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
 .app-name,
-.app-domain {
+.app-line {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .app-name {
+  min-width: 0;
   font-weight: 500;
 }
 
-.app-domain {
+// One line, muted: what the app does. No address (owner, 2026-11-26).
+.app-line {
   color: var(--text-hint-color, #8f9bb3);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1rem;
 }
 
@@ -182,6 +200,31 @@ a.app-row {
   .app-name {
     font-weight: 500;
   }
+}
+
+// "+ Add", the last row, under a hairline: a plus on a tile the size of the logos.
+.app-add-item {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--gauzy-overlay-border-color);
+}
+
+.add-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gauzy-card-2);
+  color: var(--gauzy-text-color-2);
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+a.app-row.add:hover .add-tile,
+a.app-row.add:focus-visible .add-tile {
+  color: var(--gauzy-text-color-1);
 }
 
 // "You're here", "Soon", "Beta": quiet text on a hairline, never a coloured pill.

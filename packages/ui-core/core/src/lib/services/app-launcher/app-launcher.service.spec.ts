@@ -8,6 +8,8 @@ import { AppLauncherService } from './app-launcher.service';
 const GAUZY: IEverApp = {
 	id: 'gauzy',
 	shortName: 'Gauzy',
+	name: 'Ever Gauzy',
+	lineKey: 'APP_LAUNCHER.LINES.GAUZY',
 	logo: 'g.svg',
 	url: 'https://gauzy.catalog.test',
 	domain: 'gauzy.catalog.test'
@@ -15,9 +17,20 @@ const GAUZY: IEverApp = {
 const TEAMS: IEverApp = {
 	id: 'teams',
 	shortName: 'Teams',
+	name: 'Ever Teams',
+	lineKey: 'APP_LAUNCHER.LINES.TEAMS',
 	logo: 't.svg',
 	url: 'https://teams.catalog.test',
 	domain: 'teams.catalog.test'
+};
+const PLATFORM: IEverApp = {
+	id: 'platform',
+	shortName: 'Platform',
+	name: 'Ever Platform',
+	lineKey: 'APP_LAUNCHER.LINES.PLATFORM',
+	logo: 'p.svg',
+	url: 'https://platform.catalog.test',
+	domain: 'platform.catalog.test'
 };
 
 interface SetupOptions {
@@ -195,10 +208,37 @@ describe('AppLauncherService', () => {
 		expect(openExternal).toHaveBeenCalledWith(TEAMS.url);
 	});
 
-	it('lets the link open a new tab in the browser', () => {
+	it('lets the link itself open the app in the browser (the same tab)', () => {
 		const { service } = setup();
 		const event = { preventDefault: jest.fn() } as unknown as MouseEvent;
 		service.openApp(event, TEAMS);
 		expect(event.preventDefault).not.toHaveBeenCalled();
+	});
+
+	it('links "+ Add" to the Ever Platform this deployment gives', () => {
+		const { service } = setup({
+			apps: [PLATFORM, TEAMS, GAUZY],
+			environment: { EVER_APP_LINKS: 'platform=https://app-dev.platform.test' }
+		});
+		expect(service.addUrl).toBe('https://app-dev.platform.test/apps?add=app');
+		expect(setup({ apps: [PLATFORM, GAUZY] }).service.addUrl).toBe('https://platform.catalog.test/apps?add=app');
+	});
+
+	it('has no "+ Add" without an Ever Platform in the list', () => {
+		expect(setup().service.addUrl).toBeNull();
+		expect(setup({ apps: [] }).service.addUrl).toBeNull();
+	});
+
+	it('opens "+ Add" in the system browser inside the desktop apps, and leaves it to the link in the browser', () => {
+		const openExternal = jest.fn();
+		const desktop = setup({ shell: { openExternal } }).service;
+		const desktopClick = { preventDefault: jest.fn() } as unknown as MouseEvent;
+		desktop.openLink(desktopClick, 'https://platform.catalog.test/apps?add=app');
+		expect(desktopClick.preventDefault).toHaveBeenCalled();
+		expect(openExternal).toHaveBeenCalledWith('https://platform.catalog.test/apps?add=app');
+
+		const browserClick = { preventDefault: jest.fn() } as unknown as MouseEvent;
+		setup().service.openLink(browserClick, 'https://platform.catalog.test/apps?add=app');
+		expect(browserClick.preventDefault).not.toHaveBeenCalled();
 	});
 });

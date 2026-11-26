@@ -2,6 +2,7 @@ import { hasOtherEverApp, IEverApp } from '../constants/ever-apps.constants';
 import {
 	APP_LAUNCHER_PLACEMENTS,
 	DEFAULT_APP_LAUNCHER_PLACEMENT,
+	everAppAddUrl,
 	isAppLauncherPlacement,
 	parseAppLauncherPlacement,
 	resolveEverApps,
@@ -13,14 +14,26 @@ const CATALOG: ReadonlyArray<IEverApp> = [
 	{
 		id: 'platform',
 		shortName: 'Platform',
+		name: 'Ever Platform',
+		lineKey: 'APP_LAUNCHER.LINES.PLATFORM',
 		logo: 'p.svg',
 		url: 'https://ever.catalog.test',
 		domain: 'ever.catalog.test'
 	},
-	{ id: 'gauzy', shortName: 'Gauzy', logo: 'g.svg', url: 'https://gauzy.catalog.test', domain: 'gauzy.catalog.test' },
+	{
+		id: 'gauzy',
+		shortName: 'Gauzy',
+		name: 'Ever Gauzy',
+		lineKey: 'APP_LAUNCHER.LINES.GAUZY',
+		logo: 'g.svg',
+		url: 'https://gauzy.catalog.test',
+		domain: 'gauzy.catalog.test'
+	},
 	{
 		id: 'demand',
 		shortName: 'Demand',
+		name: 'Ever Demand',
+		lineKey: 'APP_LAUNCHER.LINES.DEMAND',
 		logo: 'd.svg',
 		url: 'https://demand.catalog.test',
 		domain: 'demand.catalog.test',
@@ -91,5 +104,28 @@ describe('App Launcher list', () => {
 		expect(hasOtherEverApp([CATALOG[1]])).toBe(false);
 		expect(hasOtherEverApp([])).toBe(false);
 		expect(hasOtherEverApp([CATALOG[1], { ...CATALOG[0], url: '' }])).toBe(false);
+	});
+});
+
+describe('App Launcher "+ Add"', () => {
+	it("links Ever Platform's page for adding one's own apps, at the address the list gives", () => {
+		expect(everAppAddUrl(CATALOG)).toBe('https://ever.catalog.test/apps?add=app');
+		const stage = resolveEverApps(CATALOG, 'platform=https://app-stage.platform.test', undefined);
+		expect(everAppAddUrl(stage)).toBe('https://app-stage.platform.test/apps?add=app');
+	});
+
+	it('carries no organization: a path on the Ever Platform address is replaced, not extended', () => {
+		const apps = [{ ...CATALOG[0], url: 'https://platform.test/o/acme/overview?x=1' }];
+		expect(everAppAddUrl(apps)).toBe('https://platform.test/apps?add=app');
+	});
+
+	it.each([
+		['no Ever Platform in the list', CATALOG.slice(1)],
+		['an Ever Platform with no address', [{ ...CATALOG[0], url: '' }]],
+		['an Ever Platform address that is not a web address', [{ ...CATALOG[0], url: 'javascript:alert(1)' }]],
+		['an Ever Platform address that does not parse', [{ ...CATALOG[0], url: 'not a url' }]],
+		['an empty list', []]
+	])('is not shown with %s', (_, apps) => {
+		expect(everAppAddUrl(apps)).toBeNull();
 	});
 });
