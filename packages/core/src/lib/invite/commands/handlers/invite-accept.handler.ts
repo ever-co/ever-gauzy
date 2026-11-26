@@ -1,7 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Raw } from 'typeorm';
-import { ID, IInvite, IUser, RolesEnum } from '@gauzy/contracts';
+import { ID, IEmployee, IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from './../../../auth/auth.service';
 import { TwoFactorRequiredException, twoFactorRequiredFor } from './../../../auth/two-factor/two-factor-challenge';
 import { UserService } from './../../../user/user.service';
@@ -171,6 +171,31 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 	}
 
 	/**
+	 * The account's active employee in the invitation's organization and tenant, or null (also when the invitation names
+	 * neither). Read straight from the repository, so a signed-in caller's own tenant does not replace the invitation's.
+	 *
+	 * @param userId The account that accepted.
+	 * @param invited The invitation's organization and tenant.
+	 */
+	private async findInvitedEmployee(
+		userId: ID,
+		invited: { organizationId?: ID; tenantId?: ID }
+	): Promise<IEmployee | null> {
+		if (!invited.organizationId || !invited.tenantId) {
+			return null;
+		}
+		return await this.employeeService.typeOrmEmployeeRepository.findOne({
+			where: {
+				userId,
+				organizationId: invited.organizationId,
+				tenantId: invited.tenantId,
+				isActive: true,
+				isArchived: false
+			}
+		});
+	}
+
+	/**
 	 * After accept invite authorize user
 	 *
 	 * @param user The account that accepted.
@@ -198,14 +223,18 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 				throw new UnauthorizedException();
 			}
 
-			// Retrieve the user's employee in the INVITATION's organization. Unscoped, the lookup answered whichever employee
-			// the account has in any organization (or the request's): someone already employed elsewhere got that other
-			// employee, and its organization, in the session the acceptance returns.
-			const employee = await this.employeeService.findOneByUserId(
-				user.id,
-				invited.organizationId,
-				invited.tenantId ? { where: { tenantId: invited.tenantId } } : undefined
-			);
+			// The account's employee in the INVITATION's organization (a team or Employee invitation gives it one there).
+			// Unscoped, the lookup answered whichever employee the account has in any organization, so someone already
+			// employed elsewhere got that other employee back. Read from the repository with the invitation's tenant: the
+			// tenant-aware service would put a signed-in caller's own tenant in its place (as AuthService.getJwtAccessToken
+			// and switchWorkspace also read it).
+			const invitedEmployee = await this.findInvitedEmployee(user.id, invited);
+			// Without one there (an invitation that grants no employee), the answer stays as it was: the account's employee
+			// as the session finds it, which is the one the tokens below name.
+			const employee = invitedEmployee ?? (await this.employeeService.findOneByUserId(user.id));
+			// The tokens name the invitation's organization whenever the answer does, so the session and the employee it
+			// carries agree.
+			const sessionOrganizationId = invitedEmployee ? invited.organizationId : undefined;
 
 			// Check if the employee is active and not archived. If not, throw an error.
 			if (employee && (!employee.isActive || employee.isArchived)) {
@@ -225,8 +254,8 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 
 			// Generate both access and refresh tokens concurrently for efficiency.
 			const [access_token, refresh_token] = await Promise.all([
-				this.authService.getJwtAccessToken(user),
-				this.authService.getJwtRefreshToken(user)
+				this.authService.getJwtAccessToken(user, sessionOrganizationId),
+				this.authService.getJwtRefreshToken(user, sessionOrganizationId)
 			]);
 
 			// Store the current refresh token with the user for later validation.
