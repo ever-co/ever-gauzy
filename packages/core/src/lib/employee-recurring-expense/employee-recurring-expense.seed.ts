@@ -30,7 +30,8 @@ export const createRandomEmployeeRecurringExpense = async (
 
 				const startDate = faker.date.past();
 				employeeRecurringExpense.startDay = startDate.getDate();
-				employeeRecurringExpense.startMonth = startDate.getMonth() + 1;
+				// Months are 0-based like Date.getMonth() (January is 0), as the API, the dialog and endMonth use them
+				employeeRecurringExpense.startMonth = startDate.getMonth();
 				employeeRecurringExpense.startYear = startDate.getFullYear();
 				employeeRecurringExpense.startDate = startDate;
 
