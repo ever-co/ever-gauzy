@@ -88,10 +88,18 @@
 
 // The panel is rendered into the CDK overlay container, outside `:host`, so these rules are not nested in
 // `nb-install-component()` and resolve theme custom properties (with literal fallbacks) instead of `nb-theme()`.
+// 19.5 rem fits every line in English and nearly every locale on one line; 8 px each side on a 375 px phone.
+// Nine rows are about 470 px tall: in a shorter window (a landscape phone) the list scrolls inside the panel, so
+// "+ Add" and the footer stay reachable. The focused row scrolls into view on its own.
 .app-switcher-panel {
-  width: 18rem;
+  box-sizing: border-box;
+  width: 19.5rem;
   max-width: calc(100vw - 1rem);
+  max-height: calc(100vh - 4rem);
+  max-height: calc(100dvh - 4rem);
   padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .app-switcher-title {

@@ -5268,14 +5268,14 @@
 		"ADD": "Ajouter",
 		"ADD_HINT": "Ajoutez vos propres applications dans Ever Platform",
 		"LINES": {
-			"PLATFORM": "Un seul compte pour toutes les applications Ever",
-			"WORKS": "Des agents IA qui font tourner votre entreprise",
+			"PLATFORM": "Un seul compte pour toutes les apps Ever",
+			"WORKS": "Des agents IA qui gèrent votre activité",
 			"TEAMS": "Gestion du travail et des projets",
-			"GAUZY": "ERP, CRM et RH dans une seule application",
+			"GAUZY": "ERP, CRM et RH en une seule application",
 			"REC": "Capture et enregistrement d'écran",
 			"TRADUORA": "Gestion des traductions pour les équipes",
-			"DEMAND": "Commerce et places de marché à la demande",
-			"TECH": "Des ingénieurs et des agents opérés, à engager"
+			"DEMAND": "Commerce et marketplaces à la demande",
+			"TECH": "Ingénieurs et agents opérés à engager"
 		},
 		"PLACEMENT_TITLE": "Lanceur d'applications",
 		"PLACEMENT_DESCRIPTION": "L'emplacement du raccourci vers les autres applications Ever. S'applique à ce navigateur uniquement.",
