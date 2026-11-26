@@ -73,7 +73,7 @@ $control-height: 2.25rem;
   height: 1.625rem;
   padding: 0 0.75rem;
   border: 1px solid transparent;
-  border-radius: 0.375rem;
+  border-radius: calc(var(--border-radius) * 0.75);
   font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 500;
@@ -183,30 +183,17 @@ $control-height: 2.25rem;
     // which pins every input on the page to a `min-height` with `!important` of its own.
     min-height: $control-height !important;
     padding: 0 0.75rem;
-    border-radius: 0.375rem;
+    border-radius: calc(var(--border-radius) * 0.75);
     font-size: 0.8125rem;
     line-height: 1.25rem;
   }
 
+  // A floor, not a fixed height: a proposal with more tags than fit on one line wraps its chips
+  // onto the next and the control grows, so no tag is ever clipped out of sight.
   ::ng-deep .ng-select .ng-select-container {
     min-height: $control-height !important;
-    height: $control-height !important;
-    border-radius: 0.375rem;
+    border-radius: calc(var(--border-radius) * 0.75);
     font-size: 0.8125rem;
-  }
-
-  // Selected tag chips sit inside the control's height instead of stretching it.
-  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container {
-    padding-top: 0;
-    padding-bottom: 0;
-    align-items: center;
-    flex-wrap: nowrap;
-    overflow: hidden;
-  }
-
-  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
-    margin-top: 0;
-    margin-bottom: 0;
   }
 
   ::ng-deep nb-select .select-button {
