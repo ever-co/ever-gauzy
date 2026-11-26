@@ -559,6 +559,127 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(store.releaseLease).toHaveBeenCalledTimes(2);
 		});
 
+		describe('the owed resync is kept on the connection row (Greptile on #12158: a lease takeover lost it)', () => {
+			const T0 = Date.parse('2026-11-26T10:00:00.000Z');
+			const CONNECTED = {
+				status: 'connected',
+				platformInstanceId: '01JD00000000000000000INST01',
+				connectedAt: Date.parse('2026-10-03T09:00:00.000Z'),
+				feedCursor: null
+			};
+
+			it('a resync that failed is written to the row, due after the wait, by the lease holder only', async () => {
+				const now = T0;
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('failed') };
+				const { instance, client, store } = scheduler(membership, { now: () => now });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+				await instance.readFeed();
+
+				expect(store.updateConnection).toHaveBeenCalledWith(
+					{ membershipResyncDueAt: T0 + 30_000 },
+					{ leasedBy: expect.any(String) }
+				);
+			});
+
+			it('the next lease holder runs a resync another process owed once it is due, before the feed, and clears it', async () => {
+				let now = T0;
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+				const { instance, client, store } = scheduler(membership, { now: () => now });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+				// This process ran its own startup resync before (it worked): nothing owed here any more.
+				await instance.readFeed();
+				expect(membership.resync).toHaveBeenCalledTimes(1);
+
+				// Another process held the lease meanwhile, its resync failed, and it went away: the row owes one.
+				store.connection.mockResolvedValue({ ...CONNECTED, membershipResyncDueAt: T0 + 60_000 });
+				now = T0 + 59_000;
+				await instance.readFeed();
+				expect(membership.resync).toHaveBeenCalledTimes(1);
+
+				now = T0 + 60_000;
+				store.updateConnection.mockClear();
+				await instance.readFeed();
+				expect(membership.resync).toHaveBeenCalledTimes(2);
+				expect(membership.resync.mock.invocationCallOrder[1]).toBeLessThan(
+					client.instances.events.mock.invocationCallOrder[2]
+				);
+				expect(store.updateConnection).toHaveBeenCalledWith(
+					{ membershipResyncDueAt: null },
+					{ leasedBy: expect.any(String) }
+				);
+
+				// Cleared: it runs no more.
+				store.connection.mockResolvedValue({ ...CONNECTED, membershipResyncDueAt: null });
+				now += 60 * 60 * 1000;
+				await instance.readFeed();
+				expect(membership.resync).toHaveBeenCalledTimes(2);
+			});
+
+			it('a resync that worked with nothing owed on the row writes nothing more', async () => {
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+				const { instance, client, store } = scheduler(membership, { now: () => T0 });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+				await instance.readFeed();
+
+				expect(store.updateConnection).not.toHaveBeenCalledWith(
+					expect.objectContaining({ membershipResyncDueAt: expect.anything() }),
+					expect.anything()
+				);
+				expect(store.updateConnection).not.toHaveBeenCalledWith({ membershipResyncDueAt: null }, expect.anything());
+			});
+
+			it('after a 410, a resync that failed is kept on the row before the position moves on', async () => {
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValueOnce('done') };
+				const { instance, client, store } = scheduler(membership, { now: () => T0 });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+				await instance.readFeed();
+
+				const writes: string[] = [];
+				store.updateConnection.mockImplementation(async (values: Record<string, unknown>) => {
+					writes.push(Object.keys(values).join(','));
+					return 1;
+				});
+				membership.resync.mockResolvedValueOnce('failed');
+				client.instances.events.mockRejectedValueOnce(
+					new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000046')
+				);
+
+				expect(await instance.readFeed()).toBe(true);
+				expect(writes).toEqual(['membershipResyncDueAt', 'feedCursor']);
+			});
+
+			it('when the debt cannot be written, the 410 position does not move: the next lease holder is answered 410 again', async () => {
+				const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValueOnce('done') };
+				const { instance, client, store, order } = scheduler(membership, { now: () => T0 });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+				await instance.readFeed();
+
+				store.updateConnection.mockRejectedValueOnce(new Error('database unavailable'));
+				membership.resync.mockResolvedValueOnce('failed');
+				client.instances.events.mockRejectedValueOnce(
+					new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000047')
+				);
+				order.length = 0;
+
+				await expect(instance.readFeed()).rejects.toThrow('database unavailable');
+				expect(order).toEqual([]);
+				expect(client.instances.ackEvents).not.toHaveBeenCalled();
+			});
+
+			it('with the membership sync off, a debt on the row runs nothing and is left as it is', async () => {
+				const { instance, client, store } = scheduler(undefined, { now: () => T0 });
+				store.connection.mockResolvedValue({ ...CONNECTED, membershipResyncDueAt: T0 - 1 });
+				client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+				await instance.readFeed();
+
+				expect(client.instances.events).toHaveBeenCalledTimes(1);
+				expect(store.updateConnection).not.toHaveBeenCalledWith({ membershipResyncDueAt: null }, expect.anything());
+			});
+		});
+
 		it('with the membership sync off, no resync runs and nothing is said', async () => {
 			const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 			try {
