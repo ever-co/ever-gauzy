@@ -133,17 +133,20 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	 */
 	setProposal() {
 		this.jobPostLink = this.proposal.jobPostUrl;
-		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(this.proposal.jobPostContent);
-		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(
-			this.withSectionHeadings(this.proposal.proposalContent)
+		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(
+			this.withSectionHeadings(this.proposal.jobPostContent)
 		);
+		const proposalHtml = this.withSectionHeadings(this.proposal.proposalContent);
+		this.hasSections = /<h[1-6][s>]/i.test(proposalHtml);
+		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(proposalHtml);
 		this.state = 'ready';
 	}
 
 	/**
 	 * Proposals are usually written with bold lines for section names ("What I would bring")
 	 * rather than the editor's headings. A top-level paragraph that is just a bold line — or a
-	 * bold line and then a line break — becomes a heading, so the sheet numbers it as a section.
+	 * bold line and then a line break — becomes a heading: the sheet numbers it as a section, and
+	 * the job post shows it as a subheading.
 	 * Parsed with DOMParser, which runs no scripts and loads nothing.
 	 */
 	private withSectionHeadings(html: string | null | undefined): string {
@@ -178,7 +181,6 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 				paragraph.before(heading);
 			}
 		}
-		this.hasSections = !!doc.body.querySelector('h1, h2, h3, h4, h5, h6');
 		return doc.body.innerHTML;
 	}
 

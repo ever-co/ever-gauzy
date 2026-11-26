@@ -106,23 +106,49 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   padding-inline-end: 2.5rem;
 }
 
+// Both sections share the sheet's width, so their heading rules end where the sheet ends.
+.pd-section {
+  max-width: 50rem;
+}
+
 .pd-section-title {
   margin: 0 0 1rem;
   padding-bottom: 0.625rem;
   border-bottom: 1px solid $hairline;
-  font-size: 0.9375rem;
+  font-size: 0.84375rem;
   font-weight: 600;
   line-height: 1.5rem;
 }
 
-// The text as written in the editor, at a comfortable reading measure.
+// The job post as written in the editor: in a hairline frame with the sheet's corner and
+// padding, the sheet's type and rhythm, its bold lines as subheadings with room above
+// them, lists tight under them.
 .pd-rich-text {
-  max-width: 46rem;
-  font-size: 0.875rem;
-  line-height: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid $hairline;
+  border-radius: 0.375rem;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  font-size: 0.78125rem;
+  font-weight: 400;
+  line-height: 1.375rem;
+  color: color-mix(in srgb, var(--text-basic-color) 82%, var(--text-hint-color));
   overflow-wrap: anywhere;
 
   ::ng-deep {
+    // The app's global type gives paragraphs and list items a size of their own, which
+    // left the body text larger than its headings; they take this block's size instead.
+    p,
+    li,
+    ul,
+    ol,
+    blockquote,
+    td,
+    th,
+    span {
+      font-size: inherit;
+      line-height: inherit;
+    }
+
     > :first-child {
       margin-top: 0;
     }
@@ -132,7 +158,7 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     }
 
     p {
-      margin: 0 0 0.75rem;
+      margin: 0 0 0.5rem;
     }
 
     h1,
@@ -141,16 +167,27 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     h4,
     h5,
     h6 {
-      margin: 1.25rem 0 0.5rem;
-      font-size: 0.9375rem;
-      font-weight: 600;
-      line-height: 1.5rem;
+      margin: 0.875rem 0 0.25rem;
+      font-size: 0.84375rem;
+      font-weight: 500;
+      line-height: 1.375rem;
+      color: var(--text-basic-color);
+    }
+
+    strong,
+    b {
+      font-weight: 500;
+      color: var(--text-basic-color);
     }
 
     ul,
     ol {
-      margin: 0 0 0.75rem;
-      padding-inline-start: 1.25rem;
+      margin: 0 0 0.5rem;
+      padding-inline-start: 1.125rem;
+    }
+
+    li::marker {
+      color: var(--text-hint-color);
     }
 
     // The editor wraps each item's text in a paragraph; its margin made the lists loose.
@@ -159,11 +196,11 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     }
 
     li + li {
-      margin-top: 0.25rem;
+      margin-top: 0.125rem;
     }
 
     blockquote {
-      margin: 0 0 0.75rem;
+      margin: 0 0 0.5rem;
       padding-inline-start: 0.75rem;
       border-inline-start: 2px solid $hairline;
       color: var(--text-hint-color);
@@ -250,7 +287,7 @@ $sheet-indent: 2.75rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.875rem;
+  font-size: 0.78125rem;
   font-weight: 600;
   line-height: 1.25rem;
   color: $sheet-ink;
@@ -267,7 +304,7 @@ $sheet-indent: 2.75rem;
 
 .pd-sheet-title {
   margin: 0 0 1.25rem;
-  font-size: 1.875rem;
+  font-size: 1.75rem;
   font-weight: 700;
   line-height: 2.25rem;
   letter-spacing: -0.02em;
@@ -293,7 +330,7 @@ $sheet-indent: 2.75rem;
   min-width: 0;
 
   dt {
-    font-size: 0.75rem;
+    font-size: 0.65625rem;
     font-weight: 400;
     line-height: 1.25rem;
     color: $sheet-muted;
@@ -302,7 +339,7 @@ $sheet-indent: 2.75rem;
   dd {
     margin: 0;
     min-width: 0;
-    font-size: 0.8125rem;
+    font-size: 0.71875rem;
     font-weight: 500;
     line-height: 1.25rem;
     color: $sheet-ink;
@@ -312,7 +349,7 @@ $sheet-indent: 2.75rem;
 
 .pd-sheet-fact dd.pd-sheet-code {
   font-family: $sheet-mono;
-  font-size: 0.75rem;
+  font-size: 0.65625rem;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: $sheet-ink;
@@ -331,25 +368,42 @@ $sheet-indent: 2.75rem;
 // The proposal text: every heading numbered 01, 02… in monospace, its text set in
 // under the heading; lists with dashes; code and tables as in technical docs.
 // Text with numbered sections sits in past the numbers; text without them runs full width.
+// Direct children only: the editor wraps each list item's text in a paragraph, and
+// indenting that one too opened a wide gap between the dash and its text.
 .pd-sheet-text.has-sections ::ng-deep {
-  p,
-  ul,
-  ol,
-  blockquote,
-  pre,
-  table {
+  > p,
+  > ul,
+  > ol,
+  > blockquote,
+  > pre,
+  > table {
     margin-inline-start: $sheet-indent;
   }
 }
 
 .pd-sheet-text {
   counter-reset: pd-section;
-  font-size: 0.875rem;
-  line-height: 1.5rem;
+  font-size: 0.78125rem;
+  font-weight: 400;
+  line-height: 1.375rem;
   color: $sheet-text;
   overflow-wrap: anywhere;
 
   ::ng-deep {
+    // The app's global type gives paragraphs and list items a size of their own, which
+    // left the body text larger than its headings; they take this block's size instead.
+    p,
+    li,
+    ul,
+    ol,
+    blockquote,
+    td,
+    th,
+    span {
+      font-size: inherit;
+      line-height: inherit;
+    }
+
     > :first-child {
       margin-top: 0;
     }
@@ -364,7 +418,7 @@ $sheet-indent: 2.75rem;
     blockquote,
     pre,
     table {
-      margin: 0 0 0.75rem;
+      margin: 0 0 0.5rem;
     }
 
     h1,
@@ -375,11 +429,11 @@ $sheet-indent: 2.75rem;
     h6 {
       position: relative;
       counter-increment: pd-section;
-      margin: 2rem 0 0.625rem;
+      margin: 1.25rem 0 0.25rem;
       padding-inline-start: $sheet-indent;
-      font-size: 1rem;
-      font-weight: 600;
-      line-height: 1.5rem;
+      font-size: 0.84375rem;
+      font-weight: 500;
+      line-height: 1.375rem;
       letter-spacing: -0.005em;
       color: $sheet-ink;
 
@@ -389,9 +443,9 @@ $sheet-indent: 2.75rem;
         left: 0;
         top: 0;
         font-family: $sheet-mono;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        line-height: 1.5rem;
+        font-size: 0.65625rem;
+        font-weight: 400;
+        line-height: 1.375rem;
         color: $sheet-muted;
       }
     }
@@ -423,12 +477,12 @@ $sheet-indent: 2.75rem;
     }
 
     li + li {
-      margin-top: 0.25rem;
+      margin-top: 0.125rem;
     }
 
     strong,
     b {
-      font-weight: 600;
+      font-weight: 500;
       color: $sheet-ink;
     }
 
@@ -516,7 +570,7 @@ $sheet-indent: 2.75rem;
 
 .pd-sheet-sign-label {
   margin-bottom: 2.25rem;
-  font-size: 0.75rem;
+  font-size: 0.65625rem;
   line-height: 1rem;
   color: $sheet-muted;
 }
@@ -529,7 +583,7 @@ $sheet-indent: 2.75rem;
 
 .pd-sheet-sign-name {
   margin-top: 0.375rem;
-  font-size: 0.8125rem;
+  font-size: 0.71875rem;
   font-weight: 600;
   line-height: 1.25rem;
   color: $sheet-ink;
@@ -543,7 +597,7 @@ $sheet-indent: 2.75rem;
   align-items: end;
   gap: 0.5rem;
   margin-top: 1rem;
-  font-size: 0.75rem;
+  font-size: 0.65625rem;
   line-height: 1rem;
   color: $sheet-muted;
 
@@ -559,7 +613,7 @@ $sheet-indent: 2.75rem;
   align-items: baseline;
   min-width: 0;
   font-style: normal;
-  font-size: 0.75rem;
+  font-size: 0.65625rem;
   line-height: 1.125rem;
   color: $sheet-muted;
   overflow-wrap: anywhere;
@@ -606,7 +660,7 @@ $sheet-indent: 2.75rem;
   min-width: 0;
 
   dt {
-    font-size: 0.75rem;
+    font-size: 0.65625rem;
     font-weight: 400;
     line-height: 1rem;
     color: var(--text-hint-color);
@@ -618,7 +672,7 @@ $sheet-indent: 2.75rem;
     min-height: 1.5rem;
     margin: 0;
     min-width: 0;
-    font-size: 0.8125rem;
+    font-size: 0.71875rem;
     font-weight: 500;
     line-height: 1.25rem;
     overflow-wrap: anywhere;
@@ -633,9 +687,9 @@ $sheet-indent: 2.75rem;
   text-decoration: none;
 
   nb-icon {
-    width: 0.875rem;
-    height: 0.875rem;
-    font-size: 0.875rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    font-size: 0.75rem;
   }
 
   &:hover {
@@ -654,7 +708,7 @@ $sheet-indent: 2.75rem;
   border-radius: 0.25rem;
   background-color: color-mix(in srgb, var(--tag-color, var(--text-hint-color)) 20%, transparent);
   color: var(--text-basic-color);
-  font-size: 0.75rem;
+  font-size: 0.65625rem;
   font-weight: 500;
   line-height: 1rem;
 }
@@ -723,7 +777,7 @@ $sheet-indent: 2.75rem;
   }
 
   .pd-sheet-title {
-    font-size: 1.5rem;
+    font-size: 1.375rem;
     line-height: 2rem;
   }
 
