@@ -36,6 +36,7 @@ import {
 	emailSendErrorCode,
 	isEmailRetryEnabled,
 	isEmailRetryTemplate,
+	isReproducibleEmailMessage,
 	smtpTransportOf
 } from './email-retry.policy';
 import { Organization, EmailHistory } from './../core/entities/internal';
@@ -77,6 +78,8 @@ interface IEmailRetryDraft {
 /** An `Email` instance as far as a retryable send uses it. */
 interface IRetryableEmailInstance {
 	send(options: unknown): Promise<any>;
+	/** email-templates' own rendering step, which `send` runs before it hands the message to the transport. */
+	renderAll?(template: string, locals?: unknown, message?: unknown): Promise<Record<string, unknown>>;
 }
 
 @Injectable()
@@ -1654,7 +1657,8 @@ export class EmailService {
 	 * transport returns, and the transport itself is never modified (`getEmailInstance` builds the instance and its
 	 * configuration for this one call). A send that goes through is therefore exactly what it was without it.
 	 *
-	 * The error is thrown on unchanged either way, so the sender logs and files it as it always did.
+	 * The error is thrown on unchanged either way, so the sender logs and files it as it always did. What a retry
+	 * needs, and when a failure leaves none, is {@link retryDraftOf}'s.
 	 *
 	 * @param instance The `Email` instance `getEmailInstance` returned for this send.
 	 * @param sendOptions The template, the message (`to`) and the locals.
@@ -1674,10 +1678,10 @@ export class EmailService {
 			return instance.send(sendOptions);
 		}
 
-		let handedOver: { subject?: unknown; html?: unknown } | undefined;
+		let handedOver: Record<string, unknown> | undefined;
 		config.transport = {
 			transporter: transport.transporter,
-			sendMail: (message: { subject?: unknown; html?: unknown }) => {
+			sendMail: (message: Record<string, unknown>) => {
 				handedOver = message;
 				return transport.sendMail(message);
 			}
@@ -1685,25 +1689,72 @@ export class EmailService {
 		try {
 			return await instance.send(sendOptions);
 		} catch (error) {
-			const subject = handedOver?.subject;
-			const html = handedOver?.html;
-			if (
-				classifyEmailSendError(error).retry &&
-				typeof subject === 'string' &&
-				typeof html === 'string' &&
-				html.trim().length > 0
-			) {
-				body.retry = {
-					subject,
-					html,
-					errorCode: emailSendErrorCode(error),
-					organizationId: scope.organizationId ?? null,
-					tenantId: scope.tenantId ?? null
-				};
+			const retry = await this.retryDraftOf(instance, handedOver, error, scope);
+			if (retry) {
+				body.retry = retry;
 			}
 			throw error;
 		} finally {
 			config.transport = transport;
+		}
+	}
+
+	/**
+	 * What the automatic retry of a failed send needs, or nothing when there is to be none.
+	 *
+	 * None unless the failure came before the server accepted the message (`classifyEmailSendError`), the message
+	 * reached the transport (it was rendered), and a retry would send it as it was. The retry sends only what the row
+	 * keeps, the recipient, the subject and the HTML, through the row's mail settings, so:
+	 *
+	 * - the message may carry no other field (`isReproducibleEmailMessage`): no header, cc, bcc, reply-to, sender of
+	 *   its own or attachment, which the retry would drop;
+	 * - its text part must be the one email-templates derives from the HTML, which is what the retry's send makes: this
+	 *   instance's own `renderAll` is asked what it makes of the kept fields, and anything that differs (a text part a
+	 *   template rendered, a subject prefix) means no retry;
+	 * - the sender is the mail settings' own and is resolved again on the retry: the same unless the tenant changes its
+	 *   mail settings in between, and then the retry goes out as the settings in force say, as a resend by hand does.
+	 *
+	 * Never throws; a check that cannot be made answers no retry.
+	 */
+	private async retryDraftOf(
+		instance: IRetryableEmailInstance,
+		handedOver: Record<string, unknown> | undefined,
+		error: unknown,
+		scope: { organizationId?: ID | null; tenantId?: ID | null }
+	): Promise<IEmailRetryDraft | undefined> {
+		try {
+			const defaultFrom = (instance as { config?: { message?: { from?: unknown } } }).config?.message?.from;
+			if (
+				!handedOver ||
+				!classifyEmailSendError(error).retry ||
+				!isReproducibleEmailMessage(handedOver, defaultFrom) ||
+				typeof instance.renderAll !== 'function'
+			) {
+				return undefined;
+			}
+			const { to, subject, html, text } = handedOver as {
+				to: string;
+				subject: string;
+				html: string;
+				text?: unknown;
+			};
+			const again = await instance.renderAll('', {}, { to, subject, html });
+			if (
+				again?.subject !== subject ||
+				again?.html !== html ||
+				(again?.text ?? undefined) !== (text ?? undefined)
+			) {
+				return undefined;
+			}
+			return {
+				subject,
+				html,
+				errorCode: emailSendErrorCode(error),
+				organizationId: scope.organizationId ?? null,
+				tenantId: scope.tenantId ?? null
+			};
+		} catch {
+			return undefined;
 		}
 	}
 

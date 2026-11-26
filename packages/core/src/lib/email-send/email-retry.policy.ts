@@ -1,4 +1,4 @@
-// cspell:ignore EENVELOPE EAUTH ENOAUTH EOAUTH ETLS EREQUIRETLS EMESSAGE ESTREAM EMAXLIMIT EDNS ESOCKET ECONNECTION ECONNREFUSED ENOTFOUND EPROTOCOL EHLO ERRNOS HELO
+// cspell:ignore EENVELOPE EAUTH ENOAUTH EOAUTH ETLS EREQUIRETLS EMESSAGE ESTREAM EMAXLIMIT EDNS ESOCKET ECONNECTION ECONNREFUSED ENOTFOUND EPROTOCOL EHLO ERRNOS HELO greylisting
 import { EmailTemplateEnum } from '@gauzy/contracts';
 
 /**
@@ -18,8 +18,12 @@ import { EmailTemplateEnum } from '@gauzy/contracts';
  *   that expires, whose sender swallows the error (nobody was told it failed, so nobody resends it by hand).
  * - **At most {@link EMAIL_RETRY_MAX_ATTEMPTS} attempts in all**, counting the original, spaced by
  *   {@link EMAIL_RETRY_BACKOFF_MS}, and never for an email older than {@link EMAIL_RETRY_MAX_AGE_MS}.
- * - **At most {@link EMAIL_RETRY_BATCH_SIZE} per sweep**, sent one after another, a sweep every
- *   {@link EMAIL_RETRY_SWEEP_MS}.
+ * - **At most {@link EMAIL_RETRY_BATCH_SIZE} claims per {@link EMAIL_RETRY_SWEEP_MS} for the whole installation**,
+ *   counted in the database (`email_sent.lastRetryAt`) before each claim, whatever the number of processes sweeping and
+ *   whether or not a queue runs the sweeps; sent one after another within a sweep.
+ * - **The same message.** A retry sends the subject and HTML the original send handed to the transport; a message with
+ *   anything a retry would not reproduce (headers, cc, bcc, reply-to, attachments, a text part of its own) is never
+ *   retried ({@link isReproducibleEmailMessage}).
  * - **A switch**: `EMAIL_RETRY_ENABLED=false` ({@link isEmailRetryEnabled}).
  */
 
@@ -38,10 +42,21 @@ export const EMAIL_RETRY_BACKOFF_MS: readonly number[] = Object.freeze([5 * MINU
 /** An email older than this (from its original send) is never retried: a late notification is worth less than none. */
 export const EMAIL_RETRY_MAX_AGE_MS = 2 * HOUR;
 
-/** The most emails one sweep sends, one after another. */
+/**
+ * The most retries claimed in any {@link EMAIL_RETRY_SWEEP_MS} for the whole installation, and so the most one sweep
+ * reads and sends, one after another.
+ *
+ * Each sweep counts the rows claimed in the last period (`email_sent.lastRetryAt`, every process's claims) before each
+ * claim, and stops once the count has reached this. Two processes that count at the same moment can both claim, so
+ * the bound is this plus one per process sweeping at that moment beyond the first (a process sweeps one row at a
+ * time): with 3 API replicas, at most 22 in a period, never 3 × 20.
+ */
 export const EMAIL_RETRY_BATCH_SIZE = 20;
 
-/** How often the sweep runs: with the batch size, at most about 240 retries an hour for the whole installation. */
+/**
+ * How often the sweep runs, and the period the cap of {@link EMAIL_RETRY_BATCH_SIZE} is counted over: at most about
+ * 240 retries an hour for the whole installation, with or without a queue.
+ */
 export const EMAIL_RETRY_SWEEP_MS = 5 * MINUTE;
 
 /** A sweep starts no send after this long, so it is over before the next one is asked for. */
@@ -188,7 +203,14 @@ const NEVER_RETRIED_CODES: ReadonlySet<string> = new Set([
 /** The SMTP commands of the session before the envelope: a transient answer to one of them means nothing was sent. */
 const SESSION_COMMANDS: ReadonlySet<string> = new Set(['EHLO', 'HELO']);
 
-/** The envelope's commands: a transient answer to one of them comes before any of the message is sent. */
+/**
+ * The envelope's commands: a transient answer to one of them comes before any of the message is sent.
+ *
+ * nodemailer reports every refusal of `MAIL FROM` or `RCPT TO` as `EENVELOPE`, the code a bad address has too. A
+ * 421/450/451/452 there is greylisting, a busy mailbox or a full queue: the standard case for a later retry (an MTA
+ * retries it for days), and `DATA` was never sent. So `EENVELOPE` is retried with one of those answers to one of these
+ * two commands, and never otherwise (a 5xx, an address nodemailer refused itself at `API`, or any other step).
+ */
 const ENVELOPE_COMMANDS: ReadonlySet<string> = new Set(['MAIL FROM', 'RCPT TO']);
 
 /** What {@link classifyEmailSendError} decided. */
@@ -289,6 +311,56 @@ export function classifyEmailSendError(error: unknown): IEmailSendErrorVerdict {
 		return YES(`${command} refused for now`);
 	}
 	return NO(`unknown step ${command}`);
+}
+
+/**
+ * The fields of a message as email-templates hands it to the transport that a retry reproduces: the recipient, the
+ * subject and the HTML kept on the row, the text part email-templates derives from that HTML again, the sender the
+ * row's mail settings give again, and the empty attachment list email-templates always sets.
+ */
+const REPRODUCED_MESSAGE_FIELDS: ReadonlySet<string> = new Set([
+	'from',
+	'to',
+	'subject',
+	'html',
+	'text',
+	'attachments'
+]);
+
+/**
+ * Whether a retry would send this message as it was: one recipient, a subject and an HTML part, the mail settings'
+ * own sender, no attachment, and no other field. Headers (link tracking off, for one), cc, bcc, reply-to, a sender of
+ * the email's own or an attachment would be lost on the retry, which sends only what the row keeps, so a message with
+ * any of them is not retried. The text part is checked by the caller, which derives it again from the HTML.
+ *
+ * Reads field names and shapes only; never keeps a value.
+ *
+ * @param message The message as email-templates handed it to the transport.
+ * @param defaultFrom The sender of the mail settings the message went through (`config.message.from`).
+ */
+export function isReproducibleEmailMessage(
+	message: Record<string, unknown> | undefined,
+	defaultFrom: unknown
+): boolean {
+	if (!message || typeof message !== 'object') {
+		return false;
+	}
+	for (const [field, value] of Object.entries(message)) {
+		if (value !== undefined && !REPRODUCED_MESSAGE_FIELDS.has(field)) {
+			return false;
+		}
+	}
+	const { from, to, subject, html, attachments } = message;
+	return (
+		typeof to === 'string' &&
+		!!to &&
+		!to.includes(',') &&
+		typeof subject === 'string' &&
+		typeof html === 'string' &&
+		html.trim().length > 0 &&
+		from === defaultFrom &&
+		(attachments === undefined || (Array.isArray(attachments) && attachments.length === 0))
+	);
 }
 
 /** The longest {@link emailSendErrorCode} answer, which is what `email_sent.lastErrorCode` keeps. */

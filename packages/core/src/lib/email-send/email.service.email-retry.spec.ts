@@ -4,6 +4,7 @@ import '../core/entities/internal';
 import * as Email from 'email-templates';
 import { EmailStatusEnum, EmailTemplateEnum, LanguagesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { EmailRetryService } from './email-retry.service';
 import { EmailService } from './email.service';
 
 /**
@@ -55,7 +56,10 @@ function anEmailInstance(sendMail: jest.Mock, transporterName = 'SMTP', render?:
 				const view = rawView.split('\\').join('/');
 				if (view.endsWith('/subject')) return `  Subject of ${view.split('/')[0]}  `;
 				if (view.endsWith('/html'))
-					return `<p>${view.split('/')[0]} for ${locals.organizationName ?? 'you'}</p>`;
+					return (
+						`<h1>${view.split('/')[0]}</h1><p>${view.split('/')[0]} for ${locals.organizationName ?? 'you'}</p>` +
+						`<p><a href="https://app.gauzy.test/#/pages/dashboard">Open the app</a></p>`
+					);
 				return '';
 			})
 	});
@@ -322,6 +326,117 @@ describe('EmailService: scheduling the automatic retry of a failed email', () =>
 		expect(withRetry.row.retryCount).toBeUndefined();
 		expect(withRetry.row.nextRetryAt).toBeUndefined();
 		expect(withRetry.row.lastErrorCode).toBeUndefined();
+	});
+
+	describe('message parity: what the retry hands the transport is what the original send did', () => {
+		it.each(retriedSenders)('%s', async (template, send) => {
+			sendMail.mockRejectedValueOnce(refused());
+			await send(service);
+			const original = sendMail.mock.calls[0][0];
+			const [row] = saved();
+			expect(row.nextRetryAt).toBeInstanceOf(Date);
+
+			// The sweep's own send, through an instance built for the row's mail settings as `getEmailInstance` builds one
+			const retrySendMail = jest.fn(async (_message: Record<string, unknown>) => ({
+				messageId: '<retry@gauzy.test>'
+			}));
+			const retryInstance = anEmailInstance(retrySendMail);
+			const getRetryInstance = jest.fn(async () => retryInstance);
+			const retries = new EmailRetryService(
+				{ update: jest.fn(async () => ({ affected: 1 })) } as any,
+				{ getEmailInstance: getRetryInstance } as any
+			);
+			const report = { due: 1, sent: 0, rescheduled: 0, gaveUp: 0, taken: 0, dropped: 0, capped: false };
+			await (retries as any).send(
+				{
+					...row,
+					id: 'row-1',
+					retryCount: 0,
+					createdAt: new Date(),
+					emailTemplate: { name: `${template}/html` }
+				},
+				new Date(),
+				report
+			);
+
+			expect(report.sent).toBe(1);
+			expect(getRetryInstance).toHaveBeenCalledWith({ organizationId: 'org-1', tenantId: 'tenant-1' });
+			const retried = retrySendMail.mock.calls[0][0];
+			// Every field: the recipient, the subject, the HTML, the text part derived from it, the sender of the mail
+			// settings (resolved again) and the empty attachment list. Nothing is dropped for these four templates.
+			expect(retried).toEqual(original);
+			expect(Object.keys(retried).sort()).toEqual(['attachments', 'from', 'html', 'subject', 'text', 'to']);
+			expect(original.text).toContain('Open the app');
+		});
+	});
+
+	describe('a message a retry would not reproduce is never retried', () => {
+		/** `sendKeepingRetry` of a welcome email whose message carries `extra`, failing before acceptance. */
+		async function retryOf(extra: Record<string, unknown>, renderer?: jest.Mock) {
+			sendMail.mockRejectedValueOnce(refused());
+			const body: Record<string, any> = {};
+			await expect(
+				(service as any).sendKeepingRetry(
+					renderer ? anEmailInstance(sendMail, 'SMTP', renderer) : instance,
+					{
+						template: EmailTemplateEnum.WELCOME_USER,
+						message: { to: 'ada@example.test', ...extra },
+						locals: {}
+					},
+					body,
+					{ organizationId: 'org-1', tenantId: 'tenant-1' }
+				)
+			).rejects.toMatchObject({ originalCode: 'ECONNREFUSED' });
+			return body.retry;
+		}
+
+		it('keeps a retry for the plain message (the control)', async () => {
+			expect(await retryOf({})).toMatchObject({ subject: 'Subject of welcome-user', tenantId: 'tenant-1' });
+		});
+
+		it.each([
+			['headers (link tracking off)', { headers: { 'X-PM-TrackLinks': 'None' } }],
+			['a cc', { cc: 'boss@example.test' }],
+			['a bcc', { bcc: 'audit@example.test' }],
+			['a reply-to', { replyTo: 'support@example.test' }],
+			['a sender of its own', { from: 'someone@example.test' }],
+			['an attachment', { attachments: [{ filename: 'a.pdf', content: 'JVBERi0=', encoding: 'base64' }] }],
+			['several recipients', { to: 'ada@example.test, bob@example.test' }],
+			['a list of recipients', { to: ['ada@example.test', 'bob@example.test'] }]
+		])('%s', async (_case, extra) => {
+			expect(await retryOf(extra)).toBeUndefined();
+		});
+
+		it('a text part a template rendered, which the retry would replace by one derived from the HTML', async () => {
+			const renderer = jest.fn(async (rawView: string) => {
+				const view = rawView.split('\\').join('/');
+				if (view.endsWith('/subject')) return 'Welcome';
+				if (view.endsWith('/html')) return '<p>Welcome</p>';
+				return 'A text part of its own';
+			});
+
+			expect(await retryOf({}, renderer)).toBeUndefined();
+		});
+
+		it('keeps no value of the fields it refused: the row is filed as any failed send is', async () => {
+			sendMail.mockRejectedValueOnce(refused());
+			const bcc = 'audit@example.test';
+			const options = {
+				template: EmailTemplateEnum.WELCOME_USER,
+				message: { to: 'ada@example.test', bcc },
+				locals: {}
+			};
+			const body: Record<string, any> = {};
+
+			await expect(
+				(service as any).sendKeepingRetry(instance, options, body, {
+					organizationId: 'org-1',
+					tenantId: 'tenant-1'
+				})
+			).rejects.toBeDefined();
+
+			expect(JSON.stringify(body)).not.toContain(bcc);
+		});
 	});
 
 	it('hands the caller what the transport returned', async () => {

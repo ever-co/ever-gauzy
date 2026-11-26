@@ -11,7 +11,7 @@ import { AddEmailSentRetryColumns1791000019950 } from './migrations/179100001995
  */
 const FAILED_EMAIL = 'e0000000-0000-4000-8000-000000000001';
 const SENT_EMAIL = 'e0000000-0000-4000-8000-000000000002';
-const NEW_COLUMNS = ['retryCount', 'nextRetryAt', 'lastErrorCode'];
+const NEW_COLUMNS = ['retryCount', 'nextRetryAt', 'lastErrorCode', 'lastRetryAt'];
 
 describe('email_sent retry columns migration on SQLite', () => {
 	let dataSource: DataSource;
@@ -54,7 +54,7 @@ describe('email_sent retry columns migration on SQLite', () => {
 		}
 	};
 
-	it('adds the three columns as nullable with no default, and backfills nothing', async () => {
+	it('adds the four columns as nullable with no default, and backfills nothing', async () => {
 		await run('up');
 
 		expect((await columns()).filter((it) => NEW_COLUMNS.includes(it.name))).toEqual([
@@ -75,10 +75,16 @@ describe('email_sent retry columns migration on SQLite', () => {
 				type: expect.stringMatching(/^varchar$/i),
 				notnull: 0,
 				dflt_value: null
+			}),
+			expect.objectContaining({
+				name: 'lastRetryAt',
+				type: expect.stringMatching(/^datetime$/i),
+				notnull: 0,
+				dflt_value: null
 			})
 		]);
 		const rows = await dataSource.query(
-			`SELECT "id", "status", "content", "retryCount", "nextRetryAt", "lastErrorCode" FROM "email_sent" ORDER BY "id"`
+			`SELECT "id", "status", "content", "retryCount", "nextRetryAt", "lastErrorCode", "lastRetryAt" FROM "email_sent" ORDER BY "id"`
 		);
 		expect(rows).toEqual([
 			{
@@ -87,7 +93,8 @@ describe('email_sent retry columns migration on SQLite', () => {
 				content: null,
 				retryCount: null,
 				nextRetryAt: null,
-				lastErrorCode: null
+				lastErrorCode: null,
+				lastRetryAt: null
 			},
 			{
 				id: SENT_EMAIL,
@@ -95,7 +102,8 @@ describe('email_sent retry columns migration on SQLite', () => {
 				content: '<p>Welcome</p>',
 				retryCount: null,
 				nextRetryAt: null,
-				lastErrorCode: null
+				lastErrorCode: null,
+				lastRetryAt: null
 			}
 		]);
 	});
@@ -147,6 +155,7 @@ describe('email_sent retry columns migration on MySQL', () => {
 			'ALTER TABLE `email_sent` ADD COLUMN `retryCount` int NULL',
 			'ALTER TABLE `email_sent` ADD COLUMN `nextRetryAt` datetime NULL',
 			'ALTER TABLE `email_sent` ADD COLUMN `lastErrorCode` varchar(255) NULL',
+			'ALTER TABLE `email_sent` ADD COLUMN `lastRetryAt` datetime NULL',
 			'SELECT RELEASE_LOCK(?)'
 		]);
 	});
@@ -160,6 +169,7 @@ describe('email_sent retry columns migration on MySQL', () => {
 		expect(queries).toEqual([
 			'SELECT GET_LOCK(?, 120) AS `acquired`',
 			'ALTER TABLE `email_sent` ADD COLUMN `lastErrorCode` varchar(255) NULL',
+			'ALTER TABLE `email_sent` ADD COLUMN `lastRetryAt` datetime NULL',
 			'SELECT RELEASE_LOCK(?)',
 			'ALTER TABLE `email_sent` DROP COLUMN `retryCount`',
 			'ALTER TABLE `email_sent` DROP COLUMN `nextRetryAt`'
@@ -201,9 +211,11 @@ describe('email_sent retry columns migration on Postgres', () => {
 			'ALTER TABLE "email_sent" ADD COLUMN IF NOT EXISTS "retryCount" integer',
 			'ALTER TABLE "email_sent" ADD COLUMN IF NOT EXISTS "nextRetryAt" TIMESTAMP',
 			'ALTER TABLE "email_sent" ADD COLUMN IF NOT EXISTS "lastErrorCode" character varying',
+			'ALTER TABLE "email_sent" ADD COLUMN IF NOT EXISTS "lastRetryAt" TIMESTAMP',
 			'ALTER TABLE "email_sent" DROP COLUMN IF EXISTS "retryCount"',
 			'ALTER TABLE "email_sent" DROP COLUMN IF EXISTS "nextRetryAt"',
-			'ALTER TABLE "email_sent" DROP COLUMN IF EXISTS "lastErrorCode"'
+			'ALTER TABLE "email_sent" DROP COLUMN IF EXISTS "lastErrorCode"',
+			'ALTER TABLE "email_sent" DROP COLUMN IF EXISTS "lastRetryAt"'
 		]);
 	});
 

@@ -13,7 +13,7 @@ import { coreEntities } from '../core/entities';
 import { EmailHistory } from '../core/entities/internal';
 import { mikroOrmOutsideRequest } from '../core/testing/mikro-orm-outside-request';
 import { AddEmailSentRetryColumns1791000019950 } from '../database/migrations/1791000019950-AddEmailSentRetryColumns';
-import { EMAIL_RETRY_BATCH_SIZE } from './email-retry.policy';
+import { EMAIL_RETRY_BATCH_SIZE, EMAIL_RETRY_SWEEP_MS } from './email-retry.policy';
 import { EmailRetryService } from './email-retry.service';
 
 /**
@@ -174,7 +174,7 @@ describe('EmailRetryService on SQLite', () => {
 
 		const report = await service.sweep(NOW);
 
-		expect(report).toEqual({ due: 0, sent: 0, rescheduled: 0, gaveUp: 0, taken: 0, dropped: 0 });
+		expect(report).toEqual({ due: 0, sent: 0, rescheduled: 0, gaveUp: 0, taken: 0, dropped: 0, capped: false });
 		expect(send).not.toHaveBeenCalled();
 		expect(getEmailInstance).not.toHaveBeenCalled();
 		expect(await Promise.all([old, sent, unknown].map(rowOf))).toEqual(before);
@@ -191,8 +191,14 @@ describe('EmailRetryService on SQLite', () => {
 		const report = await service.sweep(NOW);
 
 		expect(report).toMatchObject({ due: 1, sent: 1 });
-		// Claimed before the send: the next retry is no longer due, and the count has moved on
-		expect(whileSending).toMatchObject({ status: EmailStatusEnum.FAILED, retryCount: 1, nextRetryAt: null });
+		// Claimed before the send: the next retry is no longer due, the count has moved on, and the claim is stamped
+		// with the sweep's moment for the installation-wide cap
+		expect(whileSending).toMatchObject({
+			status: EmailStatusEnum.FAILED,
+			retryCount: 1,
+			nextRetryAt: null,
+			lastRetryAt: stored(NOW)
+		});
 		expect(getEmailInstance).toHaveBeenCalledWith({ organizationId: ORGANIZATION, tenantId: TENANT });
 		expect(send).toHaveBeenCalledWith({
 			message: { to: 'ada@example.test', subject: 'Subject of welcome-user', html: '<p>Welcome</p>' }
@@ -357,6 +363,132 @@ describe('EmailRetryService on SQLite', () => {
 			'r03@example.test',
 			'r04@example.test'
 		]);
+	});
+
+	describe('the installation-wide cap', () => {
+		/** Every due row, as the sweep reads one (the same columns), with no batch limit. */
+		const allDue = (): Promise<EmailHistory[]> =>
+			dataSource
+				.getRepository(EmailHistory)
+				.createQueryBuilder('email')
+				.innerJoin('email.emailTemplate', 'template')
+				.select([
+					'email.id',
+					'email.tenantId',
+					'email.organizationId',
+					'email.email',
+					'email.name',
+					'email.content',
+					'email.retryCount',
+					'email.nextRetryAt',
+					'email.createdAt',
+					'template.id',
+					'template.name'
+				])
+				.where('email.nextRetryAt IS NOT NULL')
+				.orderBy('email.email', 'ASC')
+				.getMany();
+
+		const claimedSince = async (since: Date): Promise<number> => {
+			const [{ count }] = await dataSource.query(
+				`SELECT COUNT(*) AS "count" FROM "email_sent" WHERE "lastRetryAt" >= ?`,
+				[stored(since)]
+			);
+			return Number(count);
+		};
+
+		async function dueRows(count: number): Promise<void> {
+			for (let index = 0; index < count; index++) {
+				await aRow({ email: `r${String(index).padStart(2, '0')}@example.test` });
+			}
+		}
+
+		it(`two processes sweeping different due emails together send at most ${EMAIL_RETRY_BATCH_SIZE} + 1 in one period`, async () => {
+			await dueRows(2 * EMAIL_RETRY_BATCH_SIZE);
+			const due = await allDue();
+			// Two API processes, each having read a full batch of its own: without the cap they would send 40
+			const first = newService();
+			const second = newService();
+			jest.spyOn(first as any, 'findDue').mockResolvedValue(due.slice(0, EMAIL_RETRY_BATCH_SIZE));
+			jest.spyOn(second as any, 'findDue').mockResolvedValue(due.slice(EMAIL_RETRY_BATCH_SIZE));
+
+			const reports = await Promise.all([first.sweep(NOW), second.sweep(NOW)]);
+
+			const sent = sentTo();
+			expect(new Set(sent).size).toBe(sent.length);
+			expect(sent.length).toBeGreaterThanOrEqual(EMAIL_RETRY_BATCH_SIZE);
+			// The count both read before a claim can be one short of the cap: one extra per concurrent sweep
+			expect(sent.length).toBeLessThanOrEqual(EMAIL_RETRY_BATCH_SIZE + 1);
+			expect(reports.some((report) => report.capped)).toBe(true);
+			expect(await claimedSince(fromNow(-EMAIL_RETRY_SWEEP_MS))).toBe(sent.length);
+		});
+
+		it('caps three processes as well: never a batch per process', async () => {
+			await dueRows(3 * EMAIL_RETRY_BATCH_SIZE);
+			const due = await allDue();
+			const sweeps = [0, 1, 2].map((index) => {
+				const process = newService();
+				jest.spyOn(process as any, 'findDue').mockResolvedValue(
+					due.slice(index * EMAIL_RETRY_BATCH_SIZE, (index + 1) * EMAIL_RETRY_BATCH_SIZE)
+				);
+				return process.sweep(NOW);
+			});
+
+			await Promise.all(sweeps);
+
+			expect(sentTo().length).toBeGreaterThanOrEqual(EMAIL_RETRY_BATCH_SIZE);
+			expect(sentTo().length).toBeLessThanOrEqual(EMAIL_RETRY_BATCH_SIZE + 2);
+		});
+
+		it('a second sweep within the period, after a full batch, sends nothing; the cap frees up after the period', async () => {
+			await dueRows(EMAIL_RETRY_BATCH_SIZE + 10);
+
+			expect(await service.sweep(NOW)).toMatchObject({ sent: EMAIL_RETRY_BATCH_SIZE, capped: false });
+
+			// Another process (or the same one) a minute later: the period's batch is spent, whatever is due
+			const later = await newService().sweep(fromNow(MINUTE));
+			expect(later).toMatchObject({ due: 10, sent: 0, taken: 0, capped: true });
+			expect(send).toHaveBeenCalledTimes(EMAIL_RETRY_BATCH_SIZE);
+			const [{ waiting }] = await dataSource.query(
+				`SELECT COUNT(*) AS "waiting" FROM "email_sent" WHERE "nextRetryAt" IS NOT NULL AND "retryCount" = 0`
+			);
+			expect(Number(waiting)).toBe(10);
+
+			// Once the period is over, the rest goes
+			const next = await service.sweep(fromNow(EMAIL_RETRY_SWEEP_MS + 1));
+			expect(next).toMatchObject({ due: 10, sent: 10, capped: false });
+			expect(send).toHaveBeenCalledTimes(EMAIL_RETRY_BATCH_SIZE + 10);
+		});
+
+		it('counts the claims of the period whatever became of them: sent, failed again or given up', async () => {
+			const ids: string[] = [];
+			for (let index = 0; index < EMAIL_RETRY_BATCH_SIZE - 1; index++) ids.push(await aRow());
+			// Claimed by another process two minutes ago and since settled every way a claim can be
+			await dataSource.query(
+				`UPDATE "email_sent" SET "lastRetryAt" = ?, "retryCount" = 1, "nextRetryAt" = NULL, "status" = CASE WHEN rowid % 2 = 0 THEN 'SENT' ELSE 'FAILED' END WHERE "id" IN (${ids
+					.map(() => '?')
+					.join(', ')})`,
+				[stored(fromNow(-2 * MINUTE)), ...ids]
+			);
+			await aRow({ email: 'one@example.test' });
+			await aRow({ email: 'two@example.test' });
+
+			const report = await service.sweep(NOW);
+
+			expect(report).toMatchObject({ due: 2, sent: 1, capped: true });
+			expect(sentTo()).toHaveLength(1);
+		});
+
+		it('stops before any claim when the count of recent claims cannot be read', async () => {
+			const id = await aRow();
+			const before = await rowOf(id);
+			jest.spyOn(service as any, 'claimedInThePeriod').mockRejectedValue(new Error('database unavailable'));
+
+			await expect(service.sweep(NOW)).rejects.toThrow('database unavailable');
+
+			expect(send).not.toHaveBeenCalled();
+			expect(await rowOf(id)).toEqual(before);
+		});
 	});
 
 	it('sends one email at a time', async () => {

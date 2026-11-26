@@ -9,6 +9,7 @@ import {
 	emailSendErrorCode,
 	isEmailRetryEnabled,
 	isEmailRetryTemplate,
+	isReproducibleEmailMessage,
 	smtpTransportOf
 } from './email-retry.policy';
 
@@ -422,5 +423,50 @@ describe('smtpTransportOf', () => {
 		expect(smtpTransportOf({ send: jest.fn() })).toBeNull();
 		expect(smtpTransportOf(undefined)).toBeNull();
 		expect(smtpTransportOf(null)).toBeNull();
+	});
+});
+
+describe('isReproducibleEmailMessage', () => {
+	const FROM = 'noreply@gauzy.test';
+	/** A message as email-templates hands one of the four retried templates to the transport. */
+	const handedOver = (fields: Record<string, unknown> = {}) => ({
+		from: FROM,
+		to: 'ada@example.test',
+		attachments: [],
+		subject: 'Welcome',
+		html: '<p>Welcome</p>',
+		text: 'Welcome',
+		...fields
+	});
+
+	it('takes the message a retry sends again as it was', () => {
+		expect(isReproducibleEmailMessage(handedOver(), FROM)).toBe(true);
+		expect(isReproducibleEmailMessage(handedOver({ attachments: undefined, text: undefined }), FROM)).toBe(true);
+	});
+
+	it.each([
+		['headers', { headers: { 'X-PM-TrackLinks': 'None' } }],
+		['a cc', { cc: 'boss@example.test' }],
+		['a bcc', { bcc: ['audit@example.test'] }],
+		['a reply-to', { replyTo: 'support@example.test' }],
+		['threading', { inReplyTo: '<m@gauzy.test>' }],
+		['a list header', { list: { unsubscribe: 'https://app.gauzy.test/u' } }],
+		['a priority', { priority: 'high' }],
+		['an attachment', { attachments: [{ filename: 'a.pdf' }] }],
+		['attachments that are not a list', { attachments: 'a.pdf' }],
+		['a sender of its own', { from: 'someone@example.test' }],
+		['several recipients in one string', { to: 'ada@example.test, bob@example.test' }],
+		['a list of recipients', { to: ['ada@example.test'] }],
+		['no recipient', { to: '' }],
+		['no subject', { subject: undefined }],
+		['no HTML', { html: '  ' }],
+		['an HTML part that is not text', { html: Buffer.from('<p>x</p>') }]
+	])('refuses a message with %s', (_case, fields) => {
+		expect(isReproducibleEmailMessage(handedOver(fields), FROM)).toBe(false);
+	});
+
+	it('refuses what is not a message', () => {
+		expect(isReproducibleEmailMessage(undefined, FROM)).toBe(false);
+		expect(isReproducibleEmailMessage('message' as never, FROM)).toBe(false);
 	});
 });

@@ -12,17 +12,21 @@ const TABLE = 'email_sent';
 const COLUMNS: ReadonlyArray<Readonly<{ name: string } & Record<Dialect, string>>> = [
 	{ name: 'retryCount', postgres: 'integer', sqlite: 'integer', mysql: 'int NULL' },
 	{ name: 'nextRetryAt', postgres: 'TIMESTAMP', sqlite: 'datetime', mysql: 'datetime NULL' },
-	{ name: 'lastErrorCode', postgres: 'character varying', sqlite: 'varchar', mysql: 'varchar(255) NULL' }
+	{ name: 'lastErrorCode', postgres: 'character varying', sqlite: 'varchar', mysql: 'varchar(255) NULL' },
+	{ name: 'lastRetryAt', postgres: 'TIMESTAMP', sqlite: 'datetime', mysql: 'datetime NULL' }
 ];
 
 /**
  * Adds the automatic retry state of a failed email to `email_sent`: `retryCount` (how many automatic retries it had),
- * `nextRetryAt` (when the next one is due) and `lastErrorCode` (why the last attempt failed, without any address). See
+ * `nextRetryAt` (when the next one is due), `lastErrorCode` (why the last attempt failed, without any address) and
+ * `lastRetryAt` (when a sweep last claimed it, which is what the installation-wide cap on retries counts). See
  * `email-send/email-retry.policy.ts`.
  *
- * All three are nullable with no default, so adding them rewrites no row, and nothing is backfilled: every row written
+ * All four are nullable with no default, so adding them rewrites no row, and nothing is backfilled: every row written
  * before this migration has no `nextRetryAt`, and only a row with one is ever retried, so deploying it sends no old
- * email. No index is added: the sweep reads the failed rows (`status` is indexed) of the last two hours.
+ * email. No index is added, so the migration takes no lock that would hold up the emails being filed meanwhile: the
+ * sweep reads the failed rows (`status` is indexed) of the last two hours, and counts the recent claims only while a
+ * retry is due.
  *
  * Running `up` twice is harmless (`IF NOT EXISTS` on Postgres, a column check elsewhere), and a transaction-scoped
  * advisory lock (a named lock on MySQL) makes two API processes that boot at the same time against one database run

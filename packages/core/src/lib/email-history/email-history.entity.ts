@@ -80,6 +80,17 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	lastErrorCode?: string;
+
+	/**
+	 * When a retry sweep last claimed this email for an automatic retry. The sweeps of every process count the claims
+	 * of the last sweep period across the whole table before each claim, which is what caps the retries of the whole
+	 * installation rather than of each process. Unset on an email never claimed for a retry.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@IsDate()
+	@MultiORMColumn({ nullable: true })
+	lastRetryAt?: Date;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

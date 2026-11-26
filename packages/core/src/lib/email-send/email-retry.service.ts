@@ -13,6 +13,7 @@ import {
 	EMAIL_RETRY_BATCH_SIZE,
 	EMAIL_RETRY_MAX_AGE_MS,
 	EMAIL_RETRY_MAX_ATTEMPTS,
+	EMAIL_RETRY_SWEEP_MS,
 	EMAIL_RETRY_SWEEP_TIME_BUDGET_MS,
 	emailRetryDueAt,
 	emailSendErrorCode,
@@ -35,6 +36,11 @@ export interface IEmailRetrySweepReport {
 	taken: number;
 	/** Taken out of the retries without a send: a template no longer retried, or nothing left to send. */
 	dropped: number;
+	/**
+	 * Whether the sweep stopped at the installation-wide cap: `EMAIL_RETRY_BATCH_SIZE` rows had been claimed in the
+	 * last `EMAIL_RETRY_SWEEP_MS`, by this process or any other. The rest waits for a later sweep.
+	 */
+	capped: boolean;
 }
 
 /** An `Email` instance as far as the retry uses it. */
@@ -55,8 +61,14 @@ interface IEmailInstance {
  *   read: of two sweeps that read a row together, one changes it and sends it, the other changes nothing and sends
  *   nothing. A process that stops between its claim and its send leaves the row with no retry due: that email is lost
  *   rather than risked twice, since a message the server may have accepted cannot be taken back.
- * - **Never a burst.** At most `EMAIL_RETRY_BATCH_SIZE` emails a sweep, one after another, and no new send once the
- *   sweep's time budget is spent; the queue holds at most one sweep at a time for the whole installation.
+ * - **Never a burst, for the whole installation.** Every claim stamps `lastRetryAt` with the sweep's moment, and
+ *   before each claim the sweep counts the rows of the whole table stamped in the last `EMAIL_RETRY_SWEEP_MS`, by any
+ *   process and whatever their status now. Once that count has reached `EMAIL_RETRY_BATCH_SIZE`, the sweep stops and
+ *   the rest waits for a later one. So the cap holds across every API process, with or without a queue (the queue only
+ *   adds that one sweep runs at a time). Processes that count at the same moment can each still claim one row: the
+ *   bound is `EMAIL_RETRY_BATCH_SIZE` plus one per process sweeping at that moment beyond the first, never a batch per
+ *   process. Within a sweep the emails go one after another, and no new send starts once its time budget is spent. A
+ *   count that cannot be read stops the sweep before any claim.
  * - **The same message, through the same mail settings.** The row keeps the subject and HTML the original send
  *   rendered, and the retry hands them to the transport of the row's organization and tenant (`getEmailInstance`, as
  *   the manual resend does), with no template rendered again. Under DB_ORM=mikro-orm the mail settings are read
@@ -79,19 +91,29 @@ export class EmailRetryService {
 	) {}
 
 	/**
-	 * Sends the retries that are due, oldest first, one after another, until the batch is done or the time budget is
-	 * spent; the rest wait for the next sweep. Does nothing while retries are off.
+	 * Sends the retries that are due, oldest first, one after another, until the batch is done, the time budget is
+	 * spent or the installation-wide cap is reached; the rest wait for a later sweep. Does nothing while retries are
+	 * off.
 	 *
 	 * @param now The moment the retries are due at.
 	 * @param budgetMs How long the sweep may keep starting sends.
 	 * @returns What it did.
-	 * @throws When the due rows could not be read: nothing was sent, and the queue's own failure handling sees it.
+	 * @throws When the due rows or the count of recent claims could not be read: nothing more is sent, and the queue's
+	 * own failure handling sees it.
 	 */
 	async sweep(
 		now: Date = new Date(),
 		budgetMs: number = EMAIL_RETRY_SWEEP_TIME_BUDGET_MS
 	): Promise<IEmailRetrySweepReport> {
-		const report: IEmailRetrySweepReport = { due: 0, sent: 0, rescheduled: 0, gaveUp: 0, taken: 0, dropped: 0 };
+		const report: IEmailRetrySweepReport = {
+			due: 0,
+			sent: 0,
+			rescheduled: 0,
+			gaveUp: 0,
+			taken: 0,
+			dropped: 0,
+			capped: false
+		};
 		if (!isEmailRetryEnabled(process.env, (message) => this.logger.warn(message))) {
 			return report;
 		}
@@ -101,6 +123,11 @@ export class EmailRetryService {
 		const startedAt = Date.now();
 		for (const row of due) {
 			if (Date.now() - startedAt >= budgetMs) {
+				break;
+			}
+			// Before each claim, and outside the per-row catch: a count that cannot be read stops the sweep unsent.
+			if ((await this.claimedInThePeriod(now)) >= EMAIL_RETRY_BATCH_SIZE) {
+				report.capped = true;
 				break;
 			}
 			try {
@@ -116,7 +143,8 @@ export class EmailRetryService {
 		if (report.due > 0) {
 			this.logger.log(
 				`Email retries: ${report.sent} sent, ${report.rescheduled} rescheduled, ${report.gaveUp} given up, ` +
-					`${report.taken} taken elsewhere, ${report.dropped} dropped, of ${report.due} due`
+					`${report.taken} taken elsewhere, ${report.dropped} dropped, of ${report.due} due` +
+					(report.capped ? '; stopped at the installation-wide cap, the rest waits for a later sweep' : '')
 			);
 		}
 		return report;
@@ -150,6 +178,18 @@ export class EmailRetryService {
 			.getMany();
 	}
 
+	/**
+	 * How many rows were claimed for a retry in the period that ends at `now`, by any process, whatever their status
+	 * now: the installation-wide count the cap is checked against. Soft-deleted rows count too, since their claim was
+	 * made. Read only while a retry is due, at most once per claim.
+	 */
+	private claimedInThePeriod(now: Date): Promise<number> {
+		return this.typeOrmEmailHistoryRepository.count({
+			where: { lastRetryAt: MoreThanOrEqual(new Date(now.getTime() - EMAIL_RETRY_SWEEP_MS)) },
+			withDeleted: true
+		});
+	}
+
 	/** Claims one due row, then sends it, or takes it out of the retries when it is not to be sent. */
 	private async retry(row: EmailHistory, now: Date, report: IEmailRetrySweepReport): Promise<void> {
 		// The claim's criteria are built from these: TypeORM drops an `undefined` criterion rather than matching it.
@@ -173,7 +213,8 @@ export class EmailRetryService {
 	/**
 	 * Takes a row for one retry: one conditional write, so the store settles a race between two sweeps that read the
 	 * row together. It matches only while the row is failed, due, young enough and still on the retry that was read,
-	 * moves `retryCount` on and clears `nextRetryAt`, so no other sweep matches it after.
+	 * moves `retryCount` on and clears `nextRetryAt`, so no other sweep matches it after, and stamps `lastRetryAt` with
+	 * the sweep's moment, which the installation-wide cap counts (a claim counts whether or not it then sends).
 	 *
 	 * @returns True when this sweep holds the row.
 	 */
@@ -188,7 +229,7 @@ export class EmailRetryService {
 				nextRetryAt: LessThanOrEqual(new Date(now.getTime() + 1_000)),
 				createdAt: MoreThanOrEqual(this.oldestRetried(now))
 			} as FindOptionsWhere<EmailHistory>,
-			{ retryCount: row.retryCount + 1, nextRetryAt: null }
+			{ retryCount: row.retryCount + 1, nextRetryAt: null, lastRetryAt: now }
 		);
 		return readAffectedRows(result) === 1;
 	}

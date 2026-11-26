@@ -120,8 +120,8 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		/**
 		 * The five-minute schedule of the email retry sweep, and only the schedule: the sweep sends through the mail
 		 * settings and the provider transports the API hosts, so the API consumes the queue (`EmailRetryMaintenanceModule`).
-		 * The queue holds one sweep at a time, so the installation sweeps once per period whatever the number of API
-		 * instances. `EMAIL_RETRY_ENABLED=false` makes every sweep a no-op.
+		 * The queue holds one sweep at a time, and the cap of retries per period is counted in the database for the
+		 * whole installation. `EMAIL_RETRY_ENABLED=false` makes every sweep a no-op.
 		 */
 		...(WORKER_QUEUE_ENABLED ? [EmailRetryScheduleModule] : []),
 		/**

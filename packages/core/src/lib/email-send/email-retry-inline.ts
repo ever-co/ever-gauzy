@@ -9,9 +9,9 @@ import { EmailRetryService } from './email-retry.service';
  * five minutes, the queue's period, one pass at a time, from the async context the provider was built in (no
  * request's). There is no sweep at start-up, so an API restarted in a loop sends nothing more than one that is not.
  *
- * Several such APIs sweeping at once still send each email once (the sweep claims a row before it sends it), but each
- * sends its own batch: the installation-wide bound of one batch per period holds with a queue, which runs one sweep at
- * a time for every instance.
+ * Several such APIs sweeping at once still send each email once (the sweep claims a row before it sends it), and the
+ * cap of one batch per period is the installation's, not each API's: the sweeps count every process's recent claims
+ * in the database before each claim (see `EmailRetryService`).
  */
 @Injectable()
 export class EmailRetryInlineSweep implements OnApplicationBootstrap, OnModuleDestroy {

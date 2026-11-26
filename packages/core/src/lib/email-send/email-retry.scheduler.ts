@@ -20,8 +20,8 @@ export interface IEmailRetrySweepJob {
  * Asks the queue for one email retry sweep every five minutes (`EMAIL_RETRY_SWEEP_MS`). The job carries only the
  * request; the sweep is the worker's, on whichever API instance picks the job up, and the queue holds at most one job
  * of this schedule at a time (a tick adds nothing while one waits or runs), so the whole installation sweeps once per
- * period rather than once per instance. Two sweeps that overlap anyway still send each email once: see
- * `EmailRetryService`.
+ * period rather than once per instance. Two sweeps that overlap anyway still send each email once, and together no
+ * more than the installation-wide cap, which is counted in the database: see `EmailRetryService`.
  */
 @Injectable()
 export class EmailRetryScheduler {
