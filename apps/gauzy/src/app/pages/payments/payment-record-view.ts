@@ -102,15 +102,17 @@ function paymentDateBound(value: moment.MomentInput): string {
 }
 
 /**
- * Reads the organization's payments with a payment date in a range, page by page, without their relations: the
- * charts need the amount, the currency, the date and the contact, which are the payment's own columns.
+ * Reads the organization's payments with a payment date in a range, page by page. The charts need the amount, the
+ * currency, the date and the contact: the payment's own columns, plus its invoice (`relations`) when the contact may
+ * only be known through it.
  */
 async function loadPaymentsBetween(
 	service: PaymentService,
 	scope: IRecordViewScope,
 	start: moment.Moment,
 	end: moment.Moment,
-	where: Record<string, unknown> = {}
+	where: Record<string, unknown> = {},
+	relations: string[] = []
 ): Promise<IPayment[]> {
 	const payments: IPayment[] = [];
 	/** How many payments the range holds, as the endpoint counts them. */
@@ -124,6 +126,7 @@ async function loadPaymentsBetween(
 				...where
 			},
 			order: { paymentDate: 'ASC' },
+			...(relations.length ? { relations } : {}),
 			take: PAYMENT_PAGE_SIZE,
 			skip: page
 		});
@@ -153,16 +156,17 @@ export async function loadContactMonthsPayments(
 	// 1st of a month east of UTC as the month before.
 	const month = moment(payment.paymentDate);
 	const contactId = paymentContactId(payment);
-	return loadPaymentsBetween(
+	const payments = await loadPaymentsBetween(
 		service,
 		scope,
 		month.clone().subtract(months - 1, 'months').startOf('month'),
 		month.clone().endOf('month'),
-		{
-			...(payment.currency ? { currency: payment.currency } : {}),
-			...(contactId ? { organizationContactId: contactId } : {})
-		}
+		payment.currency ? { currency: payment.currency } : {},
+		contactId ? ['invoice'] : []
 	);
+	// The contact is matched here, not in the read: a payment recorded from an invoice before the record form saved
+	// its contact has none of its own, and `paymentContactId` finds it through the invoice, as for this payment.
+	return contactId ? payments.filter((item) => paymentContactId(item) === contactId) : payments;
 }
 
 /** The share chart's payments: every payment of the organization in the payment's month and currency. */
@@ -206,10 +210,14 @@ export async function loadPaymentNeighbours(
 			skip: 1
 		});
 	const date = moment.utc(payment.paymentDate).startOf('second');
+	const nextSecond = date.clone().add(1, 'second');
+	// The endpoint's bounds are whole seconds, and a payment date can carry milliseconds: the same-date read takes the
+	// whole current second (up to the next one) and the earlier read ends at the current second, so a payment a part
+	// of a second away is read too. The overlaps are dropped by id below.
 	const [sameDate, before, after] = await Promise.all([
-		loadPaymentsBetween(service, scope, date, date),
-		read(moment.utc(0), date.clone().subtract(1, 'second'), 'DESC'),
-		read(date.clone().add(1, 'second'), moment.utc('9999-12-31T23:59:59Z'), 'ASC')
+		loadPaymentsBetween(service, scope, date, nextSecond),
+		read(moment.utc(0), date, 'DESC'),
+		read(nextSecond, moment.utc('9999-12-31T23:59:59Z'), 'ASC')
 	]);
 	const unique = new Map<string, IPayment>();
 	for (const item of [...sameDate, ...(before.items ?? []), ...(after.items ?? [])]) {
