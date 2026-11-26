@@ -29,6 +29,15 @@ import { RequestContext } from '../core/context';
 import { printEmailCodeInLocalDevelopment } from '../logger';
 import { EmailSendService } from './../email-send/email-send.service';
 import { describeEmailSendError } from './email-send-error';
+import {
+	classifyEmailSendError,
+	EMAIL_RETRY_MAX_ATTEMPTS,
+	emailRetryDueAt,
+	emailSendErrorCode,
+	isEmailRetryEnabled,
+	isEmailRetryTemplate,
+	smtpTransportOf
+} from './email-retry.policy';
 import { Organization, EmailHistory } from './../core/entities/internal';
 import { TypeOrmEmailHistoryRepository } from './../email-history/repository/type-orm-email-history.repository';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
@@ -50,6 +59,25 @@ const NO_LINK_TRACKING_HEADERS = {
 	'X-Mailgun-Track-Clicks': 'no',
 	'X-SMTPAPI': JSON.stringify({ filters: { clicktrack: { settings: { enable: 0 } } } })
 };
+
+/**
+ * What a send that failed before the server accepted it leaves for its automatic retry (see `email-retry.policy.ts`):
+ * the message exactly as it went to the transport, why it failed, and whose mail settings it went through.
+ */
+interface IEmailRetryDraft {
+	subject: string;
+	html: string;
+	/** `emailSendErrorCode` of the failure. */
+	errorCode: string;
+	/** The organization and tenant whose mail settings the send went through; the retry goes through the same. */
+	organizationId: ID | null;
+	tenantId: ID | null;
+}
+
+/** An `Email` instance as far as a retryable send uses it. */
+interface IRetryableEmailInstance {
+	send(options: unknown): Promise<any>;
+}
 
 @Injectable()
 export class EmailService {
@@ -305,7 +333,7 @@ export class EmailService {
 		}
 		try {
 			const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
-			const sendResult = await instance.send(sendOptions);
+			const sendResult = await this.sendKeepingRetry(instance, sendOptions, body, { organizationId, tenantId });
 			body.message = sendResult.originalMessage;
 		} catch (error) {
 			this.logger.error(
@@ -695,7 +723,7 @@ export class EmailService {
 			try {
 				// Get the email instance and send the email.
 				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
-				const send = await instance.send(sendOptions);
+				const send = await this.sendKeepingRetry(instance, sendOptions, body, { organizationId, tenantId });
 				body.message = send.originalMessage;
 			} catch (error) {
 				this.logger.error(`Invitation acceptance email could not be sent: ${describeEmailSendError(error)}`);
@@ -763,7 +791,7 @@ export class EmailService {
 			if (!match) {
 				try {
 					const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
-					const send = await instance.send(sendOptions);
+					const send = await this.sendKeepingRetry(instance, sendOptions, body, { organizationId, tenantId });
 
 					body['message'] = send.originalMessage;
 				} catch (error) {
@@ -1170,7 +1198,7 @@ export class EmailService {
 		if (!match) {
 			try {
 				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
-				const send = await instance.send(sendOptions);
+				const send = await this.sendKeepingRetry(instance, sendOptions, body, { organizationId, tenantId });
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
@@ -1470,6 +1498,13 @@ export class EmailService {
 			throw new BadRequestException(`Email address ${sendOptions.message.to} is blocked by domain restrictions.`);
 		}
 
+		// A resend by hand takes the email out of the automatic retries before it goes, so the retry sweep can no
+		// longer claim it and send it as well; the save below then writes no stale retry time back either.
+		if (emailHistory.nextRetryAt) {
+			await this.typeOrmEmailHistoryRepository.update({ id: emailHistory.id }, { nextRetryAt: null });
+			emailHistory.nextRetryAt = null;
+		}
+
 		try {
 			// Retrieve the email instance for the organization and tenant.
 			const instance = await this.emailSendService.getEmailInstance({
@@ -1510,6 +1545,10 @@ export class EmailService {
 	 * Never throws. It runs in the senders' `finally` blocks, where an exception would replace the
 	 * send's own outcome - a delivered email reported as a 500, or the real send error hidden behind
 	 * a bookkeeping one.
+	 *
+	 * A failed send that left a `retry` (see {@link sendKeepingRetry}) is filed with the message it
+	 * rendered and its first automatic retry due ({@link scheduleRetry}); every other row is written
+	 * exactly as before.
 	 */
 	private async createEmailRecord(createEmailOptions: {
 		templateName: string;
@@ -1519,6 +1558,7 @@ export class EmailService {
 		organization?: IOrganization;
 		user?: IUser;
 		status?: EmailStatusEnum;
+		retry?: IEmailRetryDraft;
 	}): Promise<IEmailHistory | null> {
 		const { templateName: template, email, languageCode, message, organization, user } = createEmailOptions;
 		try {
@@ -1549,12 +1589,121 @@ export class EmailService {
 			if (user) {
 				emailEntity.user = user;
 			}
-			return await this.typeOrmEmailHistoryRepository.save(emailEntity);
+			const retry =
+				status === EmailStatusEnum.FAILED ? this.scheduleRetry(emailEntity, createEmailOptions.retry) : false;
+			const saved = await this.typeOrmEmailHistoryRepository.save(emailEntity);
+			if (retry) {
+				this.logger.warn(
+					`The "${template}" email ${saved?.id} failed (${emailEntity.lastErrorCode}); automatic retry 1 of ${
+						EMAIL_RETRY_MAX_ATTEMPTS - 1
+					} is due at ${emailEntity.nextRetryAt.toISOString()}.`
+				);
+			}
+			return saved;
 		} catch (error) {
 			this.logger.error(
 				`Could not record the "${template}" email in email_sent: ${describeEmailSendError(error)}`
 			);
 			return null;
+		}
+	}
+
+	/**
+	 * Sets a failed email's first automatic retry on the row about to be filed, when its send left a retry
+	 * ({@link sendKeepingRetry}), retries are still on, and the row names the organization and tenant whose mail
+	 * settings the send went through: the retry goes through the row's, so a row that names others is not retried.
+	 *
+	 * The row then keeps the subject and the HTML the send rendered (a failed row keeps neither otherwise), with
+	 * `retryCount` 0, `nextRetryAt` the first backoff from now and `lastErrorCode` the failure's code.
+	 *
+	 * @param row The row about to be filed.
+	 * @param retry What the failed send left, if anything.
+	 * @returns Whether a retry was scheduled.
+	 */
+	private scheduleRetry(row: EmailHistory, retry: IEmailRetryDraft | undefined): boolean {
+		if (!retry || !isEmailRetryEnabled()) {
+			return false;
+		}
+		if (
+			(retry.tenantId ?? null) !== (row.tenantId ?? null) ||
+			(retry.organizationId ?? null) !== (row.organizationId ?? null)
+		) {
+			return false;
+		}
+		const now = new Date();
+		row.name = retry.subject;
+		row.content = retry.html;
+		row.retryCount = 0;
+		row.nextRetryAt = emailRetryDueAt(0, now);
+		row.lastErrorCode = retry.errorCode;
+		return !!row.nextRetryAt;
+	}
+
+	/**
+	 * Sends an email through `instance` exactly as `instance.send(sendOptions)` does, and when the send fails before
+	 * the server accepted the message, leaves on `body.retry` what its automatic retry needs (see
+	 * `email-retry.policy.ts`).
+	 *
+	 * Only for a template the retry may send (`EMAIL_RETRY_TEMPLATES`), while retries are on, on nodemailer's SMTP
+	 * transport; anything else is `instance.send(sendOptions)` and nothing more.
+	 *
+	 * The message kept is the one email-templates hands the transport, captured on its way there, so a retry sends
+	 * what this attempt rendered rather than a second rendering (the renderer reads the tenant's templates and checks
+	 * its mail server, either of which may answer differently by then). The capture is a wrapper set on this
+	 * instance's own configuration for the length of the call: it hands the message on unchanged and returns what the
+	 * transport returns, and the transport itself is never modified (`getEmailInstance` builds the instance and its
+	 * configuration for this one call). A send that goes through is therefore exactly what it was without it.
+	 *
+	 * The error is thrown on unchanged either way, so the sender logs and files it as it always did.
+	 *
+	 * @param instance The `Email` instance `getEmailInstance` returned for this send.
+	 * @param sendOptions The template, the message (`to`) and the locals.
+	 * @param body The record the sender files in `finally`; gets `retry` when a retry is possible.
+	 * @param scope The organization and tenant `getEmailInstance` was asked for.
+	 * @returns What `instance.send` returned.
+	 */
+	private async sendKeepingRetry(
+		instance: IRetryableEmailInstance,
+		sendOptions: { template: string; message: Record<string, any>; locals?: Record<string, any> },
+		body: { retry?: IEmailRetryDraft; [field: string]: unknown },
+		scope: { organizationId?: ID | null; tenantId?: ID | null }
+	): Promise<any> {
+		const config = (instance as { config?: { transport?: unknown } })?.config;
+		const transport = smtpTransportOf(instance);
+		if (!transport || !config || !isEmailRetryEnabled() || !isEmailRetryTemplate(sendOptions.template)) {
+			return instance.send(sendOptions);
+		}
+
+		let handedOver: { subject?: unknown; html?: unknown } | undefined;
+		config.transport = {
+			transporter: transport.transporter,
+			sendMail: (message: { subject?: unknown; html?: unknown }) => {
+				handedOver = message;
+				return transport.sendMail(message);
+			}
+		};
+		try {
+			return await instance.send(sendOptions);
+		} catch (error) {
+			const subject = handedOver?.subject;
+			const html = handedOver?.html;
+			if (
+				classifyEmailSendError(error).retry &&
+				typeof subject === 'string' &&
+				typeof html === 'string' &&
+				html.trim().length > 0
+			) {
+				body.retry = {
+					subject,
+					html,
+					errorCode: emailSendErrorCode(error),
+					organizationId: scope.organizationId ?? null,
+					tenantId: scope.tenantId ?? null
+				};
+			}
+			throw error;
+		} finally {
+			config.transport = transport;
 		}
 	}
 
