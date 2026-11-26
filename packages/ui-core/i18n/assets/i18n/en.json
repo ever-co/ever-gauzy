@@ -4708,7 +4708,9 @@
 			"PROPOSAL_CONTENT": "Proposal Content",
 			"VIEW_JOB_POST": "View Job Post",
 			"PROJECT_PROPOSAL": "Project Proposal",
-			"ACCEPTED_BY": "Accepted by"
+			"ACCEPTED_BY": "Accepted by",
+			"PREPARED_FOR": "Prepared for",
+			"PREPARED_BY": "Prepared by"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Edit Proposal",

@@ -4210,7 +4210,9 @@
 			"PROPOSAL_CONTENT": "תוכן הצעה",
 			"VIEW_JOB_POST": "צפה במשרה",
 			"PROJECT_PROPOSAL": "הצעת פרויקט",
-			"ACCEPTED_BY": "התקבל על ידי"
+			"ACCEPTED_BY": "התקבל על ידי",
+			"PREPARED_FOR": "הוכן עבור",
+			"PREPARED_BY": "הוכן על ידי"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "ערוך הצעה",

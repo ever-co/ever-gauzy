@@ -4242,7 +4242,9 @@
 			"PROPOSAL_CONTENT": "Съдържание на предложението",
 			"VIEW_JOB_POST": "Преглед на обява",
 			"PROJECT_PROPOSAL": "Проектно предложение",
-			"ACCEPTED_BY": "Прието от"
+			"ACCEPTED_BY": "Прието от",
+			"PREPARED_FOR": "Изготвено за",
+			"PREPARED_BY": "Изготвено от"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Редактиране на предложението",

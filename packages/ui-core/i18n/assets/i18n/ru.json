@@ -4217,7 +4217,9 @@
 			"PROPOSAL_CONTENT": "Содержание предложения",
 			"VIEW_JOB_POST": "Просмотр объявления",
 			"PROJECT_PROPOSAL": "Проектное предложение",
-			"ACCEPTED_BY": "Принято"
+			"ACCEPTED_BY": "Принято",
+			"PREPARED_FOR": "Подготовлено для",
+			"PREPARED_BY": "Подготовлено"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Редактировать предложение",

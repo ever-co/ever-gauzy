@@ -4708,7 +4708,9 @@
 			"PROPOSAL_CONTENT": "Conteúdo da proposta",
 			"VIEW_JOB_POST": "Ver vaga",
 			"PROJECT_PROPOSAL": "Proposta de projeto",
-			"ACCEPTED_BY": "Aceito por"
+			"ACCEPTED_BY": "Aceito por",
+			"PREPARED_FOR": "Preparado para",
+			"PREPARED_BY": "Preparado por"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Editar Proposta",
