@@ -64,7 +64,9 @@ export class TimesheetSubmitHandler implements ICommandHandler<TimesheetSubmitCo
 		// Timesheets that are already submitted keep their original `submittedAt` and are not announced again:
 		// a repeated submit (double click, retried request, a bulk submit that overlaps) used to move the
 		// submission time forward and email the employee once more for every call.
-		let newlySubmittedIds = new Set<ID>();
+		const newlySubmittedIds = new Set<ID>();
+		// The first claim that failed for another reason than a lost race, reported once the rest is announced
+		let claimFailure: unknown;
 
 		if (isSubmit) {
 			const pending = await this._timeSheetService.find({
@@ -74,11 +76,26 @@ export class TimesheetSubmitHandler implements ICommandHandler<TimesheetSubmitCo
 			// Each timesheet is claimed on its own, guarded by `submittedAt IS NULL` in the statement itself.
 			// When two submits overlap, both may have read the timesheet as pending, but only one write can
 			// still match: the loser neither moves the timestamp nor emails, and is not reported as an error.
+			// Every claim is awaited, so one that fails does not hide the ones that committed: those are no
+			// longer pending, so a retry would never announce them.
 			const submittedAt = new Date();
-			const claims = await Promise.all(
-				pending.map(async ({ id }) => ((await this.claim(id, organizationId, submittedAt)) ? id : null))
+			const outcomes = await Promise.allSettled(
+				pending.map(({ id }) => this.claim(id, organizationId, submittedAt))
 			);
-			newlySubmittedIds = new Set(claims.filter((id): id is ID => id !== null));
+			outcomes.forEach((outcome, index) => {
+				if (outcome.status === 'fulfilled') {
+					if (outcome.value) {
+						newlySubmittedIds.add(pending[index].id);
+					}
+				} else if (claimFailure === undefined) {
+					claimFailure = outcome.reason;
+				}
+			});
+
+			// Nothing this call submitted is left to announce: the failure is the whole answer
+			if (claimFailure !== undefined && newlySubmittedIds.size === 0) {
+				throw claimFailure;
+			}
 		} else {
 			await this._timeSheetService.update({ id: In(ids), organizationId }, { submittedAt: null });
 		}
@@ -119,6 +136,12 @@ export class TimesheetSubmitHandler implements ICommandHandler<TimesheetSubmitCo
 					this._emailService.timesheetSubmit(employee.user.email, timesheet);
 				}
 			});
+		}
+
+		// The timesheets this call did submit are announced; the claim that failed is still reported, and a retry
+		// submits it (the others are no longer pending, so they are neither stamped nor emailed again)
+		if (claimFailure !== undefined) {
+			throw claimFailure;
 		}
 
 		return timesheets;

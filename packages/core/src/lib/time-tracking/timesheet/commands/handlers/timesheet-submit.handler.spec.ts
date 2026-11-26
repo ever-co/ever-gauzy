@@ -155,6 +155,53 @@ describe('TimesheetSubmitHandler', () => {
 		expect(emailService.timesheetSubmit).not.toHaveBeenCalled();
 	});
 
+	it('announces the timesheets it did submit before reporting a failed sibling, and a retry submits the rest', async () => {
+		// A store that honours the `submittedAt IS NULL` condition of the write, as the database does
+		const store = new Map<string, Date | null>([
+			['ts-1', null],
+			['ts-2', null]
+		]);
+		timeSheetService.find.mockImplementation(async (options: any) => {
+			const wantsPending = options.where.submittedAt.type === 'isNull';
+			return [...store.entries()]
+				.filter(([, value]) => (value === null) === wantsPending)
+				.map(([id]) => timesheet(id));
+		});
+		let failNext = true;
+		timeSheetService.update.mockImplementation(async (criteria: any, payload: any) => {
+			if (criteria.id === 'ts-2' && failNext) {
+				failNext = false;
+				throw new BadRequestException('connection lost');
+			}
+			if (store.get(criteria.id) !== null) {
+				return { affected: 0 };
+			}
+			store.set(criteria.id, payload.submittedAt);
+			return { affected: 1 };
+		});
+
+		// ts-1 commits, ts-2 fails: ts-1 is still announced, and the failure is reported
+		await expect(run('submit')).rejects.toBeInstanceOf(BadRequestException);
+		expect(emailService.timesheetSubmit).toHaveBeenCalledTimes(1);
+		expect(emailService.timesheetSubmit).toHaveBeenCalledWith(
+			'ts-1@example.com',
+			expect.objectContaining({ id: 'ts-1' })
+		);
+		const firstStamp = store.get('ts-1');
+		expect(firstStamp).toBeInstanceOf(Date);
+		expect(store.get('ts-2')).toBeNull();
+
+		// The retry submits and announces ts-2 only; ts-1 keeps its time and is not emailed again
+		const result = await run('submit');
+		expect(emailService.timesheetSubmit).toHaveBeenCalledTimes(2);
+		expect(emailService.timesheetSubmit).toHaveBeenLastCalledWith(
+			'ts-2@example.com',
+			expect.objectContaining({ id: 'ts-2' })
+		);
+		expect(store.get('ts-1')).toBe(firstStamp);
+		expect(result.map((item) => item.id)).toEqual(['ts-1', 'ts-2']);
+	});
+
 	it('writes and emails nothing when every timesheet is already submitted', async () => {
 		timeSheetService.find
 			.mockResolvedValueOnce([]) // nothing pending
