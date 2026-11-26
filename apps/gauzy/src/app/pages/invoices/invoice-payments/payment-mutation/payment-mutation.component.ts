@@ -140,7 +140,12 @@ export class PaymentMutationComponent extends TranslationBaseComponent implement
 			if (this.invoice) {
 				this.form.patchValue({ invoice: this.invoice });
 				if (this.invoice.toContact) {
-					this.form.patchValue({ contact: this.invoice.toContact });
+					// `organizationContact` is the form's contact control (there is no `contact`): without it a payment
+					// recorded from an invoice was saved with no contact, and the payment page's contact chart missed it.
+					this.form.patchValue({
+						organizationContact: this.invoice.toContact,
+						organizationContactId: this.invoice.toContact.id
+					});
 				}
 				this.form.updateValueAndValidity();
 			}
