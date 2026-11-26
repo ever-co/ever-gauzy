@@ -155,7 +155,11 @@ function cleanProse(text: string, isStreaming: boolean): string {
 				joined += '\n' + unwrapLine(lines[end]);
 				parsed = parseJsonObject(joined);
 			}
-			if (parsed && isToolCallShape(parsed)) {
+			if (parsed) {
+				// The whole object is one unit: a call is dropped entirely, an answer is kept entirely —
+				// never re-scanned line by line, or a call-shaped VALUE inside an answer
+				// (`{"example": {"path": "/pages/tasks"}}`) would be cut out and leave broken JSON.
+				if (!isToolCallShape(parsed)) kept.push(...lines.slice(index, end + 1));
 				index = end;
 				continue;
 			}

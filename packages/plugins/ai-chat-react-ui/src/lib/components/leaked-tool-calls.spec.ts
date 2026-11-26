@@ -94,6 +94,11 @@ describe('stripLeakedToolCalls', () => {
 		expect(stripLeakedToolCalls(data)).toBe(data);
 	});
 
+	it('keeps a JSON answer whole, even when a value inside it looks like a call', () => {
+		const text = 'An example:\n{"example":\n{"path":"/pages/tasks"}\n}';
+		expect(stripLeakedToolCalls(text)).toBe(text);
+	});
+
 	it('keeps a line that is only inline-code JSON', () => {
 		expect(stripLeakedToolCalls('An example:\n`{"example":1}`')).toBe('An example:\n`{"example":1}`');
 	});
