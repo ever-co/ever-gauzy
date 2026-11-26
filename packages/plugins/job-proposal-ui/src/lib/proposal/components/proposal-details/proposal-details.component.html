@@ -5,6 +5,37 @@
 				<span class="pd-dot" aria-hidden="true"></span>
 				{{ (isAccepted ? 'BUTTONS.ACCEPTED' : 'BUTTONS.SENT') | translate }}
 			</span>
+			<!-- The proposals either side of this one, in the list's order. -->
+			<div class="pd-step">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					[disabled]="!previousProposal"
+					[nbTooltip]="('BUTTONS.PREVIOUS' | translate) + ' (K)'"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.PREVIOUS' | translate"
+					(click)="openProposal(previousProposal)"
+				>
+					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					[disabled]="!nextProposal"
+					[nbTooltip]="('BUTTONS.NEXT' | translate) + ' (J)'"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.NEXT' | translate"
+					(click)="openProposal(nextProposal)"
+				>
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</div>
 			@if (proposal.id) {
 				<ngx-favorite-toggle
 					[entityType]="BaseEntityEnum.Proposal"
