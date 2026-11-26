@@ -69,12 +69,14 @@ export class PublicInvoiceService {
 					organization: {
 						name: true,
 						officialName: true,
-						brandColor: true
+						brandColor: true,
+						timeZone: true
 					},
 					fromOrganization: {
 						name: true,
 						officialName: true,
-						brandColor: true
+						brandColor: true,
+						timeZone: true
 					},
 					invoiceItems: {
 						id: true,
