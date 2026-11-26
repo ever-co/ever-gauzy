@@ -5,6 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BaseEntityEnum, IEmployee, IProposal, ITag, IUser, ProposalStatusEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
+import { RecordViewPageState } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,6 +24,9 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	public jobPostLink: SafeHtml;
 	public jobPostContent: SafeHtml;
 	public proposalContent: SafeHtml;
+	/** The page's back button leads to the proposals list (the routes file imports this component, so not its constant). */
+	public readonly backLink = '/pages/sales/proposals';
+	public state: RecordViewPageState = 'loading';
 
 	protected get isAccepted(): boolean {
 		return this.proposal?.status === ProposalStatusEnum.ACCEPTED;
@@ -150,6 +154,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		this.jobPostLink = this.proposal.jobPostUrl;
 		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(this.proposal.jobPostContent);
 		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(this.proposal.proposalContent);
+		this.state = 'ready';
 	}
 
 	/**
