@@ -1,93 +1,101 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex">
-		<ngx-back-navigation></ngx-back-navigation>
-		<h4>
+	<!-- Back, title, and the save action: the header stays in view while the editors scroll. -->
+	<nb-card-header class="pe-header">
+		<button
+			nbButton
+			ghost
+			size="small"
+			status="basic"
+			type="button"
+			class="pe-back"
+			[attr.aria-label]="'BUTTONS.BACK' | translate"
+			(click)="goBack()"
+		>
+			<nb-icon icon="arrow-back-outline"></nb-icon>
+		</button>
+		<h4 class="pe-title">
 			{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL' | translate }}
 		</h4>
+		<div class="pe-actions">
+			<button
+				nbButton
+				size="small"
+				status="primary"
+				type="button"
+				class="pe-action"
+				[disabled]="form.invalid"
+				(click)="editProposal()"
+			>
+				<nb-icon icon="checkmark-outline"></nb-icon>
+				<span>{{ 'BUTTONS.SAVE' | translate }}</span>
+			</button>
+		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<form [formGroup]="form">
-			<div class="container">
-				<div class="row">
-					<div class="col-sm-4">
-						<div class="form-group">
-							<label class="label">
-								{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_URL' | translate }}
-							</label>
-							<input
-								nbInput
-								fullWidth
-								type="text"
-								[placeholder]="'PROPOSALS_PAGE.EDIT_PROPOSAL.PLACEHOLDER.JOB_POST_URL' | translate"
-								formControlName="jobPostUrl"
-								autocomplete="on"
-							/>
-						</div>
-					</div>
-					<div class="col-sm-4">
-						<div class="form-group">
-							<label class="label">
-								{{ 'POP_UPS.CONTACT' | translate }}
-							</label>
-							<ga-contact-select
-								[addTag]="true"
-								[clearable]="true"
-								[searchable]="true"
-								[placeholder]="'POP_UPS.CONTACT' | translate"
-								formControlName="organizationContact"
-							></ga-contact-select>
-						</div>
-					</div>
-					<div class="col-sm-4">
-						<div class="form-group">
-							<ga-tags-color-input
-								[selectedTags]="form.get('tags').value"
-								(selectedTagsEvent)="selectedTagsEvent($event)"
-								[isOrgLevel]="true"
-							></ga-tags-color-input>
-						</div>
-					</div>
-					<div class="row text-editors">
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label class="label">
-									{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_CONTENT' | translate }}
-								</label>
-								<ga-rich-text-editor
-									formControlName="jobPostContent"
-									preset="standard"
-									outputFormat="html"
-									minHeight="320px"
-								></ga-rich-text-editor>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label class="label">
-									{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_CONTENT' | translate }}
-								</label>
-								<ga-rich-text-editor
-									formControlName="proposalContent"
-									preset="standard"
-									outputFormat="html"
-									minHeight="320px"
-								></ga-rich-text-editor>
-							</div>
-						</div>
-					</div>
+
+	<nb-card-body class="pe-body">
+		<form [formGroup]="form" class="pe-form">
+			<!-- Where the job was posted, who it is for, and its tags: one row of equal controls. -->
+			<div class="pe-fields">
+				<div class="pe-field">
+					<label class="label" for="proposalJobPostUrl">
+						{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_URL' | translate }}
+					</label>
+					<input
+						id="proposalJobPostUrl"
+						nbInput
+						fullWidth
+						type="text"
+						[placeholder]="'PROPOSALS_PAGE.EDIT_PROPOSAL.PLACEHOLDER.JOB_POST_URL' | translate"
+						formControlName="jobPostUrl"
+						autocomplete="on"
+					/>
+				</div>
+				<div class="pe-field">
+					<label class="label">
+						{{ 'POP_UPS.CONTACT' | translate }}
+					</label>
+					<ga-contact-select
+						[addTag]="true"
+						[clearable]="true"
+						[searchable]="true"
+						[placeholder]="'POP_UPS.CONTACT' | translate"
+						formControlName="organizationContact"
+					></ga-contact-select>
+				</div>
+				<div class="pe-field">
+					<ga-tags-color-input
+						[selectedTags]="form.get('tags').value"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					></ga-tags-color-input>
+				</div>
+			</div>
+
+			<!-- The two texts side by side: the job post, and the proposal answering it. -->
+			<div class="pe-editors">
+				<div class="pe-field">
+					<label class="label">
+						{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_CONTENT' | translate }}
+					</label>
+					<ga-rich-text-editor
+						formControlName="jobPostContent"
+						preset="standard"
+						outputFormat="html"
+						minHeight="320px"
+					></ga-rich-text-editor>
+				</div>
+				<div class="pe-field">
+					<label class="label">
+						{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_CONTENT' | translate }}
+					</label>
+					<ga-rich-text-editor
+						formControlName="proposalContent"
+						preset="standard"
+						outputFormat="html"
+						minHeight="320px"
+					></ga-rich-text-editor>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button
-			[disabled]="form.invalid"
-			(click)="editProposal()"
-			class="edit-btn"
-			status="success"
-			nbButton
-		>
-			{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL_BUTTON' | translate }}
-		</button>
-	</nb-card-footer>
 </nb-card>
