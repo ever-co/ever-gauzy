@@ -20,9 +20,11 @@ const account = (id: string, overrides: Partial<Account> = {}): Account => ({
 	...overrides
 });
 
-function build(options: { accounts?: Account[]; role?: string; sessionUserId?: string | null } = {}) {
+function build(
+	options: { accounts?: Account[]; role?: string; sessionUserId?: string | null; employee?: object } = {}
+) {
 	const roleName = options.role ?? RolesEnum.EMPLOYEE;
-	const invite = { id: 'invite-1', email: INVITED_EMAIL, tenantId: TENANT };
+	const invite = { id: 'invite-1', email: INVITED_EMAIL, tenantId: TENANT, organizationId: 'org-invited' };
 	const inviteService = {
 		validateByCode: jest.fn(async () => invite),
 		validateByToken: jest.fn(async () => invite),
@@ -48,7 +50,7 @@ function build(options: { accounts?: Account[]; role?: string; sessionUserId?: s
 		getJwtRefreshToken: jest.fn(async () => 'refresh-token')
 	};
 	const userService = { setCurrentRefreshToken: jest.fn(async () => undefined) };
-	const employeeService = { findOneByUserId: jest.fn(async () => null) };
+	const employeeService = { findOneByUserId: jest.fn(async (..._args: unknown[]) => options.employee ?? null) };
 
 	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(options.sessionUserId ?? null);
 
@@ -68,7 +70,7 @@ function build(options: { accounts?: Account[]; role?: string; sessionUserId?: s
 			)
 		);
 
-	return { accept, commandBus };
+	return { accept, commandBus, employeeService };
 }
 
 describe('accepting an invitation for an address that already has an account', () => {
@@ -139,4 +141,21 @@ describe('accepting an invitation for an address that already has an account', (
 
 		expect(commandBus.execute).toHaveBeenCalledTimes(1);
 	});
+
+	// CodeRabbit on #12140: the employee answered with the session was looked up by account alone, so someone already
+	// employed in another organization got that employee (and its organization) back.
+	it.each([RolesEnum.EMPLOYEE, RolesEnum.CANDIDATE, RolesEnum.MANAGER])(
+		"answers a %s invitation with the account's employee in the invitation's organization",
+		async (role) => {
+			const invited = { id: 'employee-invited', organizationId: 'org-invited', isActive: true, isArchived: false };
+			const { accept, employeeService } = build({ role, employee: invited });
+
+			const answer = await accept();
+
+			expect(employeeService.findOneByUserId).toHaveBeenCalledWith('user-accepted', 'org-invited', {
+				where: { tenantId: TENANT }
+			});
+			expect(answer).toMatchObject({ user: { employee: { id: 'employee-invited' } } });
+		}
+	);
 });

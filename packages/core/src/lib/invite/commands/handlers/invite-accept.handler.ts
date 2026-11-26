@@ -91,7 +91,7 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 
 			// Assign role to user
 			const { id: inviteId } = invite;
-			const { role, tenant, tenantId } = await this.inviteService.findOneByIdString(inviteId, {
+			const { role, tenant, tenantId, organizationId } = await this.inviteService.findOneByIdString(inviteId, {
 				relations: { role: true, tenant: true }
 			});
 			// Pin BOTH the relation and its foreign key to the role stored on the invite. The request
@@ -119,13 +119,13 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 			switch (role.name) {
 				case RolesEnum.EMPLOYEE:
 					user = await this.commandBus.execute(new InviteAcceptEmployeeCommand(input, languageCode));
-					return await this._authorizeUser(user);
+					return await this._authorizeUser(user, { organizationId, tenantId });
 				case RolesEnum.CANDIDATE:
 					user = await this.commandBus.execute(new InviteAcceptCandidateCommand(input, languageCode));
-					return await this._authorizeUser(user);
+					return await this._authorizeUser(user, { organizationId, tenantId });
 				default:
 					user = await this.commandBus.execute(new InviteAcceptUserCommand(input, languageCode));
-					return await this._authorizeUser(user);
+					return await this._authorizeUser(user, { organizationId, tenantId });
 			}
 		} catch (error) {
 			// The account asks for its two-factor code: the 403 carries the challenge, untouched.
@@ -173,10 +173,11 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 	/**
 	 * After accept invite authorize user
 	 *
-	 * @param user
+	 * @param user The account that accepted.
+	 * @param invited The invitation's organization and tenant: the employee answered with the session is the one there.
 	 * @returns
 	 */
-	private async _authorizeUser(user: IUser): Promise<Object> {
+	private async _authorizeUser(user: IUser, invited: { organizationId?: ID; tenantId?: ID }): Promise<Object> {
 		try {
 			const { id, email } = user;
 			await this.typeOrmUserRepository.findOneOrFail({
@@ -197,8 +198,14 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 				throw new UnauthorizedException();
 			}
 
-			// Retrieve the employee details associated with the user.
-			const employee = await this.employeeService.findOneByUserId(user.id);
+			// Retrieve the user's employee in the INVITATION's organization. Unscoped, the lookup answered whichever employee
+			// the account has in any organization (or the request's): someone already employed elsewhere got that other
+			// employee, and its organization, in the session the acceptance returns.
+			const employee = await this.employeeService.findOneByUserId(
+				user.id,
+				invited.organizationId,
+				invited.tenantId ? { where: { tenantId: invited.tenantId } } : undefined
+			);
 
 			// Check if the employee is active and not archived. If not, throw an error.
 			if (employee && (!employee.isActive || employee.isArchived)) {
