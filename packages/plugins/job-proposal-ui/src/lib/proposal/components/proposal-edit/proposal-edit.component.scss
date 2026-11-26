@@ -1,58 +1,240 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
 
-.text-editors {
-	/* combine left/right paddings */
-	padding: 0 15px;
-}
+// The edit form, laid out as the proposal's own page: a header with back, title and Save,
+// then one row of equal controls (job post URL, contact, tags) and the two texts side by
+// side. The card keeps a fixed height and scrolls its body, so Save stays in view.
+$hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+// One height for every single-line control on the form.
+$control-height: 2.25rem;
+
 :host {
-  @include nb-card-overrides(
-    overlay,
-    calc($default-card-height + 3.5rem),
-    $default-radius
-  );
+  @include nb-card-overrides(auto, calc($default-card-height + 7.5rem), $default-radius);
+
   nb-card,
-  nb-card-body,
-  nb-card-footer {
+  nb-card-body {
     background-color: var(--gauzy-card-2);
   }
-  @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
+
+  // The card fills the content column to the bottom of the page. The host was an
+  // inline, auto-height element, so the card's `height: 100%` collapsed and the body
+  // fell back to the shared `100vh` estimate, which leaves a band empty below the card
+  // on a page without a breadcrumb row. The proposals layout above already fills the
+  // column, so the host takes its full height, the card the host's, and the body
+  // whatever the header leaves.
+  display: block;
+  height: 100%;
+
+  nb-card {
+    margin-bottom: 0;
+
+    nb-card-body {
+      flex: 1 1 0;
+      height: auto;
+    }
+  }
+
+  @include ga-overrides.input-appearance($control-height, var(--gauzy-card-1));
 }
 
-// Every control on this screen at the app's 2rem / 12px set, the size the rest of
-// the Sales forms use. Fallbacks on the custom properties: `--gauzy-*` is
-// undefined in material-light / material-dark, where a `var()` without one is
-// dropped.
+// ── Header ───────────────────────────────────────────────────────────────────
+.pe-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pe-back {
+  flex: 0 0 auto;
+  padding: 0 0.25rem;
+}
+
+.pe-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+.pe-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+// Save: the page's one filled button, at the size of the details page's Edit.
+.pe-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 1.625rem;
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  text-transform: none;
+  box-shadow: none;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+    margin: 0;
+    color: inherit;
+  }
+}
+
+// ── Body ─────────────────────────────────────────────────────────────────────
+// The body fills the card; the fields take their own height and the editors the rest,
+// down to the bottom of the screen. Long text scrolls inside its editor, so the page
+// itself does not scroll; on a short screen the editors keep a usable minimum height and
+// the body scrolls instead.
+.pe-body {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.pe-form {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 0;
+}
+
+// Job post URL, contact and tags: three equal columns.
+.pe-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem 1.25rem;
+}
+
+// The two editors: two equal columns, on the same left edge as the fields above.
+.pe-editors {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(20rem, 1fr);
+  align-items: stretch;
+  gap: 1.25rem;
+  min-height: 20rem;
+
+  .pe-field {
+    min-height: 0;
+  }
+
+  // Each editor stretches to its column's height: toolbar on top, the writing area
+  // filling the rest and scrolling its own text.
+  ga-rich-text-editor {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  ::ng-deep .rich-text-editor {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  ::ng-deep .rich-text-editor__content {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  // The writing surface covers the whole area, so a click anywhere in it starts typing.
+  ::ng-deep .ProseMirror {
+    min-height: 100%;
+  }
+}
+
+.pe-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+// Every label on the form — this template's and the tags input's own — at one size and
+// one distance from its control.
+:host ::ng-deep label.label {
+  display: block;
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+}
+
+// ── Controls: one height, one corner, one text size ─────────────────────────
+// Fallbacks on the custom properties: `--gauzy-*` is undefined in material-light /
+// material-dark, where a `var()` without one is dropped.
 :host {
-  ::ng-deep label.label {
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1rem;
-    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
-  }
-
   input[nbInput] {
-    height: 2rem;
+    height: $control-height;
     // `!important` against the shared `dialog()` mixin (`gauzy/_gauzy-dialogs`),
-    // which pins every input on the page to a 2.375rem `min-height` with
-    // `!important` of its own.
-    min-height: 2rem !important;
+    // which pins every input on the page to a `min-height` with `!important` of its own.
+    min-height: $control-height !important;
     padding: 0 0.75rem;
-    font-size: 12px;
-    line-height: 1rem;
-  }
-
-  ::ng-deep nb-select .select-button {
-    height: 2rem;
-    min-height: 2rem !important;
-    padding-block: 0;
-    padding-inline-start: 0.75rem !important;
-    font-size: 12px;
-    line-height: 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
   }
 
   ::ng-deep .ng-select .ng-select-container {
-    min-height: 2rem !important;
-    font-size: 12px;
+    min-height: $control-height !important;
+    height: $control-height !important;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+  }
+
+  // Selected tag chips sit inside the control's height instead of stretching it.
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container {
+    padding-top: 0;
+    padding-bottom: 0;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  ::ng-deep nb-select .select-button {
+    height: $control-height;
+    min-height: $control-height !important;
+    padding-block: 0;
+    padding-inline-start: 0.75rem !important;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+}
+
+// ── Narrower screens ─────────────────────────────────────────────────────────
+@media screen and (max-width: 75rem) {
+  // Stacked editors each keep a fixed working height; the body scrolls between them.
+  .pe-editors {
+    flex: 0 0 auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 24rem;
+  }
+}
+
+@media screen and (max-width: 48rem) {
+  .pe-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pe-body {
+    padding: 1rem;
   }
 }
