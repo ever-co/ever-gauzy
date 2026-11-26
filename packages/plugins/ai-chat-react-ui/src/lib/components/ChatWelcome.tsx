@@ -345,7 +345,7 @@ export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWel
 						margin: 0
 					}}
 				>
-					{t('AI_ASSISTANT.TITLE', 'AI Assistant')}
+					{t('AI_ASSISTANT.TITLE', 'Ever SI')}
 				</h3>
 				<p
 					className="gz-ai-welcome-subtitle"

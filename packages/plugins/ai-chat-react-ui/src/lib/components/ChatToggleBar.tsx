@@ -92,7 +92,7 @@ export function ChatToggleBar({ isExpanded, onToggle, onNewChat, messageCount = 
 			role="button"
 			tabIndex={0}
 			aria-expanded={isExpanded}
-			aria-label="Toggle AI Chat"
+			aria-label="Toggle Ever SI"
 		>
 			{/* Left: icon + label + badge */}
 			<div style={titleStyle}>
@@ -113,7 +113,7 @@ export function ChatToggleBar({ isExpanded, onToggle, onNewChat, messageCount = 
 					<path d="M15 13v2" />
 					<path d="M9 13v2" />
 				</svg>
-				<span>AI Chat</span>
+				<span>Ever SI</span>
 				{!isExpanded && messageCount > 0 && <span style={badgeStyle}>{messageCount}</span>}
 			</div>
 
