@@ -179,6 +179,36 @@ export async function loadMonthPayments(
 }
 
 /**
+ * The payments of the second before `date` (a payment a part of a second earlier than it), nearest first. The read
+ * includes `date` itself, whose rows come first in this order and are in the full same-date read already, so it pages
+ * past them until a page holds a payment earlier than `date`: that page holds the nearest of them.
+ */
+async function readSecondBefore(
+	service: PaymentService,
+	scope: IRecordViewScope,
+	previousSecond: moment.Moment,
+	date: moment.Moment
+): Promise<IPayment[]> {
+	const payments: IPayment[] = [];
+	for (let page = 1; page <= PAYMENT_READ_MAX_PAGES; page++) {
+		const { items = [] } = await service.pagination({
+			where: {
+				organizationId: scope.organizationId,
+				tenantId: scope.tenantId,
+				paymentDate: { startDate: paymentDateBound(previousSecond), endDate: paymentDateBound(date) }
+			},
+			order: { paymentDate: 'DESC', createdAt: 'DESC' },
+			take: PAYMENT_PAGE_SIZE,
+			skip: page
+		});
+		payments.push(...items);
+		const reachedEarlier = items.some((item) => moment.utc(item.paymentDate).isBefore(date));
+		if (items.length < PAYMENT_PAGE_SIZE || reachedEarlier) break;
+	}
+	return payments;
+}
+
+/**
  * The payments either side of one, in the page's full order — payment date, then when they were recorded, then id:
  * every payment of its own payment date, which can tie with it, and the few of the nearest date before and after it.
  * {@link paymentNeighbours} puts them in that order, so a payment among many of the same date gets the ones right
@@ -208,17 +238,18 @@ export async function loadPaymentNeighbours(
 	const date = moment.utc(payment.paymentDate).startOf('second');
 	const previousSecond = date.clone().subtract(1, 'second');
 	const nextSecond = date.clone().add(1, 'second');
-	// The endpoint's bounds are whole seconds and include both ends, while a payment date can carry milliseconds.
-	// The same-date read is paged in full and spans the second before through the next one, so every payment a part
-	// of a second away is in it. The earlier and later reads keep their bounds at those seconds: rows exactly on a
-	// bound can fill their ten places, but they are then in the full read too, and nearer than anything they push out.
-	const [sameDate, before, after] = await Promise.all([
-		loadPaymentsBetween(service, scope, previousSecond, nextSecond),
+	// The endpoint's bounds are whole seconds and include both ends, while a payment date can carry milliseconds. The
+	// payment's own second is read in full, up to the next second, so a payment a part of a second after it is found.
+	// The earlier and later reads keep strict bounds at the seconds around it, so rows already read never fill their
+	// ten places ahead of the nearest payment beyond them.
+	const [sameDate, justBefore, before, after] = await Promise.all([
+		loadPaymentsBetween(service, scope, date, nextSecond),
+		readSecondBefore(service, scope, previousSecond, date),
 		read(moment.utc(0), previousSecond, 'DESC'),
 		read(nextSecond, moment.utc('9999-12-31T23:59:59Z'), 'ASC')
 	]);
 	const unique = new Map<string, IPayment>();
-	for (const item of [...sameDate, ...(before.items ?? []), ...(after.items ?? [])]) {
+	for (const item of [...sameDate, ...justBefore, ...(before.items ?? []), ...(after.items ?? [])]) {
 		unique.set(item.id, item);
 	}
 	return paymentNeighbours([...unique.values()], payment);

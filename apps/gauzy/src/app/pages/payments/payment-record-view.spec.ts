@@ -160,4 +160,45 @@ describe('the neighbour reads', () => {
 		expect(previous?.id).toBe('yesterday');
 		expect(next?.id).toBe('midnight-0');
 	});
+
+	it('stay answerable when thousands of payments sit in the second before', async () => {
+		// 2,000 payments at midnight and this one a second later: more than a full read takes, so the second before
+		// is read nearest first instead.
+		const payment = row('current', '2026-05-01T00:00:01.300Z');
+		const midnight = Array.from({ length: 2000 }, (_, index) =>
+			row(
+				`midnight-${String(index).padStart(4, '0')}`,
+				'2026-05-01T00:00:00.000Z',
+				`2026-05-01T08:${String(Math.floor(index / 60)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}.000Z`
+			)
+		);
+		const service = endpointOver([...midnight, payment]);
+
+		const { previous, next } = await loadPaymentNeighbours(service, SCOPE, payment);
+
+		expect(previous?.id).toBe('midnight-1999');
+		expect(next).toBeNull();
+	});
+
+	it('find a payment a part of a second earlier behind many on the same second', async () => {
+		const payment = row('current', '2026-05-01T00:00:00.000Z', '2026-05-01T08:00:00.000Z');
+		const sameSecond = Array.from({ length: 150 }, (_, index) =>
+			row(
+				`same-${String(index).padStart(3, '0')}`,
+				'2026-05-01T00:00:00.000Z',
+				`2026-05-01T09:${String(Math.floor(index / 60)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}.000Z`
+			)
+		);
+		const service = endpointOver([
+			row('yesterday', '2026-04-30T09:00:00.000Z'),
+			row('half-second-before', '2026-04-30T23:59:59.500Z'),
+			payment,
+			...sameSecond
+		]);
+
+		const { previous, next } = await loadPaymentNeighbours(service, SCOPE, payment);
+
+		expect(previous?.id).toBe('half-second-before');
+		expect(next?.id).toBe('same-000');
+	});
 });
