@@ -107,12 +107,18 @@ export const filterBarVisible = async () => {
 };
 
 export const presetChipsVisible = async () => {
-	// Open the filter panel, check the chips are in it, then close it again so the list keeps its usual height.
-	await dispatchClick(DocumentsHubPage.filterPanelToggleCss);
+	// The chips are in the filter panel: open it if it is closed, check the chips, and close it again only if this
+	// check opened it, so the list keeps the height the next step expects.
+	const wasOpen = (await getPage().locator(DocumentsHubPage.filterPanelOpenCss).count()) > 0;
+	if (!wasOpen) {
+		await dispatchClick(DocumentsHubPage.filterPanelToggleCss);
+	}
 	await verifyElementIsVisible(DocumentsHubPage.filterPanelOpenCss);
 	await verifyElementIsVisible(DocumentsHubPage.presetChipCss);
-	await dispatchClick(DocumentsHubPage.filterPanelToggleCss);
-	await verifyElementNotExist(DocumentsHubPage.filterPanelOpenCss);
+	if (!wasOpen) {
+		await dispatchClick(DocumentsHubPage.filterPanelToggleCss);
+		await verifyElementNotExist(DocumentsHubPage.filterPanelOpenCss);
+	}
 };
 
 /** Reads a preset chip's live facet count, e.g. "Needs review (3)" -> 3. `null` when not rendered. */
