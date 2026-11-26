@@ -5256,6 +5256,20 @@
 		"WORKSPACE": "Espace de travail",
 		"SWITCH_WORKSPACE": "Changer d'espace de travail"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "Vous êtes ici",
+		"SOON": "Bientôt",
+		"BETA": "Bêta",
+		"FOOTER": "S'ouvre dans un nouvel onglet. Vous devrez peut-être vous connecter.",
+		"OPEN_APP": "{{ app }}, s'ouvre dans un nouvel onglet",
+		"CURRENT_APP": "{{ app }}, vous êtes ici",
+		"PLACEMENT_TITLE": "Lanceur d'applications",
+		"PLACEMENT_DESCRIPTION": "L'emplacement du raccourci vers les autres applications Ever. S'applique à ce navigateur uniquement.",
+		"PLACEMENT_SIDEBAR": "Barre latérale",
+		"PLACEMENT_HEADER": "Barre du haut",
+		"PLACEMENT_RAIL": "Colonne de gauche",
+		"NOT_SAVED": "Ce navigateur n'a pas enregistré ce choix, il reste actif jusqu'au rechargement de la page."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "Assistant IA",
 		"OPEN": "Ouvrir l'assistant IA",

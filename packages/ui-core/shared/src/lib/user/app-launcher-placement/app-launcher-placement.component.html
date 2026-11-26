@@ -1,0 +1,86 @@
+<fieldset class="placement" [attr.aria-describedby]="groupName + '-description'">
+	<legend class="label">{{ 'APP_LAUNCHER.PLACEMENT_TITLE' | translate }}</legend>
+	<p class="placement__description" [id]="groupName + '-description'">
+		{{ 'APP_LAUNCHER.PLACEMENT_DESCRIPTION' | translate }}
+	</p>
+
+	<div class="placement__tiles">
+		@for (placement of placements; track placement) {
+			<label class="placement__tile" [class.placement__tile--picked]="launcher.placement() === placement">
+				<input
+					class="placement__input"
+					type="radio"
+					[name]="groupName"
+					[value]="placement"
+					[checked]="launcher.placement() === placement"
+					(change)="pick(placement)"
+				/>
+				<!-- A small picture of the shell: the window, the sidebar, the top bar, and where the launcher sits. -->
+				<svg class="placement__preview" viewBox="0 0 96 60" aria-hidden="true" focusable="false">
+					<rect class="frame" x="0.5" y="0.5" width="95" height="59" rx="5" />
+					@switch (placement) {
+						@case ('sidebar') {
+							<path
+								class="pane"
+								d="M6 0.5 H30 V59.5 H6 A5.5 5.5 0 0 1 0.5 54 V6 A5.5 5.5 0 0 1 6 0.5 Z"
+							/>
+							<line class="rule" x1="30" y1="12" x2="95.5" y2="12" />
+							<circle class="spot" cx="8" cy="7" r="3" />
+							<rect class="line" x="13" y="5.5" width="13" height="3" rx="1.5" />
+							<rect class="line" x="5" y="18" width="20" height="3" rx="1.5" />
+							<rect class="line" x="5" y="25" width="16" height="3" rx="1.5" />
+							<rect class="line" x="5" y="32" width="18" height="3" rx="1.5" />
+						}
+						@case ('header') {
+							<path
+								class="pane"
+								d="M6 0.5 H30 V59.5 H6 A5.5 5.5 0 0 1 0.5 54 V6 A5.5 5.5 0 0 1 6 0.5 Z"
+							/>
+							<line class="rule" x1="30" y1="12" x2="95.5" y2="12" />
+							<circle class="mark" cx="8" cy="7" r="3" />
+							<rect class="line" x="13" y="5.5" width="13" height="3" rx="1.5" />
+							<rect class="line" x="5" y="18" width="20" height="3" rx="1.5" />
+							<rect class="line" x="5" y="25" width="16" height="3" rx="1.5" />
+							<rect class="line" x="5" y="32" width="18" height="3" rx="1.5" />
+							<g class="spot">
+								<circle cx="83" cy="3.5" r="1" />
+								<circle cx="86" cy="3.5" r="1" />
+								<circle cx="89" cy="3.5" r="1" />
+								<circle cx="83" cy="6.5" r="1" />
+								<circle cx="86" cy="6.5" r="1" />
+								<circle cx="89" cy="6.5" r="1" />
+								<circle cx="83" cy="9.5" r="1" />
+								<circle cx="86" cy="9.5" r="1" />
+								<circle cx="89" cy="9.5" r="1" />
+							</g>
+						}
+						@case ('rail') {
+							<path
+								class="pane"
+								d="M6 0.5 H38 V59.5 H6 A5.5 5.5 0 0 1 0.5 54 V6 A5.5 5.5 0 0 1 6 0.5 Z"
+							/>
+							<line class="rule" x1="12" y1="0.5" x2="12" y2="59.5" />
+							<line class="rule" x1="38" y1="12" x2="95.5" y2="12" />
+							<g class="spot">
+								<rect x="3" y="5" width="6" height="6" rx="1.5" />
+								<rect x="3" y="14" width="6" height="6" rx="1.5" />
+								<rect x="3" y="23" width="6" height="6" rx="1.5" />
+								<rect x="3" y="32" width="6" height="6" rx="1.5" />
+							</g>
+							<circle class="mark" cx="18" cy="7" r="3" />
+							<rect class="line" x="23" y="5.5" width="11" height="3" rx="1.5" />
+							<rect class="line" x="16" y="18" width="18" height="3" rx="1.5" />
+							<rect class="line" x="16" y="25" width="14" height="3" rx="1.5" />
+							<rect class="line" x="16" y="32" width="16" height="3" rx="1.5" />
+						}
+					}
+				</svg>
+				<span class="placement__name">{{ labelKeys[placement] | translate }}</span>
+			</label>
+		}
+	</div>
+
+	@if (notSaved()) {
+		<p class="placement__note" role="status">{{ 'APP_LAUNCHER.NOT_SAVED' | translate }}</p>
+	}
+</fieldset>

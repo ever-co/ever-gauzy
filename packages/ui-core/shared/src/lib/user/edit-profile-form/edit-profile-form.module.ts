@@ -16,6 +16,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationsService, RoleService } from '@gauzy/ui-core/core';
 import { EditProfileFormComponent } from './edit-profile-form.component';
+import { AppLauncherPlacementComponent } from '../app-launcher-placement/app-launcher-placement.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
@@ -50,7 +51,8 @@ import { TimeZoneSelectorModule } from '../../modules/selectors';
 		RoleFormFieldModule,
 		TableComponentsModule,
 		TimeZoneSelectorModule,
-		PhoneFormInputModule
+		PhoneFormInputModule,
+		AppLauncherPlacementComponent
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],

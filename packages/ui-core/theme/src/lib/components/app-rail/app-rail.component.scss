@@ -1,0 +1,79 @@
+@use 'themes' as *;
+
+@include nb-install-component() {
+  display: block;
+  height: 100%;
+
+  .app-rail {
+    height: 100%;
+    padding: 0.75rem 0 0.5rem;
+    overflow-y: auto;
+    border-inline-end: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    background-color: nb-theme(gauzy-sidebar-background-1);
+    scrollbar-width: none;
+  }
+
+  .app-rail-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .app-rail-item {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+
+    // The current app: a 4 px bar on the rail's start edge, in the one accent.
+    &.current::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: 0;
+      top: 50%;
+      width: 4px;
+      height: 1.25rem;
+      transform: translateY(-50%);
+      border-start-end-radius: 4px;
+      border-end-end-radius: 4px;
+      background-color: nb-theme(color-primary-default);
+    }
+  }
+
+  .app-rail-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    outline: none;
+  }
+
+  a.app-rail-slot {
+    transition: background-color 0.15s ease-in-out;
+
+    &:hover {
+      background-color: nb-theme(background-basic-color-3);
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: -2px;
+    }
+  }
+
+  .app-rail-tile {
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 28%;
+    object-fit: cover;
+    user-select: none;
+    box-shadow: 0 0 0 1px var(--border-basic-color-4, rgba(143, 155, 179, 0.32));
+  }
+}

@@ -5255,6 +5255,20 @@
 		"WORKSPACE": "Area di lavoro",
 		"SWITCH_WORKSPACE": "Cambia area di lavoro"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "Sei qui",
+		"SOON": "Presto",
+		"BETA": "Beta",
+		"FOOTER": "Si apre in una nuova scheda. Potrebbe essere necessario accedere.",
+		"OPEN_APP": "{{ app }}, si apre in una nuova scheda",
+		"CURRENT_APP": "{{ app }}, sei qui",
+		"PLACEMENT_TITLE": "Avvio app",
+		"PLACEMENT_DESCRIPTION": "Dove si trova la scorciatoia per le altre app Ever. Vale solo per questo browser.",
+		"PLACEMENT_SIDEBAR": "Barra laterale",
+		"PLACEMENT_HEADER": "Barra superiore",
+		"PLACEMENT_RAIL": "Colonna a sinistra",
+		"NOT_SAVED": "Questo browser non ha salvato la scelta, che resta valida fino al ricaricamento della pagina."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "Assistente IA",
 		"OPEN": "Apri l'assistente IA",

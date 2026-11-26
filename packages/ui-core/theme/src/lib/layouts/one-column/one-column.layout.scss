@@ -560,6 +560,37 @@ nb-sidebar[tag='menu-sidebar'] {
   position: relative;
 }
 
+// The App Launcher's rail (the person's "Left rail" position, wide screens only): a column at the sidebar's start
+// edge. The sidebar grows by the rail's width and everything in it keeps Nebular's widths, so the brand row, the menu
+// and the user block look as they do without the rail; the header band and the page follow the sidebar's measured
+// edge (`--gz-band-left`), as they do when it collapses. Nebular sizes the sidebar from these custom properties.
+$nebular-sidebar-width: 16rem; // Nebular's `sidebar-width`, which no Gauzy theme changes
+$nebular-sidebar-width-compact: 3.5rem; // Nebular's `sidebar-width-compact`
+$app-rail-width: 3rem;
+
+nb-sidebar.menu-sidebar.with-app-rail {
+  --sidebar-width: #{$nebular-sidebar-width + $app-rail-width};
+  --sidebar-width-compact: #{$nebular-sidebar-width-compact + $app-rail-width};
+}
+
+.custom-box.with-app-rail {
+  padding-inline-start: $app-rail-width;
+
+  // Back to Nebular's widths for the content: some of its rules size from these properties (the compact menu).
+  > :not(.app-rail-column) {
+    --sidebar-width: #{$nebular-sidebar-width};
+    --sidebar-width-compact: #{$nebular-sidebar-width-compact};
+  }
+}
+
+.app-rail-column {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: $app-rail-width;
+  z-index: 1;
+}
+
 .rail-edge-button {
   position: absolute;
   z-index: 1041;

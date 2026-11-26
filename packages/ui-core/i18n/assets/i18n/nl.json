@@ -5255,6 +5255,20 @@
 		"WORKSPACE": "Werkruimte",
 		"SWITCH_WORKSPACE": "Van werkruimte wisselen"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "Je bent hier",
+		"SOON": "Binnenkort",
+		"BETA": "Bèta",
+		"FOOTER": "Opent in een nieuw tabblad. Mogelijk moet je inloggen.",
+		"OPEN_APP": "{{ app }}, opent in een nieuw tabblad",
+		"CURRENT_APP": "{{ app }}, je bent hier",
+		"PLACEMENT_TITLE": "App-starter",
+		"PLACEMENT_DESCRIPTION": "Waar de snelkoppeling naar de andere Ever-apps staat. Geldt alleen voor deze browser.",
+		"PLACEMENT_SIDEBAR": "Zijbalk",
+		"PLACEMENT_HEADER": "Bovenbalk",
+		"PLACEMENT_RAIL": "Kolom links",
+		"NOT_SAVED": "Deze browser heeft de keuze niet bewaard, dus ze geldt tot de pagina opnieuw wordt geladen."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI-assistent",
 		"OPEN": "AI-assistent openen",

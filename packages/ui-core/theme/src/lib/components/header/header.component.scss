@@ -89,6 +89,14 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       }
     }
 
+    // The App Launcher's grid button (the "Top bar" position), after the scrolling selector row.
+    .header-trail {
+      display: flex;
+      align-items: center;
+      flex: none;
+      margin-inline: 0.5rem 1rem;
+    }
+
     .logo-container {
       display: flex;
       align-items: center;

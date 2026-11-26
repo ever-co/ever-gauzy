@@ -5251,6 +5251,20 @@
 		"WORKSPACE": "Arbeitsbereich",
 		"SWITCH_WORKSPACE": "Arbeitsbereich wechseln"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "Sie sind hier",
+		"SOON": "Bald",
+		"BETA": "Beta",
+		"FOOTER": "Öffnet sich in einem neuen Tab. Eventuell müssen Sie sich anmelden.",
+		"OPEN_APP": "{{ app }}, öffnet sich in einem neuen Tab",
+		"CURRENT_APP": "{{ app }}, Sie sind hier",
+		"PLACEMENT_TITLE": "App-Starter",
+		"PLACEMENT_DESCRIPTION": "Wo die Verknüpfung zu den anderen Ever-Apps sitzt. Gilt nur für diesen Browser.",
+		"PLACEMENT_SIDEBAR": "Seitenleiste",
+		"PLACEMENT_HEADER": "Obere Leiste",
+		"PLACEMENT_RAIL": "Linke Leiste",
+		"NOT_SAVED": "Dieser Browser hat die Auswahl nicht gespeichert, sie gilt bis zum Neuladen der Seite."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "KI-Assistent",
 		"OPEN": "KI-Assistent öffnen",

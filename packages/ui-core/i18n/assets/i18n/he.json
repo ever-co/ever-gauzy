@@ -5279,6 +5279,20 @@
 		"WORKSPACE": "סביבת עבודה",
 		"SWITCH_WORKSPACE": "החלפת סביבת עבודה"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "אתם כאן",
+		"SOON": "בקרוב",
+		"BETA": "בטא",
+		"FOOTER": "נפתח בכרטיסייה חדשה. ייתכן שתצטרכו להתחבר.",
+		"OPEN_APP": "{{ app }}, נפתח בכרטיסייה חדשה",
+		"CURRENT_APP": "{{ app }}, אתם כאן",
+		"PLACEMENT_TITLE": "מפעיל האפליקציות",
+		"PLACEMENT_DESCRIPTION": "היכן נמצא קיצור הדרך לאפליקציות Ever האחרות. חל על הדפדפן הזה בלבד.",
+		"PLACEMENT_SIDEBAR": "סרגל צד",
+		"PLACEMENT_HEADER": "סרגל עליון",
+		"PLACEMENT_RAIL": "עמודת צד",
+		"NOT_SAVED": "הדפדפן לא שמר את הבחירה, ולכן היא תקפה עד לטעינה מחדש של הדף."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "עוזר AI",
 		"OPEN": "פתיחת עוזר ה-AI",

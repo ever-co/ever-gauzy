@@ -129,6 +129,14 @@
     </div>
   </div>
 
+  <!-- The App Launcher at the right end of the top bar, for people who chose "Top bar" for it. It sits outside the
+       selector row, which scrolls when the selectors need more room than the bar has, so it is always in view. -->
+  @if (launcher.showsHeaderButton()) {
+    <div class="header-trail">
+      <gauzy-app-switcher [variant]="'grid'"></gauzy-app-switcher>
+    </div>
+  }
+
   @if (showExtraActions) {
     <div (window:resize)="closeExtraActionsIfLarge($event)" class="extra-actions">
       @if (selectorsVisibility?.team) {

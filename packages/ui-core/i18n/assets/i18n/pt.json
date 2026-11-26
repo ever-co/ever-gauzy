@@ -5785,6 +5785,20 @@
 		"WORKSPACE": "Espaço de trabalho",
 		"SWITCH_WORKSPACE": "Trocar de espaço de trabalho"
 	},
+	"APP_LAUNCHER": {
+		"YOU_ARE_HERE": "Você está aqui",
+		"SOON": "Em breve",
+		"BETA": "Beta",
+		"FOOTER": "Abre em uma nova aba. Talvez seja necessário entrar.",
+		"OPEN_APP": "{{ app }}, abre em uma nova aba",
+		"CURRENT_APP": "{{ app }}, você está aqui",
+		"PLACEMENT_TITLE": "Inicializador de aplicativos",
+		"PLACEMENT_DESCRIPTION": "Onde fica o atalho para os outros aplicativos Ever. Vale apenas para este navegador.",
+		"PLACEMENT_SIDEBAR": "Barra lateral",
+		"PLACEMENT_HEADER": "Barra superior",
+		"PLACEMENT_RAIL": "Coluna à esquerda",
+		"NOT_SAVED": "Este navegador não salvou a escolha, então ela vale até a página ser recarregada."
+	},
 	"AI_ASSISTANT": {
 		"TITLE": "Assistente de IA",
 		"ATTACH_SOON": "Anexar arquivos ou pastas (em breve)",
