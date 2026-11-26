@@ -310,12 +310,11 @@ $sheet-indent: 2.75rem;
   }
 }
 
-.pd-sheet-status {
-  padding: 0;
-  margin: 0;
-  border: 0;
-  font-size: 0.8125rem;
-  line-height: 1.25rem;
+.pd-sheet-fact dd.pd-sheet-code {
+  font-family: $sheet-mono;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: $sheet-ink;
 }
 
@@ -492,60 +491,89 @@ $sheet-indent: 2.75rem;
 }
 
 // Sender and contacts on the left, lines for the client to sign and date on the right.
+// Sign-off: two columns, each a label, a line to sign on, the name under it and a dated line;
+// then the sender's contact details on one line.
 .pd-sheet-footer {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2rem;
-  padding-top: 1.25rem;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding-top: 1.75rem;
   border-top: 1px solid $sheet-rule;
+  break-inside: avoid;
 }
 
-.pd-sheet-company {
+.pd-sheet-signoff {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 3rem;
+}
+
+.pd-sheet-sign {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  min-width: 0;
+}
+
+.pd-sheet-sign-label {
+  margin-bottom: 2.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: $sheet-muted;
+}
+
+.pd-sheet-sign-line {
+  display: block;
+  height: 1px;
+  background: $sheet-sign-line;
+}
+
+.pd-sheet-sign-name {
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: $sheet-ink;
+  overflow-wrap: anywhere;
+}
+
+// "Date ________" under the name.
+.pd-sheet-sign-date {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: $sheet-muted;
+
+  .pd-sheet-sign-line {
+    margin-bottom: 0.1875rem;
+  }
+}
+
+// Company · website · email · phone.
+.pd-sheet-company {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
   min-width: 0;
   font-style: normal;
   font-size: 0.75rem;
   line-height: 1.125rem;
   color: $sheet-muted;
   overflow-wrap: anywhere;
+
+  > span + span::before {
+    content: '·';
+    margin: 0 0.5rem;
+    color: $sheet-muted;
+  }
 }
 
 .pd-sheet-company-name {
-  margin-bottom: 0.125rem;
-  font-size: 0.8125rem;
   font-weight: 600;
   color: $sheet-ink;
-}
-
-.pd-sheet-signoff {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  flex: 0 0 auto;
-  width: 16rem;
-}
-
-.pd-sheet-sign {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: end;
-  gap: 0.75rem;
-}
-
-.pd-sheet-sign-label {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  white-space: nowrap;
-  color: $sheet-muted;
-}
-
-.pd-sheet-sign-line {
-  height: 1px;
-  margin-bottom: 0.1875rem;
-  background: $sheet-sign-line;
 }
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
@@ -703,12 +731,7 @@ $sheet-indent: 2.75rem;
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .pd-sheet-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .pd-sheet-signoff {
-    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
