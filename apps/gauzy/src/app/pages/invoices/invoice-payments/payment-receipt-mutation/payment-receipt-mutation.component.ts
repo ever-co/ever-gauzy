@@ -23,8 +23,17 @@ export class InvoicePaymentReceiptMutationComponent extends TranslationBaseCompo
 	invoice: IInvoice;
 	payment: IPayment;
 
+	/**
+	 * Sends the receipt, then closes with what the send answered — `true` sent, `false` the mail could not be sent or
+	 * the request was refused — so the page that opened the dialog can say which.
+	 */
 	async send() {
-		await this.paymentService.sendReceipt(this.payment, this.invoice);
+		try {
+			const sent = await this.paymentService.sendReceipt(this.payment, this.invoice);
+			this.dialogRef.close(sent !== false);
+		} catch {
+			this.dialogRef.close(false);
+		}
 	}
 
 	cancel() {

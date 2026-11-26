@@ -28,6 +28,22 @@ export class PaymentService {
 		);
 	}
 
+	/**
+	 * A page of payments, as the payments grid reads them: `where` may carry a `paymentDate` range of `startDate` and
+	 * `endDate`; `take` is the page size, at most 100, and `skip` the page, counted from 1.
+	 */
+	pagination(query: {
+		where: Record<string, unknown>;
+		order?: Record<string, 'ASC' | 'DESC'>;
+		relations?: string[];
+		skip?: number;
+		take?: number;
+	}): Promise<IPagination<IPayment>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IPayment>>(`${API_PREFIX}/payments/pagination`, { params: toParams(query) })
+		);
+	}
+
 	add(payment: IPayment): Promise<IPayment> {
 		return firstValueFrom(this.http.post<IPayment>(`${API_PREFIX}/payments`, payment));
 	}
