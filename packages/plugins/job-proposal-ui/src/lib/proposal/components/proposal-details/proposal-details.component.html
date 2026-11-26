@@ -1,120 +1,161 @@
-<nb-card>
-  <nb-card-header class="card-header-title">
-    <div class="card-header-title">
-      <ngx-back-navigation></ngx-back-navigation>
-      <h4>
-        {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
-      </h4>
-      @if (proposal) {
-        <span class="status-pill" [class.accepted]="isAccepted">
-          {{ (isAccepted ? 'BUTTONS.ACCEPTED' : 'BUTTONS.SENT') | translate }}
-        </span>
-      }
-    </div>
-    <div class="d-flex align-items-center">
-      @if (proposal?.id) {
-        <ngx-favorite-toggle
-          [entityType]="BaseEntityEnum.Proposal"
-          [entityId]="proposal.id"
-          size="small"
-          status="basic"
-          spacing="list"
-        ></ngx-favorite-toggle>
-      }
-      <button (click)="edit()" nbButton type="button" status="basic" class="action primary" size="small">
-        <nb-icon icon="edit-outline"></nb-icon>
-        {{ 'BUTTONS.EDIT' | translate }}
-      </button>
-    </div>
-  </nb-card-header>
-  <nb-card-body class="main-content">
-    <div class="details-grid">
-      <div class="content">
-        <section class="panel">
-          <h6 class="panel-title">
-            {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT' | translate }}
-          </h6>
-          @if (proposal?.proposalContent) {
-            <div class="rich-text rich-text-content" [innerHTML]="proposalContent"></div>
-          } @else {
-            <span class="empty">—</span>
-          }
-        </section>
-        <section class="panel">
-          <h6 class="panel-title">
-            {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT' | translate }}
-          </h6>
-          @if (proposal?.jobPostContent) {
-            <div class="rich-text rich-text-content" [innerHTML]="jobPostContent"></div>
-          } @else {
-            <span class="empty">—</span>
-          }
-        </section>
-      </div>
+<ngx-record-view-page heading="PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS" [backLink]="backLink" [state]="state">
+	@if (proposal) {
+		<div recordPageActions class="pd-actions">
+			<span class="pd-status" [class.is-accepted]="isAccepted">
+				<span class="pd-dot" aria-hidden="true"></span>
+				{{ (isAccepted ? 'BUTTONS.ACCEPTED' : 'BUTTONS.SENT') | translate }}
+			</span>
+			@if (proposal.id) {
+				<ngx-favorite-toggle
+					[entityType]="BaseEntityEnum.Proposal"
+					[entityId]="proposal.id"
+					size="tiny"
+					status="basic"
+					appearance="ghost"
+					spacing="list"
+				></ngx-favorite-toggle>
+			}
+			<button
+				nbButton
+				size="small"
+				status="primary"
+				class="pd-action"
+				type="button"
+				(click)="edit()"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+			</button>
+		</div>
+	}
 
-      <aside class="panel summary">
-        <h6 class="panel-title">{{ 'BUTTONS.DETAILS' | translate }}</h6>
-        <dl>
-          <div class="field">
-            <dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON' | translate }}</dt>
-            <dd>
-              @if (proposal?.valueDate) {
-                {{ proposal.valueDate | date : 'shortDate' | dateFormat }}
-              } @else {
-                <span class="empty">—</span>
-              }
-            </dd>
-          </div>
-          @if (!employee?.id) {
-            <div class="field">
-              <dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}</dt>
-              <dd>
-                @if (proposal?.author) {
-                  <span class="person">
-                    @if (proposal.author.user?.imageUrl) {
-                      <img [src]="proposal.author.user.imageUrl" alt="" />
-                    } @else {
-                      <span class="initial">{{ proposal.author.fullName?.charAt(0) }}</span>
-                    }
-                    {{ proposal.author.fullName }}
-                  </span>
-                } @else {
-                  <span class="empty">—</span>
-                }
-              </dd>
-            </div>
-          }
-          @if (proposal?.organizationContact) {
-            <div class="field">
-              <dt>{{ 'SM_TABLE.CONTACT' | translate }}</dt>
-              <dd>{{ proposal.organizationContact.name }}</dd>
-            </div>
-          }
-          <div class="field">
-            <dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL' | translate }}</dt>
-            <dd>
-              @if (jobPostLink) {
-                <a class="link" [href]="jobPostLink" target="_blank" rel="noopener noreferrer">
-                  {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST' | translate }}
-                  <nb-icon icon="external-link-outline"></nb-icon>
-                </a>
-              } @else {
-                <span class="empty">—</span>
-              }
-            </dd>
-          </div>
-          @if (proposal?.tags?.length) {
-            <div class="field">
-              <dt>{{ 'SM_TABLE.TAGS' | translate }}</dt>
-              <dd class="tags">
-                @for (tag of proposal.tags; track tag.id) {
-                  <span class="tag" [style.background]="tag.color" [style.color]="tagTextColor(tag)">{{ tag.name }}</span>
-                }
-              </dd>
-            </div>
-          }
-        </dl>
-      </aside>
-    </div>
-  </nb-card-body>
-</nb-card>
+	@if (proposal) {
+		<div class="pd-columns">
+			<div class="pd-col">
+				<section class="pd-panel">
+					<header class="pd-panel-header">
+						<h6 class="pd-panel-title">
+							<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
+							{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT' | translate }}
+						</h6>
+					</header>
+					@if (proposal.proposalContent) {
+						<div class="pd-rich-text rich-text-content" [innerHTML]="proposalContent"></div>
+					} @else {
+						<div class="pd-empty">—</div>
+					}
+				</section>
+
+				<section class="pd-panel">
+					<header class="pd-panel-header">
+						<h6 class="pd-panel-title">
+							<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+							{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT' | translate }}
+						</h6>
+					</header>
+					@if (proposal.jobPostContent) {
+						<div class="pd-rich-text rich-text-content" [innerHTML]="jobPostContent"></div>
+					} @else {
+						<div class="pd-empty">—</div>
+					}
+				</section>
+			</div>
+
+			<div class="pd-col">
+				<section class="pd-panel">
+					<header class="pd-panel-header">
+						<h6 class="pd-panel-title">
+							<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+							{{ 'BUTTONS.DETAILS' | translate }}
+						</h6>
+					</header>
+					<dl class="pd-details">
+						<div class="pd-detail">
+							<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON' | translate }}</dt>
+							<dd>
+								@if (proposal.valueDate) {
+									{{ proposal.valueDate | date : 'shortDate' | dateFormat }}
+								} @else {
+									<span class="pd-muted">—</span>
+								}
+							</dd>
+						</div>
+						@if (!employee?.id) {
+							<div class="pd-detail">
+								<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}</dt>
+								<dd>
+									@if (proposal.author) {
+										<span class="pd-person">
+											@if (proposal.author.user?.imageUrl) {
+												<img class="pd-avatar" [src]="proposal.author.user.imageUrl" alt="" />
+											} @else {
+												<span class="pd-avatar pd-avatar-initials" aria-hidden="true">{{
+													proposal.author.fullName?.charAt(0)
+												}}</span>
+											}
+											<span class="pd-person-name">{{ proposal.author.fullName }}</span>
+										</span>
+									} @else {
+										<span class="pd-muted">—</span>
+									}
+								</dd>
+							</div>
+						}
+						@if (proposal.organizationContact) {
+							<div class="pd-detail">
+								<dt>{{ 'SM_TABLE.CONTACT' | translate }}</dt>
+								<dd>{{ proposal.organizationContact.name }}</dd>
+							</div>
+						}
+						<div class="pd-detail">
+							<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL' | translate }}</dt>
+							<dd>
+								@if (jobPostLink) {
+									<a class="pd-link" [href]="jobPostLink" target="_blank" rel="noopener noreferrer">
+										{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST' | translate }}
+										<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+									</a>
+								} @else {
+									<span class="pd-muted">—</span>
+								}
+							</dd>
+						</div>
+						@if (proposal.tags?.length) {
+							<div class="pd-detail">
+								<dt>{{ 'SM_TABLE.TAGS' | translate }}</dt>
+								<dd class="pd-tags">
+									@for (tag of proposal.tags; track tag.id) {
+										<span class="pd-tag" [style.background]="tag.color" [style.color]="tagTextColor(tag)">{{
+											tag.name
+										}}</span>
+									}
+								</dd>
+							</div>
+						}
+						<!-- When the record was entered and last changed, set apart from the proposal's own facts. -->
+						<div class="pd-detail pd-detail-group">
+							<dt>{{ 'SM_TABLE.CREATED_AT' | translate }}</dt>
+							<dd>
+								@if (proposal.createdAt) {
+									{{ proposal.createdAt | dateTimeFormat }}
+								} @else {
+									<span class="pd-muted">—</span>
+								}
+							</dd>
+						</div>
+						<div class="pd-detail">
+							<dt>{{ 'SM_TABLE.LAST_UPDATED' | translate }}</dt>
+							<dd>
+								@if (proposal.updatedAt) {
+									{{ proposal.updatedAt | dateTimeFormat }}
+								} @else {
+									<span class="pd-muted">—</span>
+								}
+							</dd>
+						</div>
+					</dl>
+				</section>
+			</div>
+		</div>
+	}
+</ngx-record-view-page>
