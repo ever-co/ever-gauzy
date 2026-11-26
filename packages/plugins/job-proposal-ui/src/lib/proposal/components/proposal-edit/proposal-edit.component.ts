@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -56,7 +57,8 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 		private readonly _proposalsService: ProposalsService,
 		private readonly _organizationSettingService: OrganizationSettingService,
 		private readonly _cdRef: ChangeDetectorRef,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _location: Location
 	) {
 		super(translateService);
 	}
@@ -178,6 +180,13 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 			// Handle errors that occur during the update
 			this._errorHandlingService.handleError(error);
 		}
+	}
+
+	/**
+	 * Goes back to the page the user came from, as the header's back button always has.
+	 */
+	goBack(): void {
+		this._location.back();
 	}
 
 	/**
