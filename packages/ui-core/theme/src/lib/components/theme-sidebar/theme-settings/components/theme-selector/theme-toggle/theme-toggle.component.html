@@ -1,0 +1,11 @@
+<!-- The icon shows where a click goes: the sun in a dark theme, the moon in a light one (Eva, like the bar's
+     other icons). -->
+<button
+	type="button"
+	class="theme-toggle"
+	[title]="(isDark() ? 'HEADER.SWITCH_TO_LIGHT_THEME' : 'HEADER.SWITCH_TO_DARK_THEME') | translate"
+	[attr.aria-label]="(isDark() ? 'HEADER.SWITCH_TO_LIGHT_THEME' : 'HEADER.SWITCH_TO_DARK_THEME') | translate"
+	(click)="toggle()"
+>
+	<nb-icon [icon]="isDark() ? 'sun-outline' : 'moon-outline'" aria-hidden="true"></nb-icon>
+</button>

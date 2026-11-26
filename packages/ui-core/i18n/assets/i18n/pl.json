@@ -5252,7 +5252,9 @@
 		"EVER_APPS": "Aplikacje",
 		"SWITCH_EVER_APP": "Przejdź do innej aplikacji Ever",
 		"WORKSPACE": "Obszar roboczy",
-		"SWITCH_WORKSPACE": "Przełącz obszar roboczy"
+		"SWITCH_WORKSPACE": "Przełącz obszar roboczy",
+		"SWITCH_TO_DARK_THEME": "Przełącz na ciemny motyw",
+		"SWITCH_TO_LIGHT_THEME": "Przełącz na jasny motyw"
 	},
 	"APP_LAUNCHER": {
 		"YOU_ARE_HERE": "Jesteś tutaj",

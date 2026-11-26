@@ -5251,7 +5251,9 @@
 		"EVER_APPS": "التطبيقات",
 		"SWITCH_EVER_APP": "الانتقال إلى تطبيق Ever آخر",
 		"WORKSPACE": "مساحة العمل",
-		"SWITCH_WORKSPACE": "تبديل مساحة العمل"
+		"SWITCH_WORKSPACE": "تبديل مساحة العمل",
+		"SWITCH_TO_DARK_THEME": "التبديل إلى السمة الداكنة",
+		"SWITCH_TO_LIGHT_THEME": "التبديل إلى السمة الفاتحة"
 	},
 	"APP_LAUNCHER": {
 		"YOU_ARE_HERE": "أنت هنا",

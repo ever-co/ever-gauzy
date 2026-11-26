@@ -5310,7 +5310,9 @@
 		"EVER_APPS": "Приложения",
 		"SWITCH_EVER_APP": "Превключване към друго приложение на Ever",
 		"WORKSPACE": "Работно пространство",
-		"SWITCH_WORKSPACE": "Смяна на работното пространство"
+		"SWITCH_WORKSPACE": "Смяна на работното пространство",
+		"SWITCH_TO_DARK_THEME": "Превключване към тъмна тема",
+		"SWITCH_TO_LIGHT_THEME": "Превключване към светла тема"
 	},
 	"APP_LAUNCHER": {
 		"YOU_ARE_HERE": "Вие сте тук",

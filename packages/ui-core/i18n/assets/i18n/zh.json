@@ -5786,7 +5786,9 @@
 		"EVER_APPS": "应用",
 		"SWITCH_EVER_APP": "切换到其他 Ever 应用",
 		"WORKSPACE": "工作区",
-		"SWITCH_WORKSPACE": "切换工作区"
+		"SWITCH_WORKSPACE": "切换工作区",
+		"SWITCH_TO_DARK_THEME": "切换到深色主题",
+		"SWITCH_TO_LIGHT_THEME": "切换到浅色主题"
 	},
 	"APP_LAUNCHER": {
 		"YOU_ARE_HERE": "您在这里",

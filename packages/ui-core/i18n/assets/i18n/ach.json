@@ -5023,7 +5023,9 @@
 		"EVER_APPS": "Apps",
 		"SWITCH_EVER_APP": "Switch to another Ever app",
 		"WORKSPACE": "Workspace",
-		"SWITCH_WORKSPACE": "Switch workspace"
+		"SWITCH_WORKSPACE": "Switch workspace",
+		"SWITCH_TO_DARK_THEME": "Switch to dark theme",
+		"SWITCH_TO_LIGHT_THEME": "Switch to light theme"
 	},
 	"APP_LAUNCHER": {
 		"YOU_ARE_HERE": "You're here",

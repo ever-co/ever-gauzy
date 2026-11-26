@@ -126,6 +126,12 @@
           (click)="toggleSidebarActions(action)"
         ></nb-action>
       }
+
+      <!-- Light or dark in one click, at the end of the bar; every theme stays in Quick settings,
+           the account panel and Settings > General. -->
+      <nb-action class="theme-toggle-action">
+        <gauzy-theme-toggle></gauzy-theme-toggle>
+      </nb-action>
     </div>
   </div>
 

@@ -5783,7 +5783,9 @@
 		"EVER_APPS": "Aplicativos",
 		"SWITCH_EVER_APP": "Mudar para outro aplicativo Ever",
 		"WORKSPACE": "Espaço de trabalho",
-		"SWITCH_WORKSPACE": "Trocar de espaço de trabalho"
+		"SWITCH_WORKSPACE": "Trocar de espaço de trabalho",
+		"SWITCH_TO_DARK_THEME": "Mudar para o tema escuro",
+		"SWITCH_TO_LIGHT_THEME": "Mudar para o tema claro"
 	},
 	"APP_LAUNCHER": {
 		"YOU_ARE_HERE": "Você está aqui",
