@@ -151,7 +151,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	 */
 	private withSectionHeadings(html: string | null | undefined): string {
 		if (!html) {
-			return html || '';
+			return '';
 		}
 		const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
 		const isBlank = (node: ChildNode | null) => node?.nodeType === Node.TEXT_NODE && !node.textContent?.trim();
