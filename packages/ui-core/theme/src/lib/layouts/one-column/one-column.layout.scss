@@ -80,8 +80,8 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       width: var(--gz-chat-width, 24rem) !important;
     }
 
-    // Maximized: take all space except the nav menu (Menu | Chat);
-    // the canvas is hidden (components stay alive) until restored.
+    // Maximized: take all space except the nav menu (Menu | Chat), still under the header band;
+    // the canvas is hidden (components stay alive, unsaved form input included) until restored.
     //
     // The fixed panel's horizontal start is its STATIC position — i.e. wherever the host lands in
     // the flex row — so pinning `right: 0` and letting the width compute keeps it exactly between
@@ -835,5 +835,16 @@ nb-sidebar[tag='menu-sidebar'] {
   }
   40% {
     transform: translateY(1px);
+  }
+}
+
+// The full-page chat route (/pages/ai-chat): that page covers the screen, so the shell's chrome is
+// hidden rather than torn down — leaving the page shows it again instantly, with nothing to reload.
+// The window's scroll is locked meanwhile by the layout component.
+:host ::ng-deep nb-layout.gz-chat-full-page {
+  nb-layout-header,
+  nb-layout-footer,
+  nb-sidebar.menu-sidebar {
+    display: none !important;
   }
 }

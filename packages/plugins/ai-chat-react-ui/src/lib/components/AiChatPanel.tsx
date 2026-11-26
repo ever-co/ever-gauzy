@@ -5,7 +5,8 @@ import {
 	useRef,
 	useState,
 	type CSSProperties,
-	type PointerEvent as ReactPointerEvent
+	type PointerEvent as ReactPointerEvent,
+	type SetStateAction
 } from 'react';
 import { useChat } from '@ai-sdk/react';
 import {
@@ -29,9 +30,11 @@ import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
 import { useChatTranslate } from '../use-chat-translate';
 import { ChatMessageList } from './ChatMessageList';
+import type { MessageFeedback } from './MessageActions';
 import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
+import { ChatHistoryDropdown } from './ChatHistoryDropdown';
 import { DocsAttachPicker } from './DocsAttachPicker';
 import { AttachmentPreview, type IPreviewableAttachment } from './AttachmentPreview';
 import { AttachmentCard } from './AttachmentCard';
@@ -39,6 +42,7 @@ import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-pr
 import { useChatTooltips } from '../use-chat-tooltips';
 import { chatTheme } from '../chat-theme';
 import { chatMarkdownCss } from '../chat-markdown-css';
+import { acquireAiChatSession, newConversationId } from './ai-chat-session';
 
 /**
  * What the docs upload endpoint answers with (the slice this panel reads).
@@ -85,13 +89,8 @@ function parseChatError(error: Error | undefined): { code?: string; providerId?:
 	}
 }
 
-/**
- * Client-generated conversation id (UUID v4, crypto-secure).
- * `crypto.randomUUID` is available in every browser Angular 21 supports.
- */
-function newConversationId(): string {
-	return crypto.randomUUID();
-}
+/** Width (px) of the centred reading column on the full-page chat (Maximize). */
+const FULL_PAGE_COLUMN = 768;
 
 /**
  * AiChatPanel
@@ -112,52 +111,6 @@ export function AiChatPanel() {
 	const store = useMemo(() => injector.get(Store), [injector]);
 	const chatSidebar = useMemo(() => injector.get(ChatSidebarService), [injector]);
 	const t = useChatTranslate(injector);
-	const [input, setInput] = useState('');
-
-	// Conversation persistence: a client-generated id sent with every turn;
-	// the backend saves the full message list for the current user.
-	const conversationIdRef = useRef<string>(newConversationId());
-	const [activeConversationId, setActiveConversationId] = useState(conversationIdRef.current);
-	const [showHistory, setShowHistory] = useState(false);
-	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
-	const [historyLoading, setHistoryLoading] = useState(false);
-
-	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
-	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
-	// Documents is asynchronous, so no id exists yet when the upload returns).
-	// An upload also keeps its picked `File`, so the preview opens instantly from memory.
-	const [attachments, setAttachments] = useState<IPreviewableAttachment[]>([]);
-	/** The attachment open in the preview overlay, if any. */
-	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
-	/**
-	 * Files uploaded this session, keyed by the id of the message they were sent with — one entry per
-	 * attachment, in order — so a card on a SENT message can still preview from memory. Cleared with
-	 * the panel; history reloads fall back to the Documents copy.
-	 */
-	const sentFilesRef = useRef(new Map<string, (File | undefined)[]>());
-	/**
-	 * Files of the message just sent, until it shows up in `messages` with its id. Keyed by the
-	 * MESSAGE (and the attachment's position in it), never by file name: without Documents a sent
-	 * file has no id, and two different `report.pdf` files would otherwise overwrite each other.
-	 */
-	const pendingSentFilesRef = useRef<{ text: string; files: (File | undefined)[] } | null>(null);
-	const [showAttachPicker, setShowAttachPicker] = useState(false);
-	const [isAttaching, setIsAttaching] = useState(false);
-	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
-	const [uploadingName, setUploadingName] = useState<string | null>(null);
-	const [attachmentError, setAttachmentError] = useState<string | null>(null);
-
-	// Docking / maximize state comes straight from the Angular
-	// ChatSidebarService signals — they also change outside this panel
-	// (e.g. collapsing clears maximized), so a live bridge is required.
-	const dockSide = useAngularSignal(injector, chatSidebar.position);
-	const isMaximized = useAngularSignal(injector, chatSidebar.maximized);
-	// True in the detached window (`/ai-chat/window`): there is no sidebar to
-	// dock, maximize, resize or collapse there, so those controls are dropped.
-	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
-	const rootRef = useRef<HTMLDivElement>(null);
-	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
-	useChatTooltips(rootRef);
 
 	const authHeaders = useCallback(
 		(): Record<string, string> => ({
@@ -167,6 +120,90 @@ export function AiChatPanel() {
 		}),
 		[store]
 	);
+
+	/**
+	 * The chat state shared by every mounted panel of this window (see `ai-chat-session.ts`): the
+	 * docked panel and the full-page chat (Maximize) are different components, so the conversation,
+	 * a reply still streaming, the draft and the staged attachments live there rather than here —
+	 * switching between the two then loses nothing.
+	 */
+	const session = useMemo(
+		() =>
+			acquireAiChatSession(store.user?.id ?? store.userId ?? null, ({ conversationIdRef: idRef }) => ({
+				transport: new DefaultChatTransport({
+					api: `${environment.API_BASE_URL}/api/ai-chat`,
+					headers: authHeaders,
+					body: () => ({ conversationId: idRef.current })
+				}),
+				// Resume the agent loop once all client tool results / approvals are in.
+				sendAutomaticallyWhen: (options) =>
+					lastAssistantMessageIsCompleteWithToolCalls(options) ||
+					lastAssistantMessageIsCompleteWithApprovalResponses(options)
+			})),
+		[store, authHeaders]
+	);
+
+	const [input, setInputState] = useState(session.input);
+	const setInput = useCallback(
+		(value: string) => {
+			session.input = value;
+			setInputState(value);
+		},
+		[session]
+	);
+
+	// Conversation persistence: a client-generated id sent with every turn;
+	// the backend saves the full message list for the current user.
+	const conversationIdRef = session.conversationIdRef;
+	const [activeConversationId, setActiveConversationId] = useState(conversationIdRef.current);
+	const [showHistory, setShowHistory] = useState(false);
+	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
+	const [historyLoading, setHistoryLoading] = useState(false);
+
+	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
+	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
+	// Documents is asynchronous, so no id exists yet when the upload returns).
+	// An upload also keeps its picked `File`, so the preview opens instantly from memory.
+	const [attachments, setAttachmentsState] = useState<IPreviewableAttachment[]>(session.attachments.current);
+	useEffect(() => session.onAttachments(setAttachmentsState), [session]);
+	const setAttachments = useCallback(
+		(update: SetStateAction<IPreviewableAttachment[]>) => session.setAttachments(update),
+		[session]
+	);
+	/** The attachment open in the preview overlay, if any. */
+	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
+	/**
+	 * Files uploaded this session, keyed by the id of the message they were sent with — one entry per
+	 * attachment, in order — so a card on a SENT message can still preview from memory. Kept for the
+	 * chat session (it survives Maximize / Restore); history reloads fall back to the Documents copy.
+	 */
+	const sentFilesRef = session.sentFilesRef;
+	/**
+	 * Files of the message just sent, until it shows up in `messages` with its id. Keyed by the
+	 * MESSAGE (and the attachment's position in it), never by file name: without Documents a sent
+	 * file has no id, and two different `report.pdf` files would otherwise overwrite each other.
+	 */
+	const pendingSentFilesRef = session.pendingSentFilesRef;
+	const [showAttachPicker, setShowAttachPicker] = useState(false);
+	const [isAttaching, setIsAttaching] = useState(false);
+	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
+	const [uploadingName, setUploadingName] = useState<string | null>(null);
+	const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
+	// Docking / maximize state comes straight from the Angular
+	// ChatSidebarService signals — they also change outside this panel
+	// (e.g. the full-page chat sets maximized while it is open), so a live
+	// bridge is required.
+	const dockSide = useAngularSignal(injector, chatSidebar.position);
+	const isMaximized = useAngularSignal(injector, chatSidebar.maximized);
+	// True in the detached window (`/ai-chat/window`): there is no sidebar to
+	// dock, maximize, resize or collapse there, so those controls are dropped.
+	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
+	const rootRef = useRef<HTMLDivElement>(null);
+	/** Holds the History button and, on the full page, its dropdown — the dropdown's "outside". */
+	const historyAnchorRef = useRef<HTMLSpanElement>(null);
+	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
+	useChatTooltips(rootRef);
 
 	/**
 	 * The tenant/organization scope the Documents endpoints require IN THE REQUEST ITSELF —
@@ -259,57 +296,46 @@ export function AiChatPanel() {
 		[injector]
 	);
 
-	const transport = useMemo(
-		() =>
-			new DefaultChatTransport({
-				api: `${environment.API_BASE_URL}/api/ai-chat`,
-				headers: authHeaders,
-				body: () => ({ conversationId: conversationIdRef.current })
-			}),
-		[authHeaders]
-	);
-
 	/**
 	 * Indirection for the stream error handler.
 	 *
-	 * `useChat`'s `onError` needs `setMessages`, which `useChat` itself returns — a cycle. The ref is
-	 * assigned right after the hook, and `onError` can only fire once a request is in flight, so it
-	 * is always populated by the time it is read.
+	 * The session's `Chat` is created once and forwards `onError` here; the panel on screen points
+	 * it at its own handler on every render (it needs `setMessages`, which `useChat` returns). It can
+	 * only fire once a request is in flight, so it is always populated by the time it is read.
 	 */
-	const handleStreamErrorRef = useRef<((error: unknown) => void) | null>(null);
+	const handleStreamErrorRef = session.streamErrorRef;
 
-	const chat = useChat({
-		transport,
-		// Resume the agent loop once all client tool results / approvals are in.
-		sendAutomaticallyWhen: (options) =>
-			lastAssistantMessageIsCompleteWithToolCalls(options) ||
-			lastAssistantMessageIsCompleteWithApprovalResponses(options),
-		// Client ("canvas") tools run here, in the browser.
-		onToolCall: ({ toolCall }) => {
-			const {
-				toolName,
-				toolCallId,
-				input: toolInput
-			} = toolCall as {
-				toolName: string;
-				toolCallId: string;
-				input: unknown;
-			};
-			if (!isClientTool(toolName)) return;
-			// Deliberately not awaited — awaiting inside onToolCall deadlocks the stream.
-			executeClientTool(injector, toolName, toolInput)
-				.then((output) => chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never }))
-				.catch((error: unknown) =>
-					chat.addToolOutput({
-						state: 'output-error',
-						tool: toolName as never,
-						toolCallId,
-						errorText: error instanceof Error ? error.message : String(error)
-					})
-				);
-		},
-		onError: (streamError: unknown) => handleStreamErrorRef.current?.(streamError)
-	});
+	// The shared `Chat`: messages, status and any request in flight belong to the session, so a
+	// reply keeps streaming while the user moves between the docked panel and the full page.
+	const chat = useChat({ chat: session.chat });
+
+	// Client ("canvas") tools run here, in the browser — forwarded by the session's `Chat` to the
+	// panel on screen.
+	session.toolCallRef.current = ({ toolCall }) => {
+		const {
+			toolName,
+			toolCallId,
+			input: toolInput
+		} = toolCall as {
+			toolName: string;
+			toolCallId: string;
+			input: unknown;
+		};
+		if (!isClientTool(toolName)) return;
+		// Deliberately not awaited — awaiting inside onToolCall deadlocks the stream.
+		executeClientTool(injector, toolName, toolInput)
+			.then((output) =>
+				session.chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never })
+			)
+			.catch((error: unknown) =>
+				session.chat.addToolOutput({
+					state: 'output-error',
+					tool: toolName as never,
+					toolCallId,
+					errorText: error instanceof Error ? error.message : String(error)
+				})
+			);
+	};
 
 	const { messages, sendMessage, status, stop, error, regenerate, setMessages, addToolApprovalResponse } = chat;
 
@@ -320,7 +346,7 @@ export function AiChatPanel() {
 	 * a free-tier limit repeatedly is normal, and yanking the user's page away each time would be its
 	 * own bug.
 	 */
-	const rateLimitPageOpenedRef = useRef(false);
+	const rateLimitPageOpenedRef = session.rateLimitPageOpenedRef;
 
 	/**
 	 * Turn a rate-limited turn into something the user can act on.
@@ -469,12 +495,37 @@ export function AiChatPanel() {
 			// In attachment order — the same order the preamble lists them, so a card's index on the
 			// sent message finds its own file.
 			if (attachments.some((attachment) => attachment.file)) {
-				pendingSentFilesRef.current = { text: messageText, files: attachments.map((attachment) => attachment.file) };
+				pendingSentFilesRef.current = {
+					text: messageText,
+					files: attachments.map((attachment) => attachment.file)
+				};
 			}
 			setAttachments([]);
 			void sendMessage({ text: messageText });
 		},
 		[attachments, input, isBusy, sendMessage]
+	);
+
+	/** Run a reply again — the latest one, which is the only one that offers it. */
+	const handleRegenerate = useCallback(
+		(messageId: string) => {
+			if (isBusy) return;
+			void regenerate({ messageId });
+		},
+		[isBusy, regenerate]
+	);
+
+	// Ratings live in the session so they survive Maximize / Restore; nothing stores them yet.
+	const [feedback, setFeedbackState] = useState<Record<string, MessageFeedback>>(session.feedback);
+	const handleFeedback = useCallback(
+		(messageId: string, value: MessageFeedback | undefined) => {
+			const next = { ...session.feedback };
+			if (value) next[messageId] = value;
+			else delete next[messageId];
+			session.feedback = next;
+			setFeedbackState(next);
+		},
+		[session]
 	);
 
 	const handleNewChat = useCallback(() => {
@@ -572,7 +623,8 @@ export function AiChatPanel() {
 					const rejection = body?.rejected?.[0];
 					if (rejection) {
 						throw new Error(
-							rejection.message || `${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
+							rejection.message ||
+								`${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
 						);
 					}
 					throw new Error(
@@ -741,6 +793,8 @@ export function AiChatPanel() {
 			.finally(() => setHistoryLoading(false));
 	}, [conversationsUrl, authHeaders]);
 
+	const closeHistory = useCallback(() => setShowHistory(false), []);
+
 	const handleSelectConversation = useCallback(
 		(id: string) => {
 			fetch(`${conversationsUrl}/${id}`, { headers: authHeaders() })
@@ -870,7 +924,13 @@ export function AiChatPanel() {
 	};
 
 	return (
-		<div ref={rootRef} style={containerStyle}>
+		<div
+			ref={rootRef}
+			style={containerStyle}
+			className={
+				isMaximized ? (hasMessages ? 'gz-ai-chat--full' : 'gz-ai-chat--full gz-ai-chat--empty') : undefined
+			}
+		>
 			{/* Keyframes, the shared markdown sheet, and every state inline styles
 			    cannot express (hover, focus, ::placeholder). Wide streamed content
 			    (code blocks, tables) scrolls inside its own box here rather than
@@ -887,8 +947,23 @@ export function AiChatPanel() {
 
 				${chatMarkdownCss}
 
+				/* Reply actions (Copy, Read aloud, ratings, Regenerate): quiet until pointed at. */
+				.gz-ai-chat-action {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-action:hover:not(:disabled) {
+					background-color: color-mix(in srgb, currentColor 12%, transparent) !important;
+					color: ${chatTheme.textPrimary} !important;
+				}
+				.gz-ai-chat-action[aria-pressed='true'] { color: ${chatTheme.textPrimary} !important; }
+				.gz-ai-chat-action:disabled { opacity: 0.4; cursor: default !important; }
+				.gz-ai-chat-action:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 1px;
+				}
+
 				/* Tool steps. The row is the expander, so the label carries the affordance:
-				   accent coloured, underlined on hover, like every other link here. */
+				   underlined on hover, like every other link here. */
 				.gz-ai-chat-tool-label { transition: color ${chatTheme.transitionSpeed} ease; }
 				.gz-ai-chat-tool-row:hover .gz-ai-chat-tool-label { text-decoration: underline; }
 				.gz-ai-chat-tool-row:focus-visible {
@@ -1023,12 +1098,72 @@ export function AiChatPanel() {
 				}
 				.gz-ai-chat-resize:hover { background: rgba(51, 102, 255, 0.35) !important; }
 				.gz-ai-chat-resize:hover::after { height: 48px; background: rgba(255, 255, 255, 0.8); }
+
+				/* ── Full page (Maximize) ─────────────────────────────────────────
+				   The chat owns the whole screen there, so the conversation, the alerts and the
+				   composer share ONE centred reading column instead of running edge to edge — the
+				   messages' scrollbar still sits at the window edge, because the column is made by
+				   the scroll box's padding rather than by a narrower scroll box. With no messages
+				   yet, the welcome and the composer are centred together on the screen. The docked
+				   panel and the detached window are untouched. */
+				.gz-ai-chat--full .gz-ai-chat-head {
+					border-bottom-color: transparent !important;
+					padding: 12px 16px 12px 20px !important;
+					/* The History dropdown hangs below the header, over the conversation. */
+					position: relative;
+					z-index: 10;
+				}
+				.gz-ai-chat--full .gz-ai-chat-messages {
+					padding: 24px max(24px, calc((100% - ${FULL_PAGE_COLUMN}px) / 2)) 24px !important;
+					gap: 14px !important;
+				}
+				.gz-ai-chat--full .gz-ai-chat-composer {
+					box-sizing: border-box;
+					width: 100%;
+					max-width: ${FULL_PAGE_COLUMN + 48}px;
+					margin: 0 auto;
+					border-top: none !important;
+					padding: 8px 24px 24px !important;
+				}
+				.gz-ai-chat--full .gz-ai-chat-composer-box {
+					border-radius: 20px !important;
+					padding: 12px 12px 8px 14px !important;
+				}
+				.gz-ai-chat--full .gz-ai-chat-alert,
+				.gz-ai-chat--full .gz-ai-chat-attach-error {
+					box-sizing: border-box;
+					width: calc(100% - 48px);
+					max-width: ${FULL_PAGE_COLUMN}px;
+					margin: 0 auto;
+				}
+				.gz-ai-chat--full .gz-ai-chat-alert {
+					border-top: none !important;
+					border-radius: 10px;
+					margin-bottom: 4px;
+				}
+				.gz-ai-chat--full .gz-ai-chat-attach-error { padding: 8px 4px 0 !important; }
+				.gz-ai-chat--empty .gz-ai-chat-body {
+					justify-content: center;
+					padding-bottom: 8vh;
+				}
+				.gz-ai-chat--empty .gz-ai-chat-welcome {
+					flex: 0 0 auto !important;
+					padding-bottom: 12px !important;
+				}
+				.gz-ai-chat--full .gz-ai-welcome-title {
+					font-size: 1.125rem !important;
+					letter-spacing: -0.01em !important;
+				}
+				.gz-ai-chat--full .gz-ai-welcome-subtitle {
+					font-size: 0.8125rem !important;
+					max-width: 380px !important;
+				}
 			`}</style>
 
 			{/* Header: title + history + new chat + dock/maximize/collapse.
 			    History and New chat carry their names — they were unlabelled
 			    glyphs, which is why people asked whether history existed. */}
-			<div style={headerStyle}>
+			<div style={headerStyle} className="gz-ai-chat-head">
 				<svg
 					width="14"
 					height="14"
@@ -1052,30 +1187,51 @@ export function AiChatPanel() {
 				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
 
 				<span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
-					<button
-						type="button"
-						onClick={openHistory}
-						className="gz-ai-chat-head-btn gz-labelled"
-						style={headerBtnLabelledStyle}
-						title={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
-						aria-label={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
-					>
-						<svg
-							width="13"
-							height="13"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							style={{ flexShrink: 0 }}
+					{/* On the full page History is a dropdown (the button toggles it); in the narrow
+					    docked panel it is the overlay rendered in the body below. Not a positioning
+					    context on purpose: the dropdown hangs from the HEADER's right edge, into the
+					    empty margin beside the conversation, instead of from this button over it. This
+					    span only holds button + dropdown together for the outside-click check. */}
+					<span ref={historyAnchorRef} style={{ display: 'flex' }}>
+						<button
+							type="button"
+							onClick={isMaximized && showHistory ? () => setShowHistory(false) : openHistory}
+							className="gz-ai-chat-head-btn gz-labelled"
+							style={headerBtnLabelledStyle}
+							title={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+							aria-label={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+							aria-haspopup={isMaximized ? 'dialog' : undefined}
+							aria-expanded={isMaximized ? showHistory : undefined}
 						>
-							<circle cx="12" cy="12" r="10" />
-							<polyline points="12 6 12 12 16 14" />
-						</svg>
-						<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.HISTORY', 'History')}</span>
-					</button>
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								style={{ flexShrink: 0 }}
+							>
+								<circle cx="12" cy="12" r="10" />
+								<polyline points="12 6 12 12 16 14" />
+							</svg>
+							<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.HISTORY', 'History')}</span>
+						</button>
+						{isMaximized && showHistory && (
+							<ChatHistoryDropdown
+								items={history}
+								loading={historyLoading}
+								activeId={activeConversationId}
+								translate={t}
+								onSelect={handleSelectConversation}
+								onDelete={handleDeleteConversation}
+								onClose={closeHistory}
+								dismissRoot={historyAnchorRef}
+							/>
+						)}
+					</span>
 					{hasMessages && (
 						<button
 							type="button"
@@ -1267,9 +1423,9 @@ export function AiChatPanel() {
 			{/* Chat body — fills remaining height. The overlays mount INSIDE it so they cover the
 			    conversation area only, never the panel's own header (which stays operable — the
 			    user can still collapse/detach while a picker is open). */}
-			<div style={bodyStyle}>
-				{/* Conversation history overlay */}
-				{showHistory && (
+			<div style={bodyStyle} className="gz-ai-chat-body">
+				{/* Conversation history overlay — the docked panel's; the full page uses the dropdown. */}
+				{showHistory && !isMaximized && (
 					<ChatHistoryPanel
 						items={history}
 						loading={historyLoading}
@@ -1313,6 +1469,9 @@ export function AiChatPanel() {
 						onPreviewAttachment={handlePreviewAttachment}
 						resolveAttachmentFile={resolveAttachmentFile}
 						translate={t}
+						onRegenerate={handleRegenerate}
+						feedback={feedback}
+						onFeedback={handleFeedback}
 					/>
 				) : (
 					<ChatWelcome translate={t} />
@@ -1322,6 +1481,7 @@ export function AiChatPanel() {
 				{errorView && (
 					<div
 						role="alert"
+						className="gz-ai-chat-alert"
 						style={{
 							padding: '8px 12px',
 							backgroundColor: 'rgba(255, 61, 113, 0.12)',
@@ -1390,6 +1550,7 @@ export function AiChatPanel() {
 				{attachmentError && (
 					<div
 						role="alert"
+						className="gz-ai-chat-attach-error"
 						style={{
 							padding: '8px 12px 0',
 							color: chatTheme.red,

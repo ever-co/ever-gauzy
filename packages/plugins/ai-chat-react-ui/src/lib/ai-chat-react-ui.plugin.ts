@@ -1,6 +1,7 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PluginRouteInput } from '@gauzy/plugin-ui';
 import { PLAYGROUND_ROUTE } from './playground.routes';
+import { AI_CHAT_PAGE_ROUTE } from './ai-chat-page.routes';
 import { AI_CHAT_SETTINGS_ROUTE, provideAiProviderConnectCallback } from './settings';
 import { AI_CHAT_REACT_UI_PLUGIN_ID, provideAiChatSidebar } from './provide-ai-chat-sidebar';
 import en from '../i18n/en.json';
@@ -10,6 +11,7 @@ import en from '../i18n/en.json';
  *
  * Self-contained plugin that registers:
  * - An AI Playground page at `/pages/playground` (Vercel AI SDK style)
+ * - The full-page chat at `/pages/ai-chat` (a direct link; Maximize expands the panel in place)
  * - A per-tenant "AI Providers" (BYOK) settings page at `/pages/settings/ai`
  *   with a nav item under the core Settings section (AI_CHAT_SETTINGS permission)
  * - The AI Chat panel in the layout's dedicated chat sidebar slot
@@ -27,7 +29,11 @@ export const AiChatReactUiPlugin = defineDeclarativePlugin(AI_CHAT_REACT_UI_PLUG
 	version: '1.0.0',
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [PLAYGROUND_ROUTE as PluginRouteInput, AI_CHAT_SETTINGS_ROUTE as PluginRouteInput],
+	routes: [
+		PLAYGROUND_ROUTE as PluginRouteInput,
+		AI_CHAT_PAGE_ROUTE as PluginRouteInput,
+		AI_CHAT_SETTINGS_ROUTE as PluginRouteInput
+	],
 
 	// ── Nav menu (item under the core Settings section) ──────────
 	navMenu: [

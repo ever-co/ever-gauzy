@@ -26,11 +26,12 @@ export const appRoutes: Routes = [
 		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
-		// Detached AI chat window (opened with window.open by
-		// ChatSidebarService.detach()). It lives here rather than under
-		// 'pages' on purpose: 'pages' renders the PagesComponent shell
-		// (nav menu sidebar + header + footer) and this window must show
-		// only the chat, so it can sit on a second monitor.
+		// Detached AI chat window at '/ai-chat/window' (opened with
+		// window.open by ChatSidebarService.detach()). It lives here rather
+		// than under 'pages' on purpose: 'pages' renders the PagesComponent
+		// shell (nav menu sidebar + header + footer) and this window must
+		// show only the chat. The bare '/ai-chat' redirects to the full-page
+		// chat, which lives under '/pages/ai-chat'.
 		path: 'ai-chat',
 		loadChildren: () => import('@gauzy/plugin-ai-chat-react-ui').then((m) => m.AI_CHAT_WINDOW_ROUTES),
 		canActivate: [AuthGuard, AppModuleGuard]

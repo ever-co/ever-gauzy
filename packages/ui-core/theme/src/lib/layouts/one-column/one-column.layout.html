@@ -1,4 +1,8 @@
-<nb-layout windowMode>
+<!-- On the full-page chat route (/pages/ai-chat, a direct link) the menu, header and footer are hidden
+     (.gz-chat-full-page in the scss) and that page covers the screen; the docked chat is not rendered
+     there, since the page is the chat. Maximize of the DOCKED chat keeps the nav menu and the header
+     (Menu | Chat) and shrinks the canvas to zero width, so the page underneath stays alive. -->
+<nb-layout windowMode [class.gz-chat-full-page]="chatSidebarService.fullPageOpen()">
 	<!-- Header — spans everything right of the nav menu, INCLUDING the chat column.
 	     Nebular renders a `fixed` header at full width, so the BAND ITSELF is inset to the menu
 	     sidebar's trailing edge (see `--gz-band-left/right` in the layout ts and scss); the chat
@@ -127,7 +131,10 @@
 	<!-- AI Chat sidebar — dedicated slot between the nav menu and the main content.
 	     Single @if (like the menu sidebar above): nesting control-flow blocks breaks
 	     nb-layout's select-based content projection for nb-sidebar. -->
-	@if (user() && chatSidebarService.available() && chatSidebarComponent(); as chatComponent) {
+	@if (
+		user() && chatSidebarService.available() && !chatSidebarService.fullPageOpen() && chatSidebarComponent();
+		as chatComponent
+	) {
 		<!-- A column that starts UNDER the fixed header band (top = the band's measured height)
 		     and runs to the viewport bottom, in both docks. It still uses Nebular's default fixed
 		     `.main-container` — see the scss for why COLLAPSED must then be `display: none`
