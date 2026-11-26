@@ -5,6 +5,7 @@ import {
 	APP_LAUNCHER_WIDE_MIN_WIDTH,
 	AppLauncherPlacement,
 	EVER_APPS,
+	everAppAddUrl,
 	hasOtherEverApp,
 	IEverApp,
 	parseAppLauncherPlacement,
@@ -36,6 +37,12 @@ export class AppLauncherService {
 
 	/** Whether the launcher shows at all: the deployment links at least one other Ever app. */
 	readonly isAvailable = hasOtherEverApp(this.apps);
+
+	/**
+	 * Where the "+ Add" row goes: Ever Platform's page for adding one's own apps, in this deployment's Ever Platform.
+	 * `null` (no row) when the list has no Ever Platform.
+	 */
+	readonly addUrl: string | null = everAppAddUrl(this.apps);
 
 	private readonly _storedPlacement = signal<AppLauncherPlacement>(this._readStoredPlacement());
 	/** Wide enough for the rail and the top bar's button; narrower (a phone), the mark opens the list. */
@@ -98,19 +105,31 @@ export class AppLauncherService {
 	}
 
 	/**
-	 * Opens another Ever app. In the browser the link does it (a new tab); inside the desktop apps a plain link would
-	 * load the other app into the Gauzy window itself, so the system browser opens it instead.
+	 * Opens another Ever app. In the browser the link does it, in the same tab (a modifier-click still opens a new
+	 * one, as for any link); inside the desktop apps a plain link would load the other app into the Gauzy window
+	 * itself, so the system browser opens it instead.
 	 *
 	 * @param event - The click on the app's link.
 	 * @param app - The app to open.
 	 */
 	openApp(event: MouseEvent, app: IEverApp): void {
+		this.openLink(event, app.url);
+	}
+
+	/**
+	 * Follows one of the launcher's links ({@link openApp}, the "+ Add" row): the link itself in the browser, the
+	 * system browser inside the desktop apps.
+	 *
+	 * @param event - The click on the link.
+	 * @param url - The link's address.
+	 */
+	openLink(event: MouseEvent, url: string): void {
 		const shell = this._electronService?.shell;
 		if (typeof shell?.openExternal !== 'function') {
 			return;
 		}
 		event.preventDefault();
-		shell.openExternal(app.url);
+		shell.openExternal(url);
 	}
 
 	private _readStoredPlacement(): AppLauncherPlacement {

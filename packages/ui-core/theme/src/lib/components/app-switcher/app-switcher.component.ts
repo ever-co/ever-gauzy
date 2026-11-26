@@ -88,6 +88,9 @@ export class AppSwitcherComponent implements OnDestroy {
 	/** The Ever apps, in the order every Ever app shares, as this deployment serves them. */
 	readonly apps: ReadonlyArray<IEverApp> = this.launcher.apps;
 
+	/** The "+ Add" row's link (Ever Platform's page for adding one's own apps); no row when `null`. */
+	readonly addUrl: string | null = this.launcher.addUrl;
+
 	readonly markPath = EVER_MARK_PATH;
 	readonly panelId: string;
 	readonly markGradientId: string;
@@ -191,8 +194,17 @@ export class AppSwitcherComponent implements OnDestroy {
 		this.hidePanel();
 		// Hiding detaches the row that held the focus: give it back to the button, as Escape does
 		this.triggerRef?.nativeElement.focus();
-		// A new tab in the browser; the system browser inside the desktop apps
+		// The same tab in the browser (the link itself); the system browser inside the desktop apps
 		this.launcher.openApp(event, app);
+	}
+
+	onAddPick(event: MouseEvent): void {
+		if (!this.addUrl) {
+			return;
+		}
+		this.hidePanel();
+		this.triggerRef?.nativeElement.focus();
+		this.launcher.openLink(event, this.addUrl);
 	}
 
 	onPanelKeydown(event: KeyboardEvent): void {

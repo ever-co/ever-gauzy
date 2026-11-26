@@ -86,31 +86,62 @@
 						<div class="app-row current" aria-current="page">
 							<img class="app-tile" [src]="app.logo" alt="" width="28" height="28" draggable="false" />
 							<span class="app-text">
-								<span class="app-name">{{ app.shortName }}</span>
-								<span class="app-domain">{{ app.domain }}</span>
+								<span class="app-title">
+									<span class="app-name">{{ app.name }}</span>
+									<span class="app-chip here">{{ 'APP_LAUNCHER.YOU_ARE_HERE' | translate }}</span>
+								</span>
+								<span class="app-line">{{ app.lineKey | translate }}</span>
 							</span>
-							<span class="app-chip here">{{ 'APP_LAUNCHER.YOU_ARE_HERE' | translate }}</span>
 						</div>
 					} @else {
-						<!-- Named by what it shows (name, address, "Soon" / "Beta"); the footer says it opens a new tab. -->
+						<!-- Same tab, as any link (no target): named by what it shows (name, line, "Soon" / "Beta"). -->
 						<a
 							class="app-row"
 							[href]="app.url"
-							target="_blank"
-							rel="noopener noreferrer"
 							[attr.aria-describedby]="panelId + '-footer'"
 							(click)="onAppPick($event, app)"
 						>
 							<img class="app-tile" [src]="app.logo" alt="" width="28" height="28" draggable="false" />
 							<span class="app-text">
-								<span class="app-name">{{ app.shortName }}</span>
-								<span class="app-domain">{{ app.domain }}</span>
+								<span class="app-title">
+									<span class="app-name">{{ app.name }}</span>
+									@if (statusKey(app); as key) {
+										<span class="app-chip">{{ key | translate }}</span>
+									}
+								</span>
+								<span class="app-line">{{ app.lineKey | translate }}</span>
 							</span>
-							@if (statusKey(app); as key) {
-								<span class="app-chip">{{ key | translate }}</span>
-							}
 						</a>
 					}
+				</li>
+			}
+			@if (addUrl) {
+				<!-- Last, under a hairline: Ever Platform's page for adding one's own apps. -->
+				<li class="app-add-item">
+					<a
+						class="app-row add"
+						[href]="addUrl"
+						[attr.title]="'APP_LAUNCHER.ADD_HINT' | translate"
+						[attr.aria-label]="'APP_LAUNCHER.ADD_HINT' | translate"
+						(click)="onAddPick($event)"
+					>
+						<span class="app-tile add-tile" aria-hidden="true">
+							<!-- lucide `plus` -->
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+								stroke-linecap="round"
+								focusable="false"
+							>
+								<path d="M12 5v14M5 12h14" />
+							</svg>
+						</span>
+						<span class="app-text">
+							<span class="app-name">{{ 'APP_LAUNCHER.ADD' | translate }}</span>
+						</span>
+					</a>
 				</li>
 			}
 		</ul>
