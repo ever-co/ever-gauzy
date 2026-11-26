@@ -36,6 +36,12 @@ interface INode {
 	fileSize?: number | null;
 }
 
+/**
+ * Two cases zip 500 real pages, which is CPU work: quick on an idle machine, past Jest's 5 s default on a busy CI
+ * pod (the stage unit run of release #8, ever-gauzy-stage-0d03d8f-c7168, timed out the 413 case at 5 s).
+ */
+const ZIP_500_PAGES_TIMEOUT_MS = 60_000;
+
 const text = (value: string) => ({ type: 'paragraph', content: [{ type: 'text', text: value }] });
 const fileLink = (id: string, label: string) => ({ type: 'fileAttachment', attrs: { documentId: id, name: label } });
 
@@ -214,7 +220,7 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 
 		const { result } = await zipOf(buildService([TREE[0], ...pages(500)]).service, TREE[0].id);
 		expect(result.pages).toBe(500);
-	});
+	}, ZIP_500_PAGES_TIMEOUT_MS);
 
 	it('counts only what the caller may read toward the limit: 500 readable pages and an unreadable one are exported', async () => {
 		const pages: INode[] = Array.from({ length: 501 }, (_, at) => ({
@@ -228,7 +234,7 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 		}));
 		const { result } = await zipOf(buildService([TREE[0], ...pages]).service, TREE[0].id);
 		expect(result.pages).toBe(500);
-	});
+	}, ZIP_500_PAGES_TIMEOUT_MS);
 
 	it('bounds a walk through folders alone (413 past the node limit)', async () => {
 		const folders: INode[] = Array.from({ length: 2001 }, (_, at) => ({
