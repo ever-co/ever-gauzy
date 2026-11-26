@@ -96,7 +96,7 @@ describe('the contact chart read', () => {
 
 /**
  * The payments endpoint as the neighbour reads meet it: `Between` on whole-second bounds, both ends included, the
- * requested order, and `take` rows of page `skip` (counted from 1).
+ * requested order keys only (a tie the query leaves open keeps the table's order), and `take` rows of page `skip` (counted from 1).
  */
 function endpointOver(rows: IPayment[]): PaymentService {
 	const at = (value: Date | string | undefined) => (value ? new Date(value).getTime() : 0);
@@ -104,7 +104,7 @@ function endpointOver(rows: IPayment[]): PaymentService {
 		pagination: jest.fn(
 			async (query: {
 				where: { paymentDate: { startDate: string; endDate: string } };
-				order?: { paymentDate?: 'ASC' | 'DESC' };
+				order?: { paymentDate?: 'ASC' | 'DESC'; createdAt?: 'ASC' | 'DESC'; id?: 'ASC' | 'DESC' };
 				take?: number;
 				skip?: number;
 			}) => {
@@ -113,9 +113,13 @@ function endpointOver(rows: IPayment[]): PaymentService {
 				const direction = query.order?.paymentDate === 'DESC' ? -1 : 1;
 				const matching = rows
 					.filter((row) => at(row.paymentDate) >= low && at(row.paymentDate) <= high)
+					// Only the keys the query names order the rows; a tie it leaves open keeps the table's order.
 					.sort(
 						(a, b) =>
-							direction * (at(a.paymentDate) - at(b.paymentDate) || at(a.createdAt) - at(b.createdAt))
+							direction *
+							(at(a.paymentDate) - at(b.paymentDate) ||
+								(query.order?.createdAt ? at(a.createdAt) - at(b.createdAt) : 0) ||
+								(query.order?.id ? String(a.id).localeCompare(String(b.id)) : 0))
 					);
 				const take = query.take ?? matching.length;
 				const page = query.skip ?? 1;
@@ -200,5 +204,19 @@ describe('the neighbour reads', () => {
 
 		expect(previous?.id).toBe('half-second-before');
 		expect(next?.id).toBe('same-000');
+	});
+
+	it('keep the right payment when a page boundary falls inside a tie', async () => {
+		// 101 payments half a second before this one, recorded at the same moment: only the id orders them, and the
+		// nearest (the last in the page's order) must not be left on a second page.
+		const payment = row('current', '2026-05-01T10:00:05.300Z');
+		const tied = Array.from({ length: 101 }, (_, index) =>
+			row(`tied-${String(index).padStart(3, '0')}`, '2026-05-01T10:00:04.500Z', '2026-05-01T08:00:00.000Z')
+		);
+		const service = endpointOver([...tied, payment]);
+
+		const { previous } = await loadPaymentNeighbours(service, SCOPE, payment);
+
+		expect(previous?.id).toBe('tied-100');
 	});
 });

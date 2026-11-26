@@ -197,7 +197,8 @@ async function readSecondBefore(
 				tenantId: scope.tenantId,
 				paymentDate: { startDate: paymentDateBound(previousSecond), endDate: paymentDateBound(date) }
 			},
-			order: { paymentDate: 'DESC', createdAt: 'DESC' },
+			// The neighbours' own order, id last (`paymentNeighbours`): a page boundary inside a tie keeps the right rows.
+			order: { paymentDate: 'DESC', createdAt: 'DESC', id: 'DESC' },
 			take: PAYMENT_PAGE_SIZE,
 			skip: page
 		});
@@ -231,7 +232,7 @@ export async function loadPaymentNeighbours(
 				tenantId: scope.tenantId,
 				paymentDate: { startDate: paymentDateBound(start), endDate: paymentDateBound(end) }
 			},
-			order: { paymentDate: direction, createdAt: direction },
+			order: { paymentDate: direction, createdAt: direction, id: direction },
 			take: PAYMENT_NEIGHBOUR_READ,
 			skip: 1
 		});
