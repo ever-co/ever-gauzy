@@ -45,6 +45,7 @@
 						 code, title, a facts table, the text with numbered sections, and a sign-off footer. -->
 					<article class="pd-sheet" #sheet>
 						<header class="pd-sheet-header">
+							<!-- Letterhead: who it is from. -->
 							<div class="pd-sheet-meta">
 								<span class="pd-sheet-brand">
 									@if (organization?.imageUrl) {
@@ -54,38 +55,34 @@
 										<span class="pd-sheet-org">{{ organization.name }}</span>
 									}
 								</span>
-								<span class="pd-sheet-code">{{ documentCode }}</span>
 							</div>
 							<h2 class="pd-sheet-title">
 								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROJECT_PROPOSAL' | translate }}
 							</h2>
+							<!-- Who it is for, who wrote it, when, and its reference. The sales status stays
+								 on the page: it is the team's tracking, not part of what the client receives. -->
 							<dl class="pd-sheet-facts">
 								<div class="pd-sheet-fact">
-									<dt>{{ 'SM_TABLE.CLIENT' | translate }}</dt>
+									<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PREPARED_FOR' | translate }}</dt>
 									<dd>{{ proposal.organizationContact?.name || '—' }}</dd>
 								</div>
 								<div class="pd-sheet-fact">
 									<dt>{{ 'SM_TABLE.DATE' | translate }}</dt>
 									<dd>
 										@if (proposal.valueDate) {
-											{{ proposal.valueDate | date : 'shortDate' | dateFormat }}
+											{{ proposal.valueDate | date : 'd MMMM y' }}
 										} @else {
 											—
 										}
 									</dd>
 								</div>
 								<div class="pd-sheet-fact">
-									<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}</dt>
-									<dd>{{ proposal.author?.fullName || '—' }}</dd>
+									<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PREPARED_BY' | translate }}</dt>
+									<dd>{{ authorName || '—' }}</dd>
 								</div>
 								<div class="pd-sheet-fact">
-									<dt>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate }}</dt>
-									<dd>
-										<span class="pd-status pd-sheet-status" [class.is-accepted]="isAccepted">
-											<span class="pd-dot" aria-hidden="true"></span>
-											{{ (isAccepted ? 'BUTTONS.ACCEPTED' : 'BUTTONS.SENT') | translate }}
-										</span>
-									</dd>
+									<dt>{{ 'INCOME_VIEW.REFERENCE' | translate }}</dt>
+									<dd class="pd-sheet-code">{{ documentCode }}</dd>
 								</div>
 							</dl>
 						</header>
@@ -103,6 +100,33 @@
 						</div>
 
 						<footer class="pd-sheet-footer">
+							<!-- Sign-off: the author's side and the client's, each with a line to sign and date. -->
+							<div class="pd-sheet-signoff">
+								<div class="pd-sheet-sign">
+									<span class="pd-sheet-sign-label">
+										{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PREPARED_BY' | translate }}
+									</span>
+									<span class="pd-sheet-sign-line" aria-hidden="true"></span>
+									<span class="pd-sheet-sign-name">{{ authorName || '—' }}</span>
+									<span class="pd-sheet-sign-date">
+										{{ 'SM_TABLE.DATE' | translate }}
+										<span class="pd-sheet-sign-line" aria-hidden="true"></span>
+									</span>
+								</div>
+								<div class="pd-sheet-sign">
+									<span class="pd-sheet-sign-label">
+										{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.ACCEPTED_BY' | translate }}
+									</span>
+									<span class="pd-sheet-sign-line" aria-hidden="true"></span>
+									<span class="pd-sheet-sign-name">{{ proposal.organizationContact?.name || '—' }}</span>
+									<span class="pd-sheet-sign-date">
+										{{ 'SM_TABLE.DATE' | translate }}
+										<span class="pd-sheet-sign-line" aria-hidden="true"></span>
+									</span>
+								</div>
+							</div>
+
+							<!-- The sender's contact details, on one line. -->
 							<address class="pd-sheet-company">
 								@if (organization?.name) {
 									<span class="pd-sheet-company-name">{{ organization.name }}</span>
@@ -117,17 +141,6 @@
 									<span>{{ proposal.author.user.phoneNumber }}</span>
 								}
 							</address>
-							<!-- Blank lines for the client to sign and date. -->
-							<div class="pd-sheet-signoff">
-								<div class="pd-sheet-sign">
-									<span class="pd-sheet-sign-label">{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.ACCEPTED_BY' | translate }}</span>
-									<span class="pd-sheet-sign-line" aria-hidden="true"></span>
-								</div>
-								<div class="pd-sheet-sign">
-									<span class="pd-sheet-sign-label">{{ 'SM_TABLE.DATE' | translate }}</span>
-									<span class="pd-sheet-sign-line" aria-hidden="true"></span>
-								</div>
-							</div>
 						</footer>
 					</article>
 				</section>
