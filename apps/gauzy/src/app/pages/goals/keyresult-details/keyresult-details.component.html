@@ -1,132 +1,161 @@
 <nb-card class="kr-dialog" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<!-- The key result's name and close on one row, then who owns it, its deadline and its objective. -->
+	<!-- The objective it belongs to over the key result's name, and the close. -->
 	<nb-card-header class="header">
 		<div class="header-row">
-			<h4 class="title">{{ keyResult.name }}</h4>
-			<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog(false)">
-				<i class="fas fa-times" aria-hidden="true"></i>
+			<div class="heading">
+				<span class="context">
+					<nb-icon icon="flag-outline" aria-hidden="true"></nb-icon>
+					<span class="context-label">{{ 'GOALS_PAGE.GOAL' | translate }}</span>
+					<span class="context-name">{{ keyResult.goal?.name }}</span>
+				</span>
+				<h4 class="title">{{ keyResult.name }}</h4>
+			</div>
+			<button type="button" class="kr-close" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog(false)">
+				<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
 			</button>
-		</div>
-		<div class="meta">
-			<ngx-avatar [src]="src" [name]="ownerName"></ngx-avatar>
-			@if (endDate) {
-			<span class="meta-item">
-				<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}: <b>{{ endDate | date }}</b>
-			</span>
-			}
-			<span class="meta-item">
-				<nb-icon icon="flag-outline" aria-hidden="true"></nb-icon>
-				{{ 'GOALS_PAGE.GOAL' | translate }}: <b>{{ keyResult.goal?.name }}</b>
-			</span>
 		</div>
 	</nb-card-header>
 
 	<nb-card-body>
 		@if (!loading) {
 		@let unit = keyResult.type == keyResultTypeEnum.KPI ? $safeNavigationMigration(kpi?.unit) : keyResult.unit;
-		<!-- The figures first: where it started, where it is headed, and how far along it is — the last on
-		     one line, label then bar then percentage, as in the objective dialog this opens from. -->
-		<section class="summary">
-			@if (keyResult.type !== keyResultTypeEnum.TRUE_OR_FALSE) {
-			<dl class="values">
-				<div class="value">
-					<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}</dt>
-					<dd>
-						{{ keyResult.initialValue }}
-						@if (unit) {
-						<span class="unit">{{ unit }}</span>
-						}
-					</dd>
-				</div>
-				<div class="value">
-					<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}</dt>
-					<dd>
-						{{ keyResult.targetValue }}
-						@if (unit) {
-						<span class="unit">{{ unit }}</span>
-						}
-					</dd>
-				</div>
-			</dl>
-			}
-			<div class="progress-row">
-				<span class="progress-label">{{ 'GOALS_PAGE.PROGRESS' | translate }}</span>
-				<nb-progress-bar
-					class="kr-progress"
-					[value]="keyResult.progress"
-					[status]="keyResult.progress < 50 ? 'warning' : keyResult.progress < 75 ? 'info' : 'success'"
-					size="tiny"
-				></nb-progress-bar>
-				<span class="progress-value">{{ keyResult.progress }}%</span>
-			</div>
-		</section>
+		<div class="kr-layout">
+			<!-- The work: the progress chart, then the updates filed on it. -->
+			<div class="main">
+				<section class="chart">
+					<ga-keyresult-progress-chart
+						[organization]="organization"
+						[keyResult]="keyResult"
+						[kpi]="kpi"
+					></ga-keyresult-progress-chart>
+				</section>
 
-		<section class="chart">
-			<ga-keyresult-progress-chart
-				[organization]="organization"
-				[keyResult]="keyResult"
-				[kpi]="kpi"
-			></ga-keyresult-progress-chart>
-		</section>
+				<section class="updates">
+					<div class="section-head">
+						<h6 class="section-title">{{ 'GOALS_PAGE.UPDATES' | translate }}</h6>
+						<button
+							nbButton
+							outline
+							status="basic"
+							size="tiny"
+							[hidden]="!isUpdatable"
+							(click)="keyResultUpdate()"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+							{{ 'BUTTONS.ADD_NEW' | translate }}
+						</button>
+					</div>
+					@if (!isUpdatable) {
+					<!-- Why there is no Add New: one quiet line, not a banner. -->
+					@if (endDate && endDate.getTime() < today.getTime()) {
+					<p class="notice" role="status">
+						<nb-icon icon="alert-circle-outline" status="warning" aria-hidden="true"></nb-icon>
+						{{ 'KEY_RESULT_PAGE.MESSAGE.TIME_FRAME_ENDED' | translate : { date: endDate | date } }}
+					</p>
+					}
+					@if (startDate && startDate.getTime() > today.getTime()) {
+					<p class="notice" role="status">
+						<nb-icon icon="alert-circle-outline" status="warning" aria-hidden="true"></nb-icon>
+						{{ 'KEY_RESULT_PAGE.MESSAGE.TIME_FRAME_NOT_STARTED' | translate : { date: startDate | date } }}
+					</p>
+					}
+					}
+					@if (updates?.length) {
+					<!-- Newest first, one row each: when, the value reported, its status, and the progress it brought
+					     with the change from the update before it. -->
+					<ul class="update-list">
+						@for (update of updates; track update; let index = $index) {
+						@let change = index < updates.length - 1 ? relativeProgress(update, updates[index + 1]) : null;
+						<li class="update">
+							<span class="update-date">{{ update.createdAt | date }}</span>
+							<span class="update-value">
+								{{ 'GOALS_PAGE.UPDATE' | translate }}: <b>{{ update.update }}</b>
+							</span>
+							<span class="update-status">
+								@if (update.status && update.status !== 'none') {
+								<span class="status" [attr.data-status]="update.status">
+									<span class="status-dot" aria-hidden="true"></span>
+									{{
+										'KEY_RESULT_PAGE.UPDATE.STATUS.' + update.status.toUpperCase().replace(' ', '_')
+											| translate
+									}}
+								</span>
+								}
+							</span>
+							<span class="update-progress">
+								@if (change && !change.zero) {
+								<span
+									class="change"
+									[class.up]="change.status === 'success'"
+									[class.down]="change.status === 'danger'"
+								>
+									{{ change.progressText }}
+								</span>
+								}
+								<b>{{ update.progress }}%</b>
+							</span>
+						</li>
+						}
+					</ul>
+					} @else {
+					<p class="empty-state">{{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}</p>
+					}
+				</section>
+			</div>
 
-		<section class="updates">
-			<div class="main-header">
-				<h6 class="section-title">{{ 'GOALS_PAGE.UPDATES' | translate }}</h6>
-				<div class="button-container">
-					<button nbButton size="small" [hidden]="!isUpdatable" status="success" (click)="keyResultUpdate()">
-						<nb-icon icon="plus-outline"></nb-icon>
-						{{ 'BUTTONS.ADD_NEW' | translate }}
-					</button>
-				</div>
-			</div>
-			@if (!isUpdatable) {
-			<div class="notices">
-				@if (endDate && endDate.getTime() < today.getTime()) {
-				<nb-alert status="warning">
-					{{ 'KEY_RESULT_PAGE.MESSAGE.TIME_FRAME_ENDED' | translate : { date: endDate | date } }}
-				</nb-alert>
-				}
-				@if (startDate && startDate.getTime() > today.getTime()) {
-				<nb-alert status="warning">
-					{{ 'KEY_RESULT_PAGE.MESSAGE.TIME_FRAME_NOT_STARTED' | translate : { date: startDate | date } }}
-				</nb-alert>
-				}
-			</div>
-			}
-			@if (updates?.length) {
-			<!-- Newest first, one row each: when, the value reported, its status, and the progress it brought
-			     with the change from the update before it. -->
-			<ul class="update-list">
-				@for (update of updates; track update; let index = $index) {
-				@let change = index < updates.length - 1 ? relativeProgress(update, updates[index + 1]) : null;
-				<li class="update">
-					<span class="update-date">{{ update.createdAt | date }}</span>
-					<span class="update-value">
-						{{ 'GOALS_PAGE.UPDATE' | translate }}: <b>{{ update.update }}</b>
-					</span>
-					<span class="update-status">
-						@if (update.status && update.status !== 'none') {
-						<span class="status-pill" [attr.data-status]="update.status">
-							{{ 'KEY_RESULT_PAGE.UPDATE.STATUS.' + update.status.toUpperCase().replace(' ', '_') | translate }}
-						</span>
-						}
-					</span>
-					<span class="update-progress">
-						<b>{{ update.progress }}%</b>
-						@if (change && !change.zero) {
-						<span class="change" [class.up]="change.status === 'success'" [class.down]="change.status === 'danger'">
-							{{ change.progressText }}
-						</span>
-						}
-					</span>
-				</li>
-				}
-			</ul>
-			} @else {
-			<div class="empty-state">{{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}</div>
-			}
-		</section>
+			<!-- The key result's fields, as label / value rows beside the work. -->
+			<aside class="details">
+				<h6 class="section-title">{{ 'FORM.LABELS.DETAILS' | translate }}</h6>
+				<dl class="fields">
+					<div class="field">
+						<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}</dt>
+						<dd><ngx-avatar [src]="src" [name]="ownerName"></ngx-avatar></dd>
+					</div>
+					@if (endDate) {
+					<div class="field">
+						<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}</dt>
+						<dd>{{ endDate | date }}</dd>
+					</div>
+					}
+					@if (keyResult.type !== keyResultTypeEnum.TRUE_OR_FALSE) {
+					<div class="field">
+						<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}</dt>
+						<dd>
+							{{ keyResult.initialValue }}
+							@if (unit) {
+							<span class="unit">{{ unit }}</span>
+							}
+						</dd>
+					</div>
+					<div class="field">
+						<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}</dt>
+						<dd>
+							{{ keyResult.targetValue }}
+							@if (unit) {
+							<span class="unit">{{ unit }}</span>
+							}
+						</dd>
+					</div>
+					}
+					<div class="field">
+						<dt>{{ 'GOALS_PAGE.PROGRESS' | translate }}</dt>
+						<dd>
+							<span class="progress-row">
+								<nb-progress-bar
+									class="kr-progress"
+									[value]="keyResult.progress"
+									[status]="
+										keyResult.progress < 50 ? 'warning' : keyResult.progress < 75 ? 'info' : 'success'
+									"
+									size="tiny"
+								></nb-progress-bar>
+								<span class="progress-percent">{{ keyResult.progress }}%</span>
+							</span>
+						</dd>
+					</div>
+				</dl>
+			</aside>
+		</div>
 		}
 	</nb-card-body>
 
