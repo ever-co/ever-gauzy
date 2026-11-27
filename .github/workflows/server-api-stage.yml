@@ -180,6 +180,7 @@ jobs:
 
   release-linux:
     needs: check-release-tag
+    if: ${{ false }} # DRY RUN 4 only: Linux x64 proven in dry runs 2/3
     runs-on: ${{ matrix.os }}
     # 720: on our ARC runners `yarn install` of the monorepo takes ~1 h 40 m alone and 3-4 h when the six app
     # workflows install at once, and the builds slow down on busy build nodes (stage-apps dry run 3, 2026-11-27:
@@ -1058,6 +1059,7 @@ jobs:
           fi
   release-windows:
     needs: check-release-tag
+    if: ${{ false }} # DRY RUN 4 only: Windows x64 proven in dry run 2
     # Signing: the Azure subscription behind Trusted Signing is disabled (403 "SignerSign() failed" since 2026-11-02), which
     # fails this leg after the whole build. The repo variable SKIP_WINDOWS_SIGNING=true builds and publishes these STAGE
     # installers unsigned instead: the publisher name and both signing paths (Azure profile, PFX) are left empty, so

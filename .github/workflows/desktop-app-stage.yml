@@ -1058,6 +1058,7 @@ jobs:
           fi
   release-windows:
     needs: check-release-tag
+    if: ${{ false }} # DRY RUN 4 only: Windows x64 proven in dry run 2
     # Signing: the Azure subscription behind Trusted Signing is disabled (403 "SignerSign() failed" since 2026-11-02), which
     # fails this leg after the whole build. The repo variable SKIP_WINDOWS_SIGNING=true builds and publishes these STAGE
     # installers unsigned instead: the publisher name and both signing paths (Azure profile, PFX) are left empty, so
