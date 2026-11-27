@@ -9,8 +9,10 @@ import {
 	NbDialogService,
 	NbIconModule,
 	NbInputModule,
+	NbProgressBarModule,
 	NbSelectModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { BehaviorSubject, of } from 'rxjs';
@@ -90,8 +92,10 @@ describe('Strategic initiatives pages', () => {
 				NbCardModule,
 				NbIconModule,
 				NbInputModule,
+				NbProgressBarModule,
 				NbSelectModule,
-				NbSpinnerModule
+				NbSpinnerModule,
+				NbTooltipModule
 			],
 			providers: [
 				{ provide: Store, useValue: store },
