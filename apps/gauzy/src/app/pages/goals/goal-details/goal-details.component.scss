@@ -1001,13 +1001,15 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     background: none;
     color: nb-theme(text-primary-color);
     font: inherit;
+    font-size: $control-font-size;
+    line-height: 1rem;
     text-align: start;
     cursor: pointer;
 
     nb-icon {
-      width: 0.875rem;
-      height: 0.875rem;
-      font-size: 0.875rem;
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
     }
 
     .muted {
@@ -1043,14 +1045,17 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     align-items: center;
     gap: 0.625rem;
     width: 100%;
-    min-height: 2.25rem;
+    min-height: 2rem;
     margin: 0;
     padding: 0.25rem calc(#{$inset} * 0.5);
     border: 0;
     border-radius: $radius;
     background: transparent;
     color: inherit;
+    // Set after `font`: the button otherwise took the larger global size.
     font: inherit;
+    font-size: $control-font-size;
+    line-height: 1rem;
     text-align: start;
     cursor: pointer;
 
@@ -1107,7 +1112,9 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     background: none;
     color: $muted;
     font: inherit;
+    font-size: $control-font-size;
     font-weight: 500;
+    line-height: 1rem;
     cursor: pointer;
 
     &:hover {
@@ -1130,15 +1137,35 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
   .compose {
     margin-bottom: 0.75rem;
 
+    // One line at rest: 2.25rem holds the 1px borders, 0.5rem padding top and
+    // bottom and an 18px line exactly, so the placeholder sits centred with no
+    // scrollbar. nbInput sets its own larger font and padding; these win.
     textarea[nbInput] {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      max-width: none;
       height: 2.25rem;
       min-height: 2.25rem !important;
+      margin: 0;
+      padding: 0.5rem $control-padding-x;
+      border-radius: $radius;
+      font-size: $control-font-size;
+      line-height: 1.125rem;
+      overflow: hidden;
       resize: none;
       transition: height 0.12s ease;
 
+      &::placeholder {
+        color: $muted;
+        opacity: 1;
+      }
+
+      // Room for a few lines while writing; scrolls past that.
       &:focus,
       &:not(:placeholder-shown) {
-        height: 4.5rem;
+        height: 5rem;
+        overflow-y: auto;
         resize: vertical;
       }
     }
@@ -1157,7 +1184,8 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
 
   .activity-list .empty-state {
     height: auto;
-    padding: 1.25rem 0;
+    padding: 1rem 0;
+    font-size: 0.6875rem;
   }
 
   // The updates' owner as a plain picture and name, not the dialog's tinted chip.
