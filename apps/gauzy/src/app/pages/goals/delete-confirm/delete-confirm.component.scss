@@ -1,0 +1,58 @@
+// A plain confirmation: no coloured header band; the danger shows only in the
+// icon and the Delete button. Custom properties carry fallbacks for the
+// material themes, where `--gauzy-*` is undefined.
+:host {
+  .confirm {
+    width: min(calc(100vw - 2rem), 25rem);
+    margin: 0;
+    border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+    border-radius: var(--gauzy-radius-md, 0.5rem);
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+  }
+
+  nb-card-body {
+    padding: 1.25rem 1.25rem 0.5rem;
+  }
+
+  .head {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .icon {
+    flex: 0 0 auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+
+  .title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5rem;
+    color: var(--gauzy-text-color-1, var(--text-basic-color));
+  }
+
+  // Lined up under the title, past the icon.
+  .message {
+    margin: 0.5rem 0 0;
+    padding-inline-start: 1.875rem;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+  }
+
+  nb-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem 1.25rem;
+    border-top: 0;
+
+    button {
+      margin: 0;
+    }
+  }
+}
