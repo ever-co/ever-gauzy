@@ -27,11 +27,11 @@
 						<tr>
 							<th class="col-title">{{ 'STRATEGIC_INITIATIVES.TITLE' | translate }}</th>
 							<th>{{ 'STRATEGIC_INITIATIVES.STATE' | translate }}</th>
-							<th>{{ 'STRATEGIC_INITIATIVES.VISIBILITY' | translate }}</th>
-							<th>{{ 'STRATEGIC_INITIATIVES.TEAMS' | translate }}</th>
-							<th class="numeric">{{ 'STRATEGIC_INITIATIVES.PROJECTS' | translate }}</th>
-							<th>{{ 'STRATEGIC_INITIATIVES.CONFIDENCE' | translate }}</th>
-							<th>{{ 'STRATEGIC_INITIATIVES.MOMENTUM' | translate }}</th>
+							<th class="col-visibility">{{ 'STRATEGIC_INITIATIVES.VISIBILITY' | translate }}</th>
+							<th class="col-teams">{{ 'STRATEGIC_INITIATIVES.TEAMS' | translate }}</th>
+							<th class="numeric col-projects">{{ 'STRATEGIC_INITIATIVES.PROJECTS' | translate }}</th>
+							<th class="col-confidence">{{ 'STRATEGIC_INITIATIVES.CONFIDENCE' | translate }}</th>
+							<th class="col-momentum">{{ 'STRATEGIC_INITIATIVES.MOMENTUM' | translate }}</th>
 							<th class="actions"></th>
 						</tr>
 					</thead>
@@ -50,17 +50,17 @@
 										{{ 'STRATEGIC_INITIATIVES.STATES.' + (initiative.state | uppercase) | translate }}
 									</span>
 								</td>
-								<td class="muted">
+								<td class="muted col-visibility">
 									{{
 										'STRATEGIC_INITIATIVES.VISIBILITY_SCOPES.' +
 											(initiative.visibilityScope | uppercase) | translate
 									}}
 								</td>
-								<td class="teams" [title]="teamNames(initiative).join(', ')">
+								<td class="teams col-teams" [title]="teamNames(initiative).join(', ')">
 									{{ teamNames(initiative).join(', ') || '—' }}
 								</td>
-								<td class="numeric">{{ initiative.projects?.length || 0 }}</td>
-								<td>
+								<td class="numeric col-projects">{{ initiative.projects?.length || 0 }}</td>
+								<td class="col-confidence">
 									@if (signals(initiative).confidenceLevel; as confidence) {
 										{{
 											'STRATEGIC_INITIATIVES.CONFIDENCE_LEVELS.' + (confidence | uppercase)
@@ -70,7 +70,7 @@
 										<span class="muted">—</span>
 									}
 								</td>
-								<td>
+								<td class="col-momentum">
 									@if (signals(initiative).perceivedMomentum; as momentum) {
 										{{ 'STRATEGIC_INITIATIVES.MOMENTUMS.' + (momentum | uppercase) | translate }}
 									} @else {
