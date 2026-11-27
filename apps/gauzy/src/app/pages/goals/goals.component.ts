@@ -75,7 +75,7 @@ const KEY_RESULT_STATUS_KEYS = ['ON_TRACK', 'NEEDS_ATTENTION', 'OFF_TRACK', 'NON
 })
 export class GoalsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	/** Every menu on the page: a pick in one closes it before its dialog opens. */
-	@ViewChildren(NbPopoverDirective) popovers: QueryList<NbPopoverDirective>;
+	@ViewChildren(NbPopoverDirective) readonly popovers: QueryList<NbPopoverDirective>;
 	loading = true;
 	selectedOrganizationId: string;
 	organizationName: string;

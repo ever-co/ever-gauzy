@@ -43,13 +43,13 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	 * deleting are emitted (`closed`, `changed`) for the page to act on.
 	 */
 	@Input() @HostBinding('class.embedded') embedded = false;
-	@Output() closed = new EventEmitter<void>();
+	@Output() readonly closed = new EventEmitter<void>();
 	/** Embedded only: `deleted` once this objective is deleted, `updated` once one of its key results changed. */
-	@Output() changed = new EventEmitter<'deleted' | 'updated'>();
+	@Output() readonly changed = new EventEmitter<'deleted' | 'updated'>();
 	/** Embedded only: the header's Edit, for the page's own objective dialog. */
-	@Output() editGoal = new EventEmitter<void>();
+	@Output() readonly editGoal = new EventEmitter<void>();
 	/** Embedded only: Key results' "Add new key result", for the page's own key-result dialog. */
-	@Output() addKeyResult = new EventEmitter<void>();
+	@Output() readonly addKeyResult = new EventEmitter<void>();
 	/** Embedded only: which list the Activity section shows. */
 	activityTab: 'comments' | 'updates' = 'comments';
 	src: string;
@@ -188,7 +188,10 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			return;
 		}
 		this.postingComment = true;
-		if (await this.postComment(comment)) {
+		// Embedded, another objective can be picked while this posts: the box and tab then belong to it, so a
+		// finishing post must not clear its draft or switch its tab.
+		const goalId = this.goal.id;
+		if ((await this.postComment(comment)) && this.goal?.id === goalId) {
 			// The box stays editable while posting: clear it only if it still holds what was sent.
 			if (this.commentControl.value.trim() === comment) {
 				this.commentControl.reset();
