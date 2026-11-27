@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -20,7 +21,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { AlertModalComponent } from '@gauzy/ui-core/shared';
+import { GoalDeleteConfirmComponent } from '../delete-confirm/delete-confirm.component';
 import { InitiativeMutationComponent } from './initiative-mutation/initiative-mutation.component';
 import { parseInitiativeSignals } from './initiative-signals';
 
@@ -54,6 +55,7 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 	private readonly strategicInitiativesService = inject(StrategicInitiativesService);
 	private readonly organizationTeamsService = inject(OrganizationTeamsService);
 	private readonly cdr = inject(ChangeDetectorRef);
+	private readonly router = inject(Router);
 
 	constructor() {
 		super(inject(TranslateService));
@@ -104,6 +106,22 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 		}
 	}
 
+	/**
+	 * A click anywhere on a row opens the initiative, not only on its title. A click on the title link or on
+	 * one of the row's buttons is theirs: the link already navigates, and Edit / Delete do their own thing.
+	 * Keyboard users have the title link, so the row itself is not a second tab stop.
+	 */
+	onRowClick(event: MouseEvent, initiative: IOrganizationStrategicInitiativeRead): void {
+		if ((event.target as Element).closest('a, button')) {
+			return;
+		}
+		// Selecting text in the row is not a click on it.
+		if (window.getSelection()?.toString()) {
+			return;
+		}
+		this.router.navigate(['/pages/goals/initiatives', initiative.id]);
+	}
+
 	/** The names of the teams an initiative is linked to directly. */
 	teamNames(initiative: IOrganizationStrategicInitiativeRead): string[] {
 		const ids = initiative.teamIds ?? (initiative.teams ?? []).map((team) => team.id);
@@ -127,17 +145,16 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 	}
 
 	async delete(initiative: IOrganizationStrategicInitiativeRead): Promise<void> {
-		const dialog = this.dialogService.open(AlertModalComponent, {
+		const dialog = this.dialogService.open(GoalDeleteConfirmComponent, {
 			context: {
 				data: {
 					title: this.getTranslation('STRATEGIC_INITIATIVES.DELETE_TITLE'),
 					message: this.getTranslation('STRATEGIC_INITIATIVES.DELETE_CONFIRMATION', {
 						name: initiative.title
-					}),
-					status: 'danger'
+					})
 				}
 			},
-			closeOnBackdropClick: false
+			closeOnBackdropClick: true
 		});
 		const response = await firstValueFrom(dialog.onClose);
 		if (response !== 'yes') {
