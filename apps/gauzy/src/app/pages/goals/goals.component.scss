@@ -444,9 +444,15 @@ $indent: 1.25rem;
   border-radius: $panel-radius;
   background: $surface;
 
-  // Takes focus when it opens over the list; the panel's own controls show the
-  // keyboard where it is.
-  &:focus {
+  // Takes focus when it opens over the list. Opened from the keyboard, it shows
+  // that focus with an inset ring (inside, as the column's edge is its border);
+  // opened by a click, it shows none.
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: -2px;
+  }
+
+  &:focus:not(:focus-visible) {
     outline: none;
   }
 }

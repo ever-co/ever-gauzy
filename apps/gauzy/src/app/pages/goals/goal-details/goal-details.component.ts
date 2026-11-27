@@ -454,7 +454,16 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
-				await this.goalService.delete(this.goal.id).catch((error) => console.log(error));
+				// Reported as deleted only once it is: on a failure the details stay open, to retry.
+				try {
+					await this.goalService.delete(this.goal.id);
+				} catch (error) {
+					this.toastrService.danger(
+						error?.error?.message ?? error?.message,
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+					return;
+				}
 				if (this.dialogRef) {
 					this.dialogRef.close('deleted');
 				} else {
