@@ -7,8 +7,10 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
+	NbProgressBarModule,
 	NbSelectModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -32,8 +34,10 @@ import { InitiativeDetailComponent } from './initiative-detail/initiative-detail
 		NbDialogModule.forChild(),
 		NbIconModule,
 		NbInputModule,
+		NbProgressBarModule,
 		NbSelectModule,
 		NbSpinnerModule,
+		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
 		TranslatePipe,
 		SharedModule,

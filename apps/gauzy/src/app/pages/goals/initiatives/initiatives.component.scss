@@ -1,79 +1,272 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+@use '../create-button' as *;
+
+// The initiatives as one panel on the Goals list's scale: a quiet 0.6875rem
+// header, 0.75rem cells on hairline rows, the state as a dot and a word, and
+// each row's actions shown on hover. Plain: hairlines and spacing, no tinted
+// chips or uppercase labels.
+//
+// The `--gauzy-*` tokens fall back to the theme's own (Nebular) properties, for
+// the material themes where they are undefined.
+$hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
+$divider: 1px solid $hairline;
+$muted: var(--gauzy-text-color-2, var(--text-hint-color));
+$text: var(--gauzy-text-color-1, var(--text-basic-color));
+$hover: var(--gauzy-hover-tint, var(--color-basic-transparent-hover));
+$surface: var(--gauzy-card-1, var(--card-background-color));
+$row-padding-x: 0.75rem;
+
 :host {
   display: block;
+
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2, var(--background-basic-color-2));
+  }
+
+  nb-card-body {
+    padding: 1rem;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+
+  // Add initiative on the header's density, as on the other list pages.
+  .ga-page-header-actions {
+    @include ga-hub.page-header-buttons();
+  }
+
+  .create-button[nbButton].status-success {
+    @include create-button();
+  }
 }
 
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-
+// The caption under the title, muted, on the list's text scale.
+.title {
   h4 {
     margin: 0;
   }
 
   .caption {
     margin: 0.25rem 0 0;
-    opacity: 0.7;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: $muted;
   }
 }
 
+// ─── The list ───────────────────────────────────────────────────────────────
+// The container the column queries measure (at the end), not the window: a
+// panel beside the page (the assistant chat) narrows the list without
+// narrowing the window.
+.initiatives-panel {
+  border: $divider;
+  border-radius: var(--border-radius);
+  background: $surface;
+  overflow-x: auto;
+  container: initiatives / inline-size;
+}
+
 .empty {
-  padding: 2rem 0;
+  padding: 2.5rem 1rem;
   text-align: center;
-  opacity: 0.7;
+  font-size: 0.75rem;
+  color: $muted;
 }
 
 .initiatives-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: $text;
 
   th,
   td {
-    padding: 0.5rem 0.75rem;
-    text-align: left;
+    height: 2.5rem;
+    padding: 0.375rem 0.75rem;
+    border-bottom: $divider;
+    text-align: start;
     vertical-align: middle;
-    border-bottom: 1px solid var(--border-basic-color-3, rgba(0, 0, 0, 0.08));
+    white-space: nowrap;
+
+    &:first-child {
+      padding-inline-start: $row-padding-x;
+    }
   }
 
   th {
-    font-size: 0.75rem;
+    height: 2.25rem;
+    font-size: 0.6875rem;
     font-weight: 600;
-    text-transform: uppercase;
-    opacity: 0.7;
+    color: $muted;
+  }
+
+  // A row opens its initiative on a click anywhere in it: it says so with the
+  // pointer, the hover tint, and the title taking the link colour.
+  tbody tr {
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+
+    &:hover {
+      background: $hover;
+
+      .link {
+        color: var(--color-primary-default);
+      }
+    }
+
+    &:last-child td {
+      border-bottom: 0;
+    }
+  }
+
+  // The title takes about a third of the row and truncates past it; the other
+  // columns share the rest, so the row reads across without a gap after the
+  // title. (`max-width: 0` lets the ellipsis work inside a table cell.)
+  .col-title {
+    width: 32%;
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .teams {
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Left-aligned like every other column, so the headings and values all start
+  // on the same edge.
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .muted {
+    color: $muted;
   }
 
   .actions {
     width: 1%;
-    white-space: nowrap;
-    text-align: right;
-  }
-
-  .link {
-    cursor: pointer;
-    font-weight: 600;
+    padding-block: 0;
+    text-align: end;
   }
 }
 
-.badge {
-  display: inline-block;
-  padding: 0 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  line-height: 1.25rem;
-  background-color: var(--color-basic-transparent-200, rgba(143, 155, 179, 0.16));
+.link {
+  font-weight: 500;
+  color: $text;
+  text-decoration: none;
+  cursor: pointer;
 
-  &.state-active {
-    color: var(--color-success-default, #00d68f);
-    background-color: var(--color-success-transparent-100, rgba(0, 214, 143, 0.08));
+  &:hover {
+    color: var(--color-primary-default);
+    text-decoration: underline;
   }
 
-  &.state-resolved {
-    color: var(--color-info-default, #0095ff);
-    background-color: var(--color-info-transparent-100, rgba(0, 149, 255, 0.08));
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
+}
 
-  &.state-retired {
-    opacity: 0.6;
+// ─── State: a dot and a word, no tinted chip ────────────────────────────────
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.state-dot {
+  flex: 0 0 auto;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: $muted;
+}
+
+.state[data-state='active'] .state-dot {
+  background: var(--color-success-default);
+}
+
+.state[data-state='resolved'] .state-dot {
+  background: var(--color-info-default);
+}
+
+// Retired: done with, so the word is muted too.
+.state[data-state='retired'] {
+  color: $muted;
+}
+
+// ─── Row actions: shown on hover and on focus ───────────────────────────────
+.row-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 0.125rem;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+tr:hover .row-actions,
+tr:focus-within .row-actions {
+  opacity: 1;
+}
+
+// No hover on a touch screen: the actions stay in view.
+@media (hover: none) {
+  .row-actions {
+    opacity: 1;
+  }
+}
+
+.row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  color: $muted;
+
+  nb-icon {
+    margin: 0;
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+// ─── Columns that give way as the list narrows ──────────────────────────────
+// Title, state and the actions always; the counts and lists first, then the
+// signals. Everything stays on the initiative's own page, a click away.
+@container initiatives (max-width: 56rem) {
+  .initiatives-table {
+    .col-teams,
+    .col-projects {
+      display: none;
+    }
+  }
+}
+
+@container initiatives (max-width: 40rem) {
+  .initiatives-table {
+    .col-visibility,
+    .col-confidence,
+    .col-momentum {
+      display: none;
+    }
+
+    // Title, state and actions are all that is left: the title takes the room.
+    .col-title {
+      width: 100%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .initiatives-table tbody tr,
+  .row-actions {
+    transition: none;
   }
 }

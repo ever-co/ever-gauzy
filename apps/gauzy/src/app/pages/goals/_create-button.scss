@@ -1,0 +1,53 @@
+// A page's create button ("Add new Objective", "Add initiative") as the other
+// list pages draw theirs: the one solid button in the header, in the theme's
+// primary colour, 28px tall. Those pages get it from `ngx-gauzy-button-action`;
+// the Goals pages do not use it, so the same rules live here.
+//
+// Include it on the button's selector. Name the button's status class with it
+// (`.create-button[nbButton].status-success`) so these out-rank the theme's own
+// status-button rules, hover and focus included.
+@mixin create-button() {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: var(--gauzy-toolbar-button-height);
+  margin: 0;
+  padding: 0 0.625rem;
+  border: none;
+  border-radius: var(--gauzy-toolbar-button-radius);
+  background-color: var(--color-primary-default);
+  box-shadow: none;
+  color: var(--text-control-color);
+  font-size: var(--gauzy-header-text-size);
+  font-weight: 500;
+  line-height: 1rem;
+  white-space: nowrap;
+  text-transform: none;
+
+  nb-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0 !important;
+    font-size: 0.875rem;
+    color: inherit;
+  }
+
+  &:hover,
+  &:focus {
+    background-color: var(--color-primary-hover);
+    color: var(--text-control-color);
+  }
+
+  &:active {
+    background-color: var(--color-primary-active);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 1px;
+  }
+}

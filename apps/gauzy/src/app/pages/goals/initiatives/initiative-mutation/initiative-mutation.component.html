@@ -1,6 +1,6 @@
 <nb-card class="initiative-mutation" [nbSpinner]="saving" nbSpinnerStatus="primary">
-	<nb-card-header>
-		<h5>
+	<nb-card-header class="header">
+		<h5 class="title">
 			{{ (isEdit ? 'STRATEGIC_INITIATIVES.EDIT' : 'STRATEGIC_INITIATIVES.ADD') | translate }}
 		</h5>
 	</nb-card-header>
@@ -117,8 +117,8 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="footer">
-		<button nbButton status="basic" outline (click)="cancel()">{{ 'BUTTONS.CANCEL' | translate }}</button>
-		<button nbButton status="success" [disabled]="form.invalid || saving" (click)="save()">
+		<button nbButton ghost status="basic" size="small" (click)="cancel()">{{ 'BUTTONS.CANCEL' | translate }}</button>
+		<button nbButton status="success" size="small" [disabled]="form.invalid || saving" (click)="save()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

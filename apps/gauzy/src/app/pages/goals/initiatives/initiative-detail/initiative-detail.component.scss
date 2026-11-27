@@ -1,96 +1,676 @@
+// One initiative, laid out as an issue view on the Goals pages' scale: back,
+// the list it belongs to, its title and state in the header with Edit and
+// Delete; the substance (intent, risks and notes, the teams, goals and
+// projects aligned to it) on the left, and its fields as label / value rows in
+// a column on the right that stays in view. Plain: hairlines and spacing, the
+// state as a dot and a word, small glyphs that read a value at a glance, no
+// tinted chips or uppercase labels.
+//
+// The `--gauzy-*` tokens fall back to the theme's own (Nebular) properties, for
+// the material themes where they are undefined.
+$font-size: 0.75rem;
+// The page's one inset: header and body share it, so the back arrow, the
+// title and every section start on the same line. It tightens on a narrow
+// card (see the container queries at the end).
+$inset: 1.5rem;
+$inset-narrow: 1rem;
+$hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
+$divider: 1px solid $hairline;
+$muted: var(--gauzy-text-color-2, var(--text-hint-color));
+$text: var(--gauzy-text-color-1, var(--text-basic-color));
+$hover: var(--gauzy-hover-tint, var(--color-basic-transparent-hover));
+$radius: var(--gauzy-radius-sm, calc(var(--border-radius) * 0.75));
+$details-width: 18rem;
+$avatar: 1.375rem;
+
 :host {
   display: block;
+
+  // The card is the container the layout measures, not the window: a panel
+  // beside the page (the assistant chat) narrows the card without narrowing
+  // the window, and media queries did not see it.
+  nb-card {
+    margin-bottom: 0;
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+    container: initiative / inline-size;
+  }
 }
 
+// ─── Header ─────────────────────────────────────────────────────────────────
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem 1rem;
+  padding: 1rem $inset;
+  border-bottom: $divider;
+}
 
-  .title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
 
-    h4 {
-      margin: 0;
+// Pulled out by its own padding, so the arrow's glyph, not its button box,
+// sits on the inset line the content below starts on.
+.back {
+  flex: 0 0 auto;
+  margin: 0;
+  margin-inline-start: -0.375rem;
+  padding: 0.375rem;
+  color: $muted;
+}
+
+.heading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+// The list the initiative belongs to, as a quiet link over its title.
+.crumbs {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.crumb {
+  color: $muted;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-primary-default);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  min-width: 0;
+}
+
+.title {
+  min-width: 0;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: $text;
+  overflow-wrap: anywhere;
+}
+
+.header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.icon-action {
+  margin: 0;
+  padding: 0.375rem;
+}
+
+// Edit on the header's density: the toolbar's 28px height.
+.edit[nbButton] {
+  height: var(--gauzy-toolbar-button-height, 1.75rem);
+  margin: 0;
+  padding: 0 0.75rem;
+  font-size: $font-size;
+  text-transform: none;
+}
+
+// ─── State: a dot and a word, no tinted chip ────────────────────────────────
+.state {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: $font-size;
+  line-height: 1rem;
+  color: $text;
+}
+
+.state-dot {
+  flex: 0 0 auto;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: $muted;
+}
+
+.state[data-state='active'] .state-dot {
+  background: var(--color-success-default);
+}
+
+.state[data-state='resolved'] .state-dot {
+  background: var(--color-info-default);
+}
+
+.state[data-state='retired'] {
+  color: $muted;
+}
+
+// ─── Body ───────────────────────────────────────────────────────────────────
+nb-card-body {
+  padding: $inset;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 0;
+  text-align: center;
+  font-size: $font-size;
+  color: $muted;
+
+  > nb-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  button {
+    margin: 0;
+  }
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) $details-width;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+// The reading column, out to the details column. Every section has the same
+// build — its title over a hairline, then its content — and the same gap to
+// the next, whether it holds a sentence or a list.
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  min-width: 0;
+}
+
+// Teams, goals and projects on one line, a column each. A column is never
+// narrower than 13rem: past that they wrap under each other, so a narrow card
+// (a panel open beside the page) gets two, then one.
+.aligned {
+  display: grid;
+  // `min(100%, …)`: on a card narrower than 13rem the one column takes the
+  // width there is instead of running past the inset.
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1.75rem 1.5rem;
+  align-items: start;
+
+  // A goal's bar, shorter in a column a third of the width.
+  .goal-progress {
+    flex-basis: 5.5rem;
+  }
+}
+
+// A section's title, with the hairline every section has under it.
+.section-title {
+  margin: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: $divider;
+  font-size: $font-size;
+  font-weight: 600;
+  line-height: 1rem;
+  color: $text;
+}
+
+// Content under a title: a sentence, a list or its empty message all start
+// the same distance below the hairline, share one text size — the page's 12px
+// — and the text colour.
+$content-font-size: $font-size;
+$content-line-height: 1.125rem;
+$content-gap: 0.625rem;
+
+.text {
+  margin: 0;
+  padding-top: $content-gap;
+  font-size: $content-font-size;
+  line-height: $content-line-height;
+  color: $text;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  color: $muted;
+}
+
+.empty-text {
+  margin: 0;
+  padding-top: $content-gap;
+  font-size: $content-font-size;
+  line-height: $content-line-height;
+  color: $text;
+}
+
+// ─── Lists: rows under the title's hairline, a hairline between rows ────────
+// `.items` / `.item`, not `.rows` / `.row`: `.row` is Bootstrap's grid row,
+// whose negative margins pulled these out past their heading. No line under
+// the last row: the section's gap ends it.
+.items {
+  margin: 0;
+  padding: 0.25rem 0 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.25rem;
+  padding: 0.375rem 0;
+  font-size: $content-font-size;
+  line-height: $content-line-height;
+  color: $text;
+
+  & + & {
+    border-top: $divider;
+  }
+}
+
+// Wraps rather than truncates: the columns are narrow, and two goals or teams
+// whose names begin alike would otherwise read the same, with no other way to
+// see the rest of the name.
+.item-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.item-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+  color: $muted;
+}
+
+// ─── Known risks: one outlined box, a row per risk ──────────────────────────
+// Plain: a hairline box and hairlines between rows, a small warning glyph in
+// the warning colour, no fill or accent bar. A row lights up on hover.
+.risk-list {
+  margin: $content-gap 0 0;
+  padding: 0;
+  list-style: none;
+  border: $divider;
+  border-radius: $radius;
+  overflow: hidden;
+}
+
+.risk {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  font-size: $content-font-size;
+  line-height: $content-line-height;
+  color: $text;
+  transition: background-color 0.12s ease;
+
+  & + & {
+    border-top: $divider;
+  }
+
+  &:hover {
+    background: $hover;
+  }
+}
+
+// Centred on the first line, so a risk that wraps keeps it beside its start.
+.risk-icon {
+  flex: 0 0 auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: calc((#{$content-line-height} - 0.875rem) / 2);
+  font-size: 0.875rem;
+  color: var(--color-warning-default);
+}
+
+// A risk is a sentence: it wraps rather than truncates.
+.risk-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+// A project row is a link to the project: the whole row, with a chevron that
+// shows on hover.
+.item-link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  margin: -0.375rem -0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: $radius;
+  color: inherit;
+  text-decoration: none;
+
+  .item-go {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: $muted;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+
+  &:hover {
+    background: $hover;
+
+    .item-name {
+      color: var(--color-primary-default);
+    }
+
+    .item-go {
+      opacity: 1;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: -2px;
+
+    .item-go {
+      opacity: 1;
     }
   }
 }
 
-.empty {
-  padding: 2rem 0;
-  text-align: center;
-  opacity: 0.7;
-}
-
-.block {
-  margin-bottom: 1.25rem;
-
-  h6 {
-    margin: 0 0 0.5rem;
-  }
-
-  ul {
-    margin: 0;
-    padding-left: 1.25rem;
-  }
-}
-
-.intent {
-  white-space: pre-line;
-}
-
-.facts {
+// A goal's progress: the Goals list's thin bar and its percentage. Not
+// `.progress` / `.progress-bar`: those are Bootstrap's, which paint a grey
+// track and a solid blue fill.
+.goal-progress {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  flex: 0 0 9rem;
+  grid-template-columns: minmax(0, 1fr) 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-  > div {
+// Sized and coloured through the progress bar's own theme properties (every
+// `nb-theme(progress-bar-*)` is a `var(--progress-bar-*)` here), not by
+// reaching into its elements: 3px, fully rounded — the track clips its fill —
+// on a hairline track for each status the bar can take. It shows no value
+// text: `displayValue` is off by default.
+.goal-progress-bar {
+  width: 100%;
+  --progress-bar-tiny-height: 3px;
+  --progress-bar-border-radius: 999px;
+  --progress-bar-warning-background-color: #{$hairline};
+  --progress-bar-info-background-color: #{$hairline};
+  --progress-bar-success-background-color: #{$hairline};
+}
+
+.goal-progress-percent {
+  text-align: end;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+// Round for a person, square-ish for a team: initials or a picture.
+.avatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: $avatar;
+  height: $avatar;
+  overflow: hidden;
+  border-radius: 50%;
+  background: $hairline;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: $text;
+
+  &.square {
+    border-radius: $radius;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+// ─── Details: label / value rows, in view while the left scrolls ────────────
+.details {
+  position: sticky;
+  top: 1rem;
+  padding-inline-start: 1.75rem;
+  border-inline-start: $divider;
+}
+
+// A fixed label column, the same in both lists, so the values of the fields
+// and of the dates under them start on one line.
+.fields {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  column-gap: 1rem;
+  row-gap: 0.25rem;
+  margin: 0;
+
+  // When it was made and last changed: under a hairline, quieter.
+  &.meta {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: $divider;
+
+    dd {
+      color: $muted;
+    }
+  }
+}
+
+.field {
+  display: contents;
+
+  dt,
+  dd {
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    align-items: center;
+    min-width: 0;
+    min-height: 2rem;
+    margin: 0;
+    font-size: $font-size;
+    line-height: 1rem;
   }
 
-  .label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    opacity: 0.7;
+  dt {
+    font-weight: 400;
+    color: $muted;
+    white-space: nowrap;
+  }
+
+  dd {
+    color: $text;
+    overflow-wrap: anywhere;
   }
 }
 
-.columns {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+.person,
+.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
-.muted {
-  opacity: 0.6;
+.person-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.badge {
-  display: inline-block;
-  padding: 0 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  line-height: 1.25rem;
-  background-color: var(--color-basic-transparent-200, rgba(143, 155, 179, 0.16));
+// The steward as a link to their profile: the name takes the link colour and
+// an underline on hover, the way the project rows do.
+.person-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
 
-  &.state-active {
-    color: var(--color-success-default, #00d68f);
-    background-color: var(--color-success-transparent-100, rgba(0, 214, 143, 0.08));
+  &:hover .person-name {
+    color: var(--color-primary-default);
+    text-decoration: underline;
   }
 
-  &.state-resolved {
-    color: var(--color-info-default, #0095ff);
-    background-color: var(--color-info-transparent-100, rgba(0, 149, 255, 0.08));
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.field-icon {
+  flex: 0 0 auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+  color: $muted;
+}
+
+// Confidence: three pips, lit up to the level, in the level's colour.
+.pips {
+  display: inline-flex;
+  gap: 0.1875rem;
+}
+
+.pip {
+  width: 0.375rem;
+  height: 0.625rem;
+  border-radius: 1px;
+  background: $hairline;
+}
+
+[data-confidence='low'] .pip.on {
+  background: var(--color-danger-default);
+}
+
+[data-confidence='medium'] .pip.on {
+  background: var(--color-warning-default);
+}
+
+[data-confidence='high'] .pip.on {
+  background: var(--color-success-default);
+}
+
+// Momentum: the arrow takes the momentum's colour.
+[data-momentum='stalled'] .momentum-icon {
+  color: var(--color-danger-default);
+}
+
+[data-momentum='progressing'] .momentum-icon {
+  color: var(--color-info-default);
+}
+
+[data-momentum='accelerating'] .momentum-icon {
+  color: var(--color-success-default);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-link .item-go,
+  .risk {
+    transition: none;
+  }
+}
+
+// ─── Narrower cards ─────────────────────────────────────────────────────────
+// Measured on the card (`container: initiative`), so they also apply when the
+// window is wide but a panel beside the page takes part of it.
+
+// A tighter details column, so the reading column keeps its room.
+@container initiative (max-width: 64rem) {
+  .detail-layout {
+    grid-template-columns: minmax(0, 1fr) 15.5rem;
+    gap: 1.75rem;
   }
 
-  &.state-retired {
-    opacity: 0.6;
+  .details {
+    padding-inline-start: 1.25rem;
+  }
+
+  .fields {
+    grid-template-columns: 6rem minmax(0, 1fr);
+  }
+}
+
+// One column: the substance, then the details under a hairline, laid out two
+// fields to a line so they stay compact.
+@container initiative (max-width: 48rem) {
+  .detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  // Under the substance, where it sits in the page's order, so Tab and the
+  // eye meet the steward and the project links in the same order.
+  .details {
+    position: static;
+    padding: 1.25rem 0 0;
+    border-inline-start: 0;
+    border-top: $divider;
+  }
+
+  .fields {
+    grid-template-columns: 6rem minmax(0, 1fr) 6rem minmax(0, 1fr);
+    column-gap: 1rem;
+
+    &.meta {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+    }
+  }
+
+  .main {
+    max-width: none;
+  }
+}
+
+// A phone, or a narrow pane: one field to a line again, the tighter inset, a
+// shorter goal bar, and the header's actions under the title when they do not
+// fit beside it.
+@container initiative (max-width: 34rem) {
+  .header {
+    flex-wrap: wrap;
+    padding: 0.75rem $inset-narrow;
+  }
+
+  nb-card-body {
+    padding: $inset-narrow;
+  }
+
+  .fields {
+    grid-template-columns: 6rem minmax(0, 1fr);
+  }
+
+  .goal-progress {
+    flex-basis: 6rem;
   }
 }
