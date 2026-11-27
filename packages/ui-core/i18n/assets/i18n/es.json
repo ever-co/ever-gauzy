@@ -2567,6 +2567,8 @@
 		"GOAL_TEMPLATES": "Plantillas de objetivos",
 		"CREATE_NEW_MENU": "Crear nuevo",
 		"CREATE_FROM_PRESET": "Crear a partir de un preajuste",
+		"SEARCH_PLACEHOLDER": "Buscar objetivos y resultados clave",
+		"NO_MATCHING_OBJECTIVES": "Ningún objetivo coincide con tu búsqueda.",
 		"SELECT_A_PRESET": "Seleccionar un preajuste",
 		"ADDITIONAL_DETAILS": "Detalles adicionales",
 		"OWNERSHIP": {

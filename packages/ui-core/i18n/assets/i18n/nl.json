@@ -2565,6 +2565,8 @@
 		"GOAL_TEMPLATES": "Doelsjablonen",
 		"CREATE_NEW_MENU": "Maak nieuw",
 		"CREATE_FROM_PRESET": "Maken vanuit voorinstelling",
+		"SEARCH_PLACEHOLDER": "Doelen en kernresultaten zoeken",
+		"NO_MATCHING_OBJECTIVES": "Geen doelen komen overeen met je zoekopdracht.",
 		"SELECT_A_PRESET": "Selecteer een voorinstelling",
 		"ADDITIONAL_DETAILS": "Aanvullende gegevens",
 		"OWNERSHIP": {
