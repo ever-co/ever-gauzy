@@ -1,11 +1,13 @@
 // cspell:ignore EENVELOPE EAUTH ENOAUTH EOAUTH ETLS EREQUIRETLS EMESSAGE ESTREAM EMAXLIMIT EDNS ESOCKET ECONNECTION ECONNREFUSED ENOTFOUND EPROTOCOL ECONNRESET EPIPE EHOSTUNREACH ESES EFETCH BDAT EHLO HELO REQUIRETLS RSET XOAUTH flase greylisted
-import { EmailTemplateEnum } from '@gauzy/contracts';
+import { EmailStatusEnum, EmailTemplateEnum } from '@gauzy/contracts';
 import {
 	classifyEmailSendError,
 	EMAIL_RETRY_BACKOFF_MS,
+	EMAIL_RETRY_IN_FLIGHT_MS,
 	EMAIL_RETRY_MAX_ATTEMPTS,
 	EMAIL_RETRY_TEMPLATES,
 	emailRetryDueAt,
+	emailRetryInFlightUntil,
 	emailSendErrorCode,
 	isEmailRetryEnabled,
 	isEmailRetryTemplate,
@@ -468,5 +470,57 @@ describe('isReproducibleEmailMessage', () => {
 	it('refuses what is not a message', () => {
 		expect(isReproducibleEmailMessage(undefined, FROM)).toBe(false);
 		expect(isReproducibleEmailMessage('message' as never, FROM)).toBe(false);
+	});
+});
+
+describe('emailRetryInFlightUntil', () => {
+	const NOW = new Date('2026-11-27T12:00:00.000Z');
+	const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60_000);
+
+	it('holds a resend for 15 minutes after a sweep claimed the email', () => {
+		expect(EMAIL_RETRY_IN_FLIGHT_MS).toBe(15 * 60_000);
+		const row = { status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: minutesAgo(2) };
+
+		expect(emailRetryInFlightUntil(row, NOW)).toEqual(new Date(minutesAgo(2).getTime() + EMAIL_RETRY_IN_FLIGHT_MS));
+	});
+
+	it('reads the claim moment as the store returns it, a string included', () => {
+		const row = { status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: minutesAgo(1).toISOString() };
+
+		expect(emailRetryInFlightUntil(row, NOW)).toEqual(new Date(minutesAgo(1).getTime() + EMAIL_RETRY_IN_FLIGHT_MS));
+	});
+
+	it('reads text without a zone, as SQLite keeps a moment, as UTC', () => {
+		const row = { status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: '2026-11-27 11:58:00.000' };
+
+		expect(emailRetryInFlightUntil(row, NOW)).toEqual(new Date('2026-11-27T12:13:00.000Z'));
+	});
+
+	it('holds nothing once the window is over', () => {
+		expect(
+			emailRetryInFlightUntil(
+				{ status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: minutesAgo(15) },
+				NOW
+			)
+		).toBeNull();
+	});
+
+	it('holds nothing for a row no sweep is sending: sent, due again, never claimed, or a claim time that cannot be read', () => {
+		const claimed = minutesAgo(1);
+		expect(
+			emailRetryInFlightUntil({ status: EmailStatusEnum.SENT, nextRetryAt: null, lastRetryAt: claimed }, NOW)
+		).toBeNull();
+		expect(
+			emailRetryInFlightUntil({ status: EmailStatusEnum.FAILED, nextRetryAt: NOW, lastRetryAt: claimed }, NOW)
+		).toBeNull();
+		expect(
+			emailRetryInFlightUntil({ status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: null }, NOW)
+		).toBeNull();
+		expect(
+			emailRetryInFlightUntil(
+				{ status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: 'not a date' },
+				NOW
+			)
+		).toBeNull();
 	});
 });

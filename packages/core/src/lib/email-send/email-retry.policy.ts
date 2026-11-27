@@ -1,5 +1,5 @@
 // cspell:ignore EENVELOPE EAUTH ENOAUTH EOAUTH ETLS EREQUIRETLS EMESSAGE ESTREAM EMAXLIMIT EDNS ESOCKET ECONNECTION ECONNREFUSED ENOTFOUND EPROTOCOL EHLO ERRNOS HELO greylisting
-import { EmailTemplateEnum } from '@gauzy/contracts';
+import { EmailStatusEnum, EmailTemplateEnum } from '@gauzy/contracts';
 
 /**
  * When an email whose send failed is sent again automatically, and when it never is.
@@ -61,6 +61,15 @@ export const EMAIL_RETRY_SWEEP_MS = 5 * MINUTE;
 
 /** A sweep starts no send after this long, so it is over before the next one is asked for. */
 export const EMAIL_RETRY_SWEEP_TIME_BUDGET_MS = 4 * MINUTE;
+
+/**
+ * How long after a sweep claimed an email (`email_sent.lastRetryAt`) its retry may still be going out. The sweep holds
+ * no lock while it reads the mail settings and sends, so a resend by hand waits this long rather than risk a second
+ * copy ({@link emailRetryInFlightUntil}). Counted from the claim, it covers the mail settings' verification and the
+ * send at nodemailer's default timeouts (2 minutes to connect, 30 seconds for the greeting, 10 minutes of silence); a
+ * retry still going after that is taken to be over.
+ */
+export const EMAIL_RETRY_IN_FLIGHT_MS = 15 * MINUTE;
 
 /**
  * The templates whose failed email may be sent again automatically. An allowlist, so a template added later is never
@@ -145,6 +154,49 @@ export function emailRetryDueAt(retriesMade: number, failedAt: Date): Date | nul
 	}
 	const delay = EMAIL_RETRY_BACKOFF_MS[retriesMade];
 	return delay === undefined ? null : new Date(failedAt.getTime() + delay);
+}
+
+/**
+ * Until when an automatic retry of an email may still be going out, so that a resend by hand must wait: `null` when
+ * none can be.
+ *
+ * A sweep's claim leaves the row `FAILED` with no retry due and `lastRetryAt` stamped, and the row stays so while the
+ * sweep reads the mail settings and sends; once it is over the row is `SENT`, due again, or failed for good. The last
+ * reads the same as a retry still going, so it waits the same, until {@link EMAIL_RETRY_IN_FLIGHT_MS} after the claim.
+ * A claim moment that cannot be read is no claim.
+ *
+ * @param row The email as it was read.
+ * @param now The moment of the resend.
+ */
+export function emailRetryInFlightUntil(
+	row: { status?: unknown; nextRetryAt?: Date | string | null; lastRetryAt?: Date | string | null },
+	now: Date
+): Date | null {
+	if (row.status !== EmailStatusEnum.FAILED || row.nextRetryAt || !row.lastRetryAt) {
+		return null;
+	}
+	const claimedAt = storedInstantOf(row.lastRetryAt);
+	if (!Number.isFinite(claimedAt)) {
+		return null;
+	}
+	const until = claimedAt + EMAIL_RETRY_IN_FLIGHT_MS;
+	return until > now.getTime() ? new Date(until) : null;
+}
+
+/** A date and time with no zone, as SQLite keeps one (`2026-12-01 10:00:00.000`). */
+const ZONELESS_DATE_TIME = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?$/;
+
+/**
+ * The epoch milliseconds of a moment as the store answers it: a `Date`, or text. The store keeps these moments in
+ * UTC, so text without a zone (SQLite's, where a column's type is not known to the mapping) is read as UTC rather than
+ * as the local time JavaScript would take it for. NaN when it cannot be read.
+ */
+function storedInstantOf(value: Date | string): number {
+	if (value instanceof Date) {
+		return value.getTime();
+	}
+	const text = String(value).trim();
+	return new Date(ZONELESS_DATE_TIME.test(text) ? `${text.replace(' ', 'T')}Z` : text).getTime();
 }
 
 /** The name nodemailer's own SMTP transport reports (its pooled variant is `SMTP (pool)`, which is not used here). */

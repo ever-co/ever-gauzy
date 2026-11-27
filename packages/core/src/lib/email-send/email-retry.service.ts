@@ -88,7 +88,9 @@ type SendOutcome =
  *   read: of two sweeps that read a row together, one changes it and sends it, the other changes nothing and sends
  *   nothing. A process that stops between its claim and its send leaves the row with no retry due: that email is lost
  *   rather than risked twice, since a message the server may have accepted cannot be taken back. Nothing ever gives
- *   a claimed row back.
+ *   a claimed row back. A resend by hand (`EmailService.resendEmail`) is refused while a claimed retry may still be
+ *   going out (`EMAIL_RETRY_IN_FLIGHT_MS` after the claim), and takes a due row with a write that matches nothing
+ *   once a sweep has claimed it, so a sweep and a resend never both send it.
  * - **Never a burst, for the whole installation.** Every claim stamps `lastRetryAt` with the moment it is made, and
  *   before each claim the sweep counts, at that moment, the rows of the whole table stamped in the last
  *   `EMAIL_RETRY_SWEEP_MS`, by any process and whatever their status now. Once that count has reached
@@ -358,6 +360,11 @@ export class EmailRetryService {
 	 * retry can fix, retries are left and that moment is within the maximum age; otherwise with none, for good. Written
 	 * only while the row is still this sweep's (failed, not due, on this retry), so a row re-sent by hand meanwhile is
 	 * not put back in the retries.
+	 *
+	 * A retry can fix a failure before the SMTP server accepted the message, and one before the message was handed to
+	 * any transport at all: `getEmailInstance` threw (no instance), which is how an SMTP server that does not answer
+	 * fails, since the mail settings are verified against it first. The stored message needs no rendering, so the
+	 * retry after it sends exactly the same.
 	 */
 	private async settleFailure(
 		row: EmailHistory,
@@ -367,7 +374,9 @@ export class EmailRetryService {
 	): Promise<void> {
 		const template = row.emailTemplate?.name;
 		const lastErrorCode = emailSendErrorCode(failure.error);
-		const transient = !!smtpTransportOf(failure.instance) && classifyEmailSendError(failure.error).retry;
+		const transient =
+			failure.instance === undefined ||
+			(!!smtpTransportOf(failure.instance) && classifyEmailSendError(failure.error).retry);
 		const nextAt = transient ? emailRetryDueAt(attempt, failure.failedAt) : null;
 		const dueAt = nextAt && !isPastMaxAge(row, nextAt) ? nextAt : null;
 

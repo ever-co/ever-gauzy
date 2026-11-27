@@ -5,16 +5,18 @@
 import '../core/entities/internal';
 
 import { randomUUID } from 'node:crypto';
-import { Logger } from '@nestjs/common';
+import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { EmailStatusEnum } from '@gauzy/contracts';
+import { EmailStatusEnum, LanguagesEnum } from '@gauzy/contracts';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
+import { RequestContext } from '../core/context';
 import { EmailHistory } from '../core/entities/internal';
 import { mikroOrmOutsideRequest } from '../core/testing/mikro-orm-outside-request';
 import { AddEmailSentRetryColumns1791000019950 } from '../database/migrations/1791000019950-AddEmailSentRetryColumns';
 import { EMAIL_RETRY_BATCH_SIZE, EMAIL_RETRY_SWEEP_MS } from './email-retry.policy';
 import { EmailRetryService } from './email-retry.service';
+import { EmailService } from './email.service';
 
 /**
  * The retry sweep against a real SQLite database: `email_sent` as the platform had it before the retry, with the
@@ -784,5 +786,138 @@ describe('EmailRetryService on SQLite', () => {
 			else process.env.DB_ORM = previousOrm;
 			await mikroOrm.close();
 		}
+	});
+	it('reschedules a retry whose mail settings failed their verification: nothing went to any server', async () => {
+		const id = await aRow();
+		// What `getEmailInstance` throws when no SMTP server of the chain answers its verification
+		getEmailInstance.mockRejectedValueOnce(
+			new InternalServerErrorException('Error while retrieving tenant/organization smtp configuration')
+		);
+
+		const report = await service.sweep(at(NOW));
+
+		expect(report).toMatchObject({ due: 1, rescheduled: 1, gaveUp: 0, sent: 0 });
+		expect(send).not.toHaveBeenCalled();
+		expect(await rowOf(id)).toMatchObject({
+			status: EmailStatusEnum.FAILED,
+			retryCount: 1,
+			nextRetryAt: stored(fromNow(30 * MINUTE))
+		});
+	});
+
+	/**
+	 * A resend by hand (`EmailService.resendEmail`) and the sweep on the same row, on the same database: whichever
+	 * order they meet in, the email goes once. The resend's own clock is the sweep's (`Date` is faked to it), since it
+	 * judges whether a claimed retry may still be going out.
+	 */
+	describe('a resend by hand meeting the sweep', () => {
+		let resendSend: jest.Mock;
+		let emails: EmailService;
+
+		beforeEach(() => {
+			jest.useFakeTimers({
+				now: NOW,
+				doNotFake: [
+					'nextTick',
+					'setImmediate',
+					'clearImmediate',
+					'setInterval',
+					'clearInterval',
+					'setTimeout',
+					'clearTimeout',
+					'queueMicrotask',
+					'hrtime',
+					'performance'
+				]
+			});
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+			resendSend = jest.fn(async () => ({ messageId: '<r@gauzy.test>' }));
+			const repository = dataSource.getRepository(EmailHistory);
+			emails = new EmailService(
+				{
+					// The test database keeps only the template's name and has no organization table: the row is read
+					// with its template's name, and its organization is the id it names.
+					findOne: async ({ where }: { where: Record<string, unknown> }) => {
+						const row = await repository.findOne({ where });
+						if (!row) return null;
+						const [emailTemplate] = await dataSource.query(
+							`SELECT "id", "name" FROM "email_template" WHERE "id" = ?`,
+							[row.emailTemplateId]
+						);
+						return Object.assign(row, { emailTemplate, organization: { id: row.organizationId } });
+					},
+					update: (criteria: never, values: never) => repository.update(criteria, values),
+					save: (entity: EmailHistory) => repository.update({ id: entity.id }, { status: entity.status })
+				} as never,
+				{} as never,
+				{} as never,
+				{ getEmailInstance: async () => ({ send: resendSend }) } as never
+			);
+		});
+
+		afterEach(() => {
+			jest.useRealTimers();
+		});
+
+		it('refuses a resend while the sweep that claimed the email is sending it', async () => {
+			const id = await aRow();
+			let refusal: unknown;
+			send.mockImplementationOnce(async () => {
+				refusal = await emails.resendEmail(id, {}, LanguagesEnum.ENGLISH).catch((error) => error);
+				return { messageId: '<m@gauzy.test>' };
+			});
+
+			const report = await service.sweep(at(NOW));
+
+			expect(report).toMatchObject({ sent: 1 });
+			expect(String(refusal)).toContain('An automatic retry of this email may still be going out');
+			expect(send).toHaveBeenCalledTimes(1);
+			expect(resendSend).not.toHaveBeenCalled();
+			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 1 });
+		});
+
+		it('sends nothing by hand when the sweep claimed the email after the resend read it', async () => {
+			const id = await aRow();
+			const repository = dataSource.getRepository(EmailHistory);
+			const read = (emails as any).typeOrmEmailHistoryRepository.findOne;
+			(emails as any).typeOrmEmailHistoryRepository.findOne = async (options: never) => {
+				const row = await read(options);
+				// The sweep claims (and sends) between the resend's read and its write
+				await service.sweep(at(NOW));
+				return row;
+			};
+
+			await expect(emails.resendEmail(id, {}, LanguagesEnum.ENGLISH)).rejects.toThrow(
+				'An automatic retry of this email has just started'
+			);
+
+			expect(send).toHaveBeenCalledTimes(1);
+			expect(resendSend).not.toHaveBeenCalled();
+			expect(await repository.findOneBy({ id })).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 1 });
+		});
+
+		it('takes a due email out of the retries before it goes, so the sweep after it finds nothing to send', async () => {
+			const id = await aRow();
+
+			await emails.resendEmail(id, {}, LanguagesEnum.ENGLISH);
+			const report = await service.sweep(at(NOW));
+
+			expect(resendSend).toHaveBeenCalledTimes(1);
+			expect(report).toMatchObject({ due: 0, sent: 0 });
+			expect(send).not.toHaveBeenCalled();
+			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 0, nextRetryAt: null });
+		});
+
+		it('re-sends by hand once the window after the last claim is over', async () => {
+			const id = await aRow();
+			send.mockRejectedValueOnce(noSuchUser());
+			await service.sweep(at(NOW)); // claimed, failed for good: no retry due, claimed at NOW
+			jest.setSystemTime(fromNow(15 * MINUTE + 1));
+
+			await emails.resendEmail(id, {}, LanguagesEnum.ENGLISH);
+
+			expect(resendSend).toHaveBeenCalledTimes(1);
+			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT });
+		});
 	});
 });
