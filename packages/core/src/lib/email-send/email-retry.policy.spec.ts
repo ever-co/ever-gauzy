@@ -3,6 +3,7 @@ import { EmailStatusEnum, EmailTemplateEnum } from '@gauzy/contracts';
 import {
 	classifyEmailSendError,
 	EMAIL_RETRY_BACKOFF_MS,
+	EMAIL_RETRY_IN_FLIGHT_CODE,
 	EMAIL_RETRY_IN_FLIGHT_MS,
 	EMAIL_RETRY_MAX_ATTEMPTS,
 	EMAIL_RETRY_TEMPLATES,
@@ -14,6 +15,8 @@ import {
 	isReproducibleEmailMessage,
 	smtpTransportOf
 } from './email-retry.policy';
+
+const HOUR_MS = 60 * 60_000;
 
 /** An error shaped as nodemailer 10 shapes its own. */
 function smtpError(fields: Record<string, unknown>, message = 'failed'): Error {
@@ -476,51 +479,54 @@ describe('isReproducibleEmailMessage', () => {
 describe('emailRetryInFlightUntil', () => {
 	const NOW = new Date('2026-11-27T12:00:00.000Z');
 	const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60_000);
+	/** A row a sweep claimed `minutes` ago and has not written the outcome of yet. */
+	const claimed = (lastRetryAt: Date | string, fields: Record<string, unknown> = {}) => ({
+		status: EmailStatusEnum.FAILED,
+		nextRetryAt: null,
+		lastRetryAt,
+		lastErrorCode: EMAIL_RETRY_IN_FLIGHT_CODE,
+		...fields
+	});
 
-	it('holds a resend for 15 minutes after a sweep claimed the email', () => {
-		expect(EMAIL_RETRY_IN_FLIGHT_MS).toBe(15 * 60_000);
-		const row = { status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: minutesAgo(2) };
+	it('holds a resend while the claim mark is on the row, however long the retry takes, up to an hour', () => {
+		expect(EMAIL_RETRY_IN_FLIGHT_CODE).toBe('IN_FLIGHT');
+		expect(EMAIL_RETRY_IN_FLIGHT_MS).toBe(60 * 60_000);
 
-		expect(emailRetryInFlightUntil(row, NOW)).toEqual(new Date(minutesAgo(2).getTime() + EMAIL_RETRY_IN_FLIGHT_MS));
+		expect(emailRetryInFlightUntil(claimed(minutesAgo(2)), NOW)).toEqual(
+			new Date(minutesAgo(2).getTime() + HOUR_MS)
+		);
+		expect(emailRetryInFlightUntil(claimed(minutesAgo(40)), NOW)).toEqual(
+			new Date(minutesAgo(40).getTime() + HOUR_MS)
+		);
 	});
 
 	it('reads the claim moment as the store returns it, a string included', () => {
-		const row = { status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: minutesAgo(1).toISOString() };
-
-		expect(emailRetryInFlightUntil(row, NOW)).toEqual(new Date(minutesAgo(1).getTime() + EMAIL_RETRY_IN_FLIGHT_MS));
+		expect(emailRetryInFlightUntil(claimed(minutesAgo(1).toISOString()), NOW)).toEqual(
+			new Date(minutesAgo(1).getTime() + HOUR_MS)
+		);
 	});
 
 	it('reads text without a zone, as SQLite keeps a moment, as UTC', () => {
-		const row = { status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: '2026-11-27 11:58:00.000' };
-
-		expect(emailRetryInFlightUntil(row, NOW)).toEqual(new Date('2026-11-27T12:13:00.000Z'));
+		expect(emailRetryInFlightUntil(claimed('2026-11-27 11:58:00.000'), NOW)).toEqual(
+			new Date('2026-11-27T12:58:00.000Z')
+		);
 	});
 
-	it('holds nothing once the window is over', () => {
-		expect(
-			emailRetryInFlightUntil(
-				{ status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: minutesAgo(15) },
-				NOW
-			)
-		).toBeNull();
+	it('holds nothing an hour after a claim whose outcome was never written', () => {
+		expect(emailRetryInFlightUntil(claimed(minutesAgo(60)), NOW)).toBeNull();
 	});
 
-	it('holds nothing for a row no sweep is sending: sent, due again, never claimed, or a claim time that cannot be read', () => {
-		const claimed = minutesAgo(1);
+	it('holds nothing once the retry wrote how it went, even a moment after the claim', () => {
 		expect(
-			emailRetryInFlightUntil({ status: EmailStatusEnum.SENT, nextRetryAt: null, lastRetryAt: claimed }, NOW)
+			emailRetryInFlightUntil(claimed(minutesAgo(1), { lastErrorCode: 'EENVELOPE 550 RCPT TO' }), NOW)
 		).toBeNull();
-		expect(
-			emailRetryInFlightUntil({ status: EmailStatusEnum.FAILED, nextRetryAt: NOW, lastRetryAt: claimed }, NOW)
-		).toBeNull();
-		expect(
-			emailRetryInFlightUntil({ status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: null }, NOW)
-		).toBeNull();
-		expect(
-			emailRetryInFlightUntil(
-				{ status: EmailStatusEnum.FAILED, nextRetryAt: null, lastRetryAt: 'not a date' },
-				NOW
-			)
-		).toBeNull();
+		expect(emailRetryInFlightUntil(claimed(minutesAgo(1), { lastErrorCode: null }), NOW)).toBeNull();
+		expect(emailRetryInFlightUntil(claimed(minutesAgo(1), { status: EmailStatusEnum.SENT }), NOW)).toBeNull();
+		expect(emailRetryInFlightUntil(claimed(minutesAgo(1), { nextRetryAt: NOW }), NOW)).toBeNull();
+	});
+
+	it('holds nothing for a row never claimed, or with a claim moment that cannot be read', () => {
+		expect(emailRetryInFlightUntil(claimed(null as never), NOW)).toBeNull();
+		expect(emailRetryInFlightUntil(claimed('not a date'), NOW)).toBeNull();
 	});
 });

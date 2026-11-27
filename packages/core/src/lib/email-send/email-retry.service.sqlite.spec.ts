@@ -734,8 +734,8 @@ describe('EmailRetryService on SQLite', () => {
 
 		expect(report).toMatchObject({ due: 2, dropped: 2, sent: 0 });
 		expect(send).not.toHaveBeenCalled();
-		expect(await rowOf(password)).toMatchObject({ nextRetryAt: null });
-		expect(await rowOf(action)).toMatchObject({ nextRetryAt: null });
+		expect(await rowOf(password)).toMatchObject({ nextRetryAt: null, lastErrorCode: null });
+		expect(await rowOf(action)).toMatchObject({ nextRetryAt: null, lastErrorCode: null });
 	});
 
 	it('takes an email with nothing to send out of the retries, unsent', async () => {
@@ -743,7 +743,7 @@ describe('EmailRetryService on SQLite', () => {
 
 		expect(await service.sweep(at(NOW))).toMatchObject({ dropped: 1 });
 		expect(send).not.toHaveBeenCalled();
-		expect(await rowOf(id)).toMatchObject({ nextRetryAt: null });
+		expect(await rowOf(id)).toMatchObject({ nextRetryAt: null, lastErrorCode: null });
 	});
 
 	it('never retries an email that went, even one still marked due', async () => {
@@ -870,10 +870,46 @@ describe('EmailRetryService on SQLite', () => {
 			const report = await service.sweep(at(NOW));
 
 			expect(report).toMatchObject({ sent: 1 });
-			expect(String(refusal)).toContain('An automatic retry of this email may still be going out');
+			expect(String(refusal)).toContain('An automatic retry of this email is going out');
 			expect(send).toHaveBeenCalledTimes(1);
 			expect(resendSend).not.toHaveBeenCalled();
-			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 1 });
+			// The SENT write gives the row back the code of its first failure in place of the in-flight mark
+			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 1, lastErrorCode: null });
+		});
+
+		it('still refuses a resend 40 minutes into a slow retry: the mark holds until the outcome is written', async () => {
+			const id = await aRow();
+			let refusal: unknown;
+			send.mockImplementationOnce(async () => {
+				// A server that answers slowly enough for nodemailer's idle timeouts never to fire
+				jest.setSystemTime(fromNow(40 * MINUTE));
+				refusal = await emails.resendEmail(id, {}, LanguagesEnum.ENGLISH).catch((error) => error);
+				return { messageId: '<m@gauzy.test>' };
+			});
+
+			await service.sweep(at(NOW));
+
+			expect(String(refusal)).toContain('An automatic retry of this email is going out');
+			expect(resendSend).not.toHaveBeenCalled();
+			expect(send).toHaveBeenCalledTimes(1);
+		});
+
+		it('marks the row while its retry goes out, and the outcome replaces the mark with the failure code', async () => {
+			const id = await aRow();
+			let during: Record<string, any> | undefined;
+			send.mockImplementationOnce(async () => {
+				during = await rowOf(id);
+				throw refused();
+			});
+
+			await service.sweep(at(NOW));
+
+			expect(during).toMatchObject({
+				status: EmailStatusEnum.FAILED,
+				nextRetryAt: null,
+				lastErrorCode: 'IN_FLIGHT'
+			});
+			expect(await rowOf(id)).toMatchObject({ retryCount: 1, lastErrorCode: 'ESOCKET ECONNREFUSED CONN' });
 		});
 
 		it('sends nothing by hand when the sweep claimed the email after the resend read it', async () => {
@@ -908,16 +944,31 @@ describe('EmailRetryService on SQLite', () => {
 			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT, retryCount: 0, nextRetryAt: null });
 		});
 
-		it('re-sends by hand once the window after the last claim is over', async () => {
+		it('re-sends by hand as soon as a retry that failed for good wrote how it went', async () => {
 			const id = await aRow();
 			send.mockRejectedValueOnce(noSuchUser());
-			await service.sweep(at(NOW)); // claimed, failed for good: no retry due, claimed at NOW
-			jest.setSystemTime(fromNow(15 * MINUTE + 1));
+			await service.sweep(at(NOW)); // claimed at NOW, failed for good: no retry due, the mark replaced
 
 			await emails.resendEmail(id, {}, LanguagesEnum.ENGLISH);
 
 			expect(resendSend).toHaveBeenCalledTimes(1);
 			expect(await rowOf(id)).toMatchObject({ status: EmailStatusEnum.SENT });
+		});
+
+		it('after a sweep that stopped mid-send, waits an hour from its claim, then re-sends by hand', async () => {
+			const id = await aRow();
+			// A process killed between its claim and its outcome: the mark stays
+			send.mockImplementationOnce(() => new Promise(() => undefined));
+			void service.sweep(at(NOW));
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(await rowOf(id)).toMatchObject({ lastErrorCode: 'IN_FLIGHT', lastRetryAt: stored(NOW) });
+
+			jest.setSystemTime(fromNow(59 * MINUTE));
+			await expect(emails.resendEmail(id, {}, LanguagesEnum.ENGLISH)).rejects.toThrow('is going out');
+			jest.setSystemTime(fromNow(60 * MINUTE + 1));
+			await emails.resendEmail(id, {}, LanguagesEnum.ENGLISH);
+
+			expect(resendSend).toHaveBeenCalledTimes(1);
 		});
 	});
 });

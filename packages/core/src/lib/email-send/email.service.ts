@@ -32,7 +32,6 @@ import { readAffectedRows } from '../database/database.helper';
 import { describeEmailSendError } from './email-send-error';
 import {
 	classifyEmailSendError,
-	EMAIL_RETRY_IN_FLIGHT_MS,
 	EMAIL_RETRY_MAX_ATTEMPTS,
 	emailRetryDueAt,
 	emailRetryInFlightUntil,
@@ -1504,12 +1503,14 @@ export class EmailService {
 			throw new BadRequestException(`Email address ${sendOptions.message.to} is blocked by domain restrictions.`);
 		}
 
-		// A resend by hand never goes while an automatic retry of the same email may still be going out: the sweep that
-		// claimed it holds no lock while it reads the mail settings and sends (`email-retry.service.ts`).
+		// A resend by hand never goes while an automatic retry of the same email is going out: the sweep that claimed it
+		// holds no lock while it reads the mail settings and sends, and marks the row until it writes how that went
+		// (`email-retry.service.ts`).
 		const inFlightUntil = emailRetryInFlightUntil(emailHistory, new Date());
 		if (inFlightUntil) {
 			throw new ConflictException(
-				`An automatic retry of this email may still be going out; it can be re-sent by hand from ${inFlightUntil.toISOString()}.`
+				'An automatic retry of this email is going out; it can be re-sent by hand once it is over ' +
+					`(at the latest from ${inFlightUntil.toISOString()}).`
 			);
 		}
 
@@ -1529,8 +1530,7 @@ export class EmailService {
 			);
 			if (readAffectedRows(taken) !== 1) {
 				throw new ConflictException(
-					'An automatic retry of this email has just started; it can be re-sent by hand from ' +
-						`${new Date(Date.now() + EMAIL_RETRY_IN_FLIGHT_MS).toISOString()}.`
+					'An automatic retry of this email has just started; it can be re-sent by hand once it is over.'
 				);
 			}
 			emailHistory.nextRetryAt = null;

@@ -11,6 +11,7 @@ import { EmailSendService } from './email-send.service';
 import {
 	classifyEmailSendError,
 	EMAIL_RETRY_BATCH_SIZE,
+	EMAIL_RETRY_IN_FLIGHT_CODE,
 	EMAIL_RETRY_MAX_AGE_MS,
 	EMAIL_RETRY_MAX_ATTEMPTS,
 	EMAIL_RETRY_SWEEP_MS,
@@ -88,9 +89,10 @@ type SendOutcome =
  *   read: of two sweeps that read a row together, one changes it and sends it, the other changes nothing and sends
  *   nothing. A process that stops between its claim and its send leaves the row with no retry due: that email is lost
  *   rather than risked twice, since a message the server may have accepted cannot be taken back. Nothing ever gives
- *   a claimed row back. A resend by hand (`EmailService.resendEmail`) is refused while a claimed retry may still be
- *   going out (`EMAIL_RETRY_IN_FLIGHT_MS` after the claim), and takes a due row with a write that matches nothing
- *   once a sweep has claimed it, so a sweep and a resend never both send it.
+ *   a claimed row back. A resend by hand (`EmailService.resendEmail`) is refused while a claimed retry is going out
+ *   (the claim marks the row `EMAIL_RETRY_IN_FLIGHT_CODE` and the write of the outcome replaces the mark; a mark never
+ *   replaced holds for `EMAIL_RETRY_IN_FLIGHT_MS`), and takes a due row with a write that matches nothing once a
+ *   sweep has claimed it, so a sweep and a resend never both send it.
  * - **Never a burst, for the whole installation.** Every claim stamps `lastRetryAt` with the moment it is made, and
  *   before each claim the sweep counts, at that moment, the rows of the whole table stamped in the last
  *   `EMAIL_RETRY_SWEEP_MS`, by any process and whatever their status now. Once that count has reached
@@ -214,6 +216,7 @@ export class EmailRetryService {
 				'email.content',
 				'email.retryCount',
 				'email.nextRetryAt',
+				'email.lastErrorCode',
 				'email.createdAt',
 				'template.id',
 				'template.name'
@@ -260,6 +263,8 @@ export class EmailRetryService {
 		}
 		if (!isEmailRetryTemplate(template) || !row.email || !row.name || !row.content?.trim()) {
 			this.logger.warn(`Email ${row.id} ("${template}") was taken out of the automatic retries unsent.`);
+			// Nothing is going out: the claim's in-flight mark goes, and the code of the last failure comes back.
+			await this.whileOurs(row, row.retryCount + 1, { lastErrorCode: row.lastErrorCode ?? null });
 			report.dropped += 1;
 			return;
 		}
@@ -271,7 +276,8 @@ export class EmailRetryService {
 	 * row together. It matches only while the row is failed, due at the sweep's moment, younger than the maximum age at
 	 * the claim's moment, and still on the retry that was read; it moves `retryCount` on and clears `nextRetryAt`, so no
 	 * other sweep matches it after, and stamps `lastRetryAt` with the claim's moment, which the installation-wide cap
-	 * counts (a claim counts whether or not it then sends).
+	 * counts (a claim counts whether or not it then sends). It marks the row `EMAIL_RETRY_IN_FLIGHT_CODE` until the write
+	 * of the outcome, which keeps a resend by hand from going meanwhile.
 	 *
 	 * @param row The row as the sweep read it.
 	 * @param now The sweep's moment, which the row must be due at.
@@ -289,7 +295,12 @@ export class EmailRetryService {
 				nextRetryAt: LessThanOrEqual(new Date(now.getTime() + 1_000)),
 				createdAt: MoreThanOrEqual(oldestRetriedAt(claimedAt))
 			} as FindOptionsWhere<EmailHistory>,
-			{ retryCount: row.retryCount + 1, nextRetryAt: null, lastRetryAt: claimedAt }
+			{
+				retryCount: row.retryCount + 1,
+				nextRetryAt: null,
+				lastRetryAt: claimedAt,
+				lastErrorCode: EMAIL_RETRY_IN_FLIGHT_CODE
+			}
 		);
 		return readAffectedRows(result) === 1;
 	}
@@ -338,7 +349,8 @@ export class EmailRetryService {
 	/**
 	 * Records a sent retry as `SENT`, while the row is still this sweep's. A write the store refuses is tried again
 	 * after each of `sentWriteDelaysMs`; the message is never sent again. A write that never goes through leaves the row
-	 * claimed and failed, which no sweep sends again, and is logged by the row's id alone.
+	 * claimed and failed, which no sweep sends again, and is logged by the row's id alone. The write also gives the row
+	 * back the code of its last failure in place of the claim's in-flight mark.
 	 */
 	private async recordSent(row: EmailHistory, attempt: number): Promise<void> {
 		for (let tries = 0; tries <= this.sentWriteDelaysMs.length; tries++) {
@@ -346,7 +358,10 @@ export class EmailRetryService {
 				await this.sleep(this.sentWriteDelaysMs[tries - 1]);
 			}
 			try {
-				await this.whileOurs(row, attempt, { status: EmailStatusEnum.SENT });
+				await this.whileOurs(row, attempt, {
+					status: EmailStatusEnum.SENT,
+					lastErrorCode: row.lastErrorCode ?? null
+				});
 				return;
 			} catch {
 				// Tried again below, or logged once the attempts are spent.
@@ -409,7 +424,7 @@ export class EmailRetryService {
 	private async whileOurs(
 		row: EmailHistory,
 		attempt: number,
-		values: { status?: EmailStatusEnum; nextRetryAt?: Date; lastErrorCode?: string }
+		values: { status?: EmailStatusEnum; nextRetryAt?: Date; lastErrorCode?: string | null }
 	): Promise<boolean> {
 		const result = await this.typeOrmEmailHistoryRepository.update(
 			{

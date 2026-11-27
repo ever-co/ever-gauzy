@@ -63,13 +63,18 @@ export const EMAIL_RETRY_SWEEP_MS = 5 * MINUTE;
 export const EMAIL_RETRY_SWEEP_TIME_BUDGET_MS = 4 * MINUTE;
 
 /**
- * How long after a sweep claimed an email (`email_sent.lastRetryAt`) its retry may still be going out. The sweep holds
- * no lock while it reads the mail settings and sends, so a resend by hand waits this long rather than risk a second
- * copy ({@link emailRetryInFlightUntil}). Counted from the claim, it covers the mail settings' verification and the
- * send at nodemailer's default timeouts (2 minutes to connect, 30 seconds for the greeting, 10 minutes of silence); a
- * retry still going after that is taken to be over.
+ * The `lastErrorCode` a sweep's claim writes, and every write of the retry's outcome replaces: while a row carries it,
+ * its automatic retry is being sent ({@link emailRetryInFlightUntil}).
  */
-export const EMAIL_RETRY_IN_FLIGHT_MS = 15 * MINUTE;
+export const EMAIL_RETRY_IN_FLIGHT_CODE = 'IN_FLIGHT';
+
+/**
+ * How long after its claim (`email_sent.lastRetryAt`) a row still marked {@link EMAIL_RETRY_IN_FLIGHT_CODE} keeps a
+ * resend by hand waiting. A retry that ends replaces the mark at once, however long it took, so this only bounds the
+ * wait after a sweep that stopped between its claim and that write (a process killed mid-send): that email may or may
+ * not have gone, and is left alone for an hour rather than for good.
+ */
+export const EMAIL_RETRY_IN_FLIGHT_MS = HOUR;
 
 /**
  * The templates whose failed email may be sent again automatically. An allowlist, so a template added later is never
@@ -160,19 +165,30 @@ export function emailRetryDueAt(retriesMade: number, failedAt: Date): Date | nul
  * Until when an automatic retry of an email may still be going out, so that a resend by hand must wait: `null` when
  * none can be.
  *
- * A sweep's claim leaves the row `FAILED` with no retry due and `lastRetryAt` stamped, and the row stays so while the
- * sweep reads the mail settings and sends; once it is over the row is `SENT`, due again, or failed for good. The last
- * reads the same as a retry still going, so it waits the same, until {@link EMAIL_RETRY_IN_FLIGHT_MS} after the claim.
- * A claim moment that cannot be read is no claim.
+ * A sweep's claim leaves the row `FAILED` with no retry due, `lastRetryAt` stamped and `lastErrorCode`
+ * {@link EMAIL_RETRY_IN_FLIGHT_CODE}, and the row stays so while the sweep reads the mail settings and sends, for as
+ * long as that takes; the write of how it went (`SENT`, due again, failed for good, expired) replaces the mark. A row
+ * whose mark was never replaced waits until {@link EMAIL_RETRY_IN_FLIGHT_MS} after its claim. A claim moment that
+ * cannot be read is no claim.
  *
  * @param row The email as it was read.
  * @param now The moment of the resend.
  */
 export function emailRetryInFlightUntil(
-	row: { status?: unknown; nextRetryAt?: Date | string | null; lastRetryAt?: Date | string | null },
+	row: {
+		status?: unknown;
+		nextRetryAt?: Date | string | null;
+		lastRetryAt?: Date | string | null;
+		lastErrorCode?: string | null;
+	},
 	now: Date
 ): Date | null {
-	if (row.status !== EmailStatusEnum.FAILED || row.nextRetryAt || !row.lastRetryAt) {
+	if (
+		row.status !== EmailStatusEnum.FAILED ||
+		row.nextRetryAt ||
+		!row.lastRetryAt ||
+		row.lastErrorCode !== EMAIL_RETRY_IN_FLIGHT_CODE
+	) {
 		return null;
 	}
 	const claimedAt = storedInstantOf(row.lastRetryAt);
