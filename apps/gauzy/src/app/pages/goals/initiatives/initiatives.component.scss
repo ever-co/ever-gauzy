@@ -54,11 +54,15 @@ $row-padding-x: 0.75rem;
 }
 
 // ─── The list ───────────────────────────────────────────────────────────────
+// The container the column queries measure (at the end), not the window: a
+// panel beside the page (the assistant chat) narrows the list without
+// narrowing the window.
 .initiatives-panel {
   border: $divider;
   border-radius: var(--border-radius);
   background: $surface;
   overflow-x: auto;
+  container: initiatives / inline-size;
 }
 
 .empty {
@@ -115,9 +119,11 @@ $row-padding-x: 0.75rem;
     }
   }
 
-  // The title takes the room the other columns leave, and truncates.
+  // The title takes about a third of the row and truncates past it; the other
+  // columns share the rest, so the row reads across without a gap after the
+  // title. (`max-width: 0` lets the ellipsis work inside a table cell.)
   .col-title {
-    width: 100%;
+    width: 32%;
     max-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -129,8 +135,9 @@ $row-padding-x: 0.75rem;
     text-overflow: ellipsis;
   }
 
+  // Left-aligned like every other column, so the headings and values all start
+  // on the same edge.
   .numeric {
-    text-align: end;
     font-variant-numeric: tabular-nums;
   }
 
@@ -227,6 +234,33 @@ tr:focus-within .row-actions {
     width: 0.875rem;
     height: 0.875rem;
     font-size: 0.875rem;
+  }
+}
+
+// ─── Columns that give way as the list narrows ──────────────────────────────
+// Title, state and the actions always; the counts and lists first, then the
+// signals. Everything stays on the initiative's own page, a click away.
+@container initiatives (max-width: 56rem) {
+  .initiatives-table {
+    .col-teams,
+    .col-projects {
+      display: none;
+    }
+  }
+}
+
+@container initiatives (max-width: 40rem) {
+  .initiatives-table {
+    .col-visibility,
+    .col-confidence,
+    .col-momentum {
+      display: none;
+    }
+
+    // Title, state and actions are all that is left: the title takes the room.
+    .col-title {
+      width: 100%;
+    }
   }
 }
 
