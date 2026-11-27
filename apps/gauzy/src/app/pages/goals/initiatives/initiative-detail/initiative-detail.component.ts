@@ -137,6 +137,19 @@ export class InitiativeDetailComponent extends TranslationBaseComponent implemen
 		return this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
 	}
 
+	/**
+	 * Aligned projects link to their page only when it would open: the reader holds the project page's own
+	 * permission (`ALL_ORG_VIEW` or `ORG_PROJECT_VIEW`), and the initiative is in the selected organization —
+	 * the project page reads the selected one, and reports a project of another as not found. Otherwise the
+	 * names are plain text, as the steward's is.
+	 */
+	get canOpenProjects(): boolean {
+		const permitted =
+			this.store.hasPermission(PermissionsEnum.ALL_ORG_VIEW) ||
+			this.store.hasPermission(PermissionsEnum.ORG_PROJECT_VIEW);
+		return permitted && !!this.initiative && this.store.selectedOrganization?.id === this.initiative.organizationId;
+	}
+
 	stewardName(): string {
 		const user = this.steward?.user;
 		return user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || '—';
@@ -193,13 +206,27 @@ export class InitiativeDetailComponent extends TranslationBaseComponent implemen
 		try {
 			await this.strategicInitiativesService.delete(initiative.id);
 			this.toastrService.success('STRATEGIC_INITIATIVES.DELETED', { name: initiative.title });
-			this.back();
+			// Back to the list only from this initiative's page: a user who went elsewhere while the request
+			// was out stays where they went.
+			if (this.isOnDetailOf(initiative.id)) {
+				this.back();
+			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
 		} finally {
 			this.deleting = false;
 			this.cdr.markForCheck();
 		}
+	}
+
+	/** Whether the current page is still the detail page of initiative `id`. */
+	private isOnDetailOf(id: ID): boolean {
+		return this.router.isActive(this.router.createUrlTree(['/pages/goals/initiatives', id]), {
+			paths: 'exact',
+			queryParams: 'ignored',
+			fragment: 'ignored',
+			matrixParams: 'ignored'
+		});
 	}
 
 	back(): void {
