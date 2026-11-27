@@ -1,5 +1,6 @@
-<nb-card class="initiative-detail" [nbSpinner]="loading" nbSpinnerStatus="primary">
-	<!-- Back, the title with its state as a dot and a word, and Edit on the trailing edge. -->
+<nb-card class="initiative-detail" [nbSpinner]="loading || deleting" nbSpinnerStatus="primary">
+	<!-- Back, where the initiative sits (Strategic Initiatives, as a link), its title and state; Edit and
+	     Delete on the trailing edge. -->
 	<nb-card-header class="header">
 		<div class="heading">
 			<button
@@ -8,34 +9,67 @@
 				size="small"
 				class="back"
 				(click)="back()"
+				[nbTooltip]="'BUTTONS.BACK' | translate"
 				[attr.aria-label]="'BUTTONS.BACK' | translate"
 			>
 				<nb-icon icon="arrow-back-outline"></nb-icon>
 			</button>
-			<h4 class="title">{{ initiative?.title || ('STRATEGIC_INITIATIVES.HEADER' | translate) }}</h4>
-			@if (initiative) {
-				<span class="state" [attr.data-state]="initiative.state">
-					<span class="state-dot" aria-hidden="true"></span>
-					{{ 'STRATEGIC_INITIATIVES.STATES.' + (initiative.state | uppercase) | translate }}
-				</span>
-			}
+			<div class="heading-text">
+				<nav class="crumbs" [attr.aria-label]="'STRATEGIC_INITIATIVES.HEADER' | translate">
+					<a class="crumb" routerLink="/pages/goals/initiatives">{{
+						'STRATEGIC_INITIATIVES.HEADER' | translate
+					}}</a>
+				</nav>
+				<div class="title-row">
+					<h4 class="title">{{ initiative?.title || ('STRATEGIC_INITIATIVES.HEADER' | translate) }}</h4>
+					@if (initiative) {
+						<span class="state" [attr.data-state]="initiative.state">
+							<span class="state-dot" aria-hidden="true"></span>
+							{{ 'STRATEGIC_INITIATIVES.STATES.' + (initiative.state | uppercase) | translate }}
+						</span>
+					}
+				</div>
+			</div>
 		</div>
 		@if (initiative) {
-			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE]">
-				<button nbButton status="primary" size="small" class="edit" (click)="edit()">
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-			</ng-template>
+			<div class="header-actions">
+				<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE]">
+					<button
+						nbButton
+						ghost
+						size="small"
+						class="icon-action"
+						[disabled]="deleting"
+						[nbTooltip]="'BUTTONS.DELETE' | translate"
+						[attr.aria-label]="'BUTTONS.DELETE' | translate"
+						(click)="delete()"
+					>
+						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+					</button>
+				</ng-template>
+				<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE]">
+					<button nbButton status="primary" size="small" class="edit" (click)="edit()">
+						<nb-icon icon="edit-outline"></nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+				</ng-template>
+			</div>
 		}
 	</nb-card-header>
 	<nb-card-body>
 		@if (notFound) {
-			<div class="empty">{{ 'STRATEGIC_INITIATIVES.NOT_FOUND' | translate }}</div>
+			<div class="empty">
+				<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+				<p>{{ 'STRATEGIC_INITIATIVES.NOT_FOUND' | translate }}</p>
+				<button nbButton ghost status="basic" size="small" (click)="back()">
+					<nb-icon icon="arrow-back-outline"></nb-icon>
+					{{ 'STRATEGIC_INITIATIVES.HEADER' | translate }}
+				</button>
+			</div>
 		}
 		@if (initiative) {
-			<!-- Laid out as an issue view: the substance (intent, risks and notes, what is aligned to it) on the
-			     left, the fields as label / value rows in a column on the right. -->
+			<!-- An issue view: the substance (intent, risks and notes, what is aligned to it) on the left, the
+			     fields as label / value rows in a column on the right that stays in view while the left scrolls. -->
 			<div class="detail-layout">
 				<div class="main">
 					<section class="section">
@@ -43,34 +77,40 @@
 						<p class="text" [class.muted]="!initiative.intent">{{ initiative.intent || '—' }}</p>
 					</section>
 
-					@if (signals.knownRisks?.length || signals.strategicNotes) {
-						@if (signals.knownRisks?.length) {
-							<section class="section">
-								<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.KNOWN_RISKS' | translate }}</h6>
-								<ul class="rows">
-									@for (risk of signals.knownRisks; track $index) {
-										<li class="row">
-											<span class="row-name wrap">{{ risk }}</span>
-										</li>
-									}
-								</ul>
-							</section>
-						}
-						@if (signals.strategicNotes) {
-							<section class="section">
-								<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.NOTES' | translate }}</h6>
-								<p class="text">{{ signals.strategicNotes }}</p>
-							</section>
-						}
+					@if (signals.knownRisks?.length) {
+						<section class="section">
+							<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.KNOWN_RISKS' | translate }}</h6>
+							<!-- Not `.row`: that is Bootstrap's grid row, whose negative margins pushed these
+							     rows out past their heading. -->
+							<ul class="items">
+								@for (risk of signals.knownRisks; track $index) {
+									<li class="item risk">
+										<span class="marker" aria-hidden="true"></span>
+										<span class="item-name wrap">{{ risk }}</span>
+									</li>
+								}
+							</ul>
+						</section>
 					}
 
+					@if (signals.strategicNotes) {
+						<section class="section">
+							<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.NOTES' | translate }}</h6>
+							<p class="text">{{ signals.strategicNotes }}</p>
+						</section>
+					}
+
+					<!-- Teams, goals and projects side by side, as columns that wrap under each other when the column
+					     is too narrow for three. -->
+					<div class="aligned">
 					<section class="section">
 						<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.TEAMS' | translate }}</h6>
 						@if (teams.length) {
-							<ul class="rows">
+							<ul class="items">
 								@for (team of teams; track team.id) {
-									<li class="row">
-										<span class="row-name">{{ team.name }}</span>
+									<li class="item">
+										<span class="avatar square" aria-hidden="true">{{ initials(team.name) }}</span>
+										<span class="item-name">{{ team.name }}</span>
 									</li>
 								}
 							</ul>
@@ -82,11 +122,20 @@
 					<section class="section">
 						<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.GOALS' | translate }}</h6>
 						@if (goals.length) {
-							<ul class="rows">
+							<ul class="items">
 								@for (goal of goals; track goal.id) {
-									<li class="row">
-										<span class="row-name">{{ goal.name }}</span>
-										<span class="row-value">{{ goal.progress || 0 }}%</span>
+									<li class="item">
+										<nb-icon class="item-icon" icon="flag-outline" aria-hidden="true"></nb-icon>
+										<span class="item-name">{{ goal.name }}</span>
+										<span class="goal-progress">
+											<nb-progress-bar
+												class="goal-progress-bar"
+												[value]="goal.progress || 0"
+												[status]="progressStatus(goal.progress)"
+												size="tiny"
+											></nb-progress-bar>
+											<span class="goal-progress-percent">{{ goal.progress || 0 }}%</span>
+										</span>
 									</li>
 								}
 							</ul>
@@ -98,10 +147,15 @@
 					<section class="section">
 						<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.PROJECTS' | translate }}</h6>
 						@if (initiative.projects?.length) {
-							<ul class="rows">
+							<ul class="items">
 								@for (project of initiative.projects; track project.id) {
-									<li class="row">
-										<span class="row-name">{{ project.name }}</span>
+									<li class="item">
+										<!-- Opens the project's own page. -->
+										<a class="item-link" [routerLink]="['/pages/organization/projects/view', project.id]">
+											<nb-icon class="item-icon" icon="briefcase-outline" aria-hidden="true"></nb-icon>
+											<span class="item-name">{{ project.name }}</span>
+											<nb-icon class="item-go" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+										</a>
 									</li>
 								}
 							</ul>
@@ -109,32 +163,68 @@
 							<p class="empty-text">{{ 'STRATEGIC_INITIATIVES.NO_PROJECTS' | translate }}</p>
 						}
 					</section>
-
+					</div>
 				</div>
 
 				<aside class="details">
 					<dl class="fields">
 						<div class="field">
 							<dt>{{ 'STRATEGIC_INITIATIVES.STEWARD' | translate }}</dt>
-							<dd>{{ stewardName() }}</dd>
+							<dd>
+								@if (steward) {
+									<span class="person">
+										<span class="avatar" aria-hidden="true">
+											@if (steward.user?.imageUrl) {
+												<img [src]="steward.user.imageUrl" alt="" />
+											} @else {
+												{{ initials(stewardName()) }}
+											}
+										</span>
+										<span class="person-name">{{ stewardName() }}</span>
+									</span>
+								} @else {
+									<span class="muted">—</span>
+								}
+							</dd>
 						</div>
 						<div class="field">
 							<dt>{{ 'STRATEGIC_INITIATIVES.VISIBILITY' | translate }}</dt>
 							<dd>
-								{{
-									'STRATEGIC_INITIATIVES.VISIBILITY_SCOPES.' + (initiative.visibilityScope | uppercase)
-										| translate
-								}}
+								<span class="with-icon">
+									<nb-icon
+										class="field-icon"
+										[icon]="
+											initiative.visibilityScope === 'leadership'
+												? 'lock-outline'
+												: initiative.visibilityScope === 'team'
+												? 'people-outline'
+												: 'globe-2-outline'
+										"
+										aria-hidden="true"
+									></nb-icon>
+									{{
+										'STRATEGIC_INITIATIVES.VISIBILITY_SCOPES.' + (initiative.visibilityScope | uppercase)
+											| translate
+									}}
+								</span>
 							</dd>
 						</div>
 						<div class="field">
 							<dt>{{ 'STRATEGIC_INITIATIVES.CONFIDENCE' | translate }}</dt>
 							<dd>
 								@if (signals.confidenceLevel) {
-									{{
-										'STRATEGIC_INITIATIVES.CONFIDENCE_LEVELS.' + (signals.confidenceLevel | uppercase)
-											| translate
-									}}
+									<span class="with-icon" [attr.data-confidence]="signals.confidenceLevel">
+										<!-- Three pips, lit up to the level: one for low, three for high. -->
+										<span class="pips" aria-hidden="true">
+											@for (pip of [1, 2, 3]; track pip) {
+												<span class="pip" [class.on]="pip <= confidenceRank(signals.confidenceLevel)"></span>
+											}
+										</span>
+										{{
+											'STRATEGIC_INITIATIVES.CONFIDENCE_LEVELS.' + (signals.confidenceLevel | uppercase)
+												| translate
+										}}
+									</span>
 								} @else {
 									<span class="muted">—</span>
 								}
@@ -144,10 +234,17 @@
 							<dt>{{ 'STRATEGIC_INITIATIVES.MOMENTUM' | translate }}</dt>
 							<dd>
 								@if (signals.perceivedMomentum) {
-									{{
-										'STRATEGIC_INITIATIVES.MOMENTUMS.' + (signals.perceivedMomentum | uppercase)
-											| translate
-									}}
+									<span class="with-icon" [attr.data-momentum]="signals.perceivedMomentum">
+										<nb-icon
+											class="field-icon momentum-icon"
+											[icon]="momentumIcon(signals.perceivedMomentum)"
+											aria-hidden="true"
+										></nb-icon>
+										{{
+											'STRATEGIC_INITIATIVES.MOMENTUMS.' + (signals.perceivedMomentum | uppercase)
+												| translate
+										}}
+									</span>
 								} @else {
 									<span class="muted">—</span>
 								}
@@ -163,6 +260,22 @@
 								}
 							</dd>
 						</div>
+					</dl>
+
+					<!-- When the record was made and last changed, quieter, under a hairline. -->
+					<dl class="fields meta">
+						@if (initiative.createdAt) {
+							<div class="field">
+								<dt>{{ 'SM_TABLE.CREATED' | translate }}</dt>
+								<dd>{{ initiative.createdAt | date: 'mediumDate' }}</dd>
+							</div>
+						}
+						@if (initiative.updatedAt) {
+							<div class="field">
+								<dt>{{ 'SM_TABLE.LAST_UPDATED' | translate }}</dt>
+								<dd>{{ initiative.updatedAt | date: 'medium' }}</dd>
+							</div>
+						}
 					</dl>
 				</aside>
 			</div>
