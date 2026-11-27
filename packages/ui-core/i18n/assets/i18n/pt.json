@@ -3049,6 +3049,8 @@
 		"GOAL_TEMPLATES": "Modelos de objetivos",
 		"CREATE_NEW_MENU": "Criar novo",
 		"CREATE_FROM_PRESET": "Criar a partir de predefinição",
+		"SEARCH_PLACEHOLDER": "Pesquisar objetivos e resultados-chave",
+		"NO_MATCHING_OBJECTIVES": "Nenhum objetivo corresponde à sua pesquisa.",
 		"SELECT_A_PRESET": "Selecionar uma predefinição",
 		"ADDITIONAL_DETAILS": "Detalhes adicionais",
 		"OWNERSHIP": {

@@ -29,7 +29,8 @@ import {
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { AddTaskDialogComponent, AlertModalComponent } from '@gauzy/ui-core/shared';
+import { AddTaskDialogComponent } from '@gauzy/ui-core/shared';
+import { GoalDeleteConfirmComponent } from '../delete-confirm/delete-confirm.component';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 
@@ -252,15 +253,14 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 	}
 
 	async deleteKeyResult() {
-		const dialog = this.dialogService.open(AlertModalComponent, {
+		const dialog = this.dialogService.open(GoalDeleteConfirmComponent, {
 			context: {
 				data: {
 					title: this.getTranslation('GOALS_PAGE.DELETE_KEY_RESULT'),
-					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
-					status: 'danger'
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE')
 				}
 			},
-			closeOnBackdropClick: false
+			closeOnBackdropClick: true
 		});
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {

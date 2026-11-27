@@ -1,4 +1,16 @@
-import { Component, OnInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnChanges,
+	type SimpleChanges,
+	ChangeDetectionStrategy,
+	ViewChild,
+	Input,
+	Output,
+	EventEmitter,
+	HostBinding,
+	Optional
+} from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { BaseEntityEnum, IComment, ID, IGoal, IKeyResult, IKeyResultUpdate, PermissionsEnum } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/theme';
@@ -7,9 +19,20 @@ import { CommentService, EmployeesService, GoalService, Store } from '@gauzy/ui-
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { AlertModalComponent } from '@gauzy/ui-core/shared';
+import { GoalDeleteConfirmComponent } from '../delete-confirm/delete-confirm.component';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
+
+let nextActivityId = 0;
+
+/**
+ * What the embedded details report: the objective deleted, or one of its key results changed. `goalId` names
+ * the objective it happened to, which by then may no longer be the one shown.
+ */
+export interface IGoalDetailsChange {
+	change: 'deleted' | 'updated';
+	goalId: ID;
+}
 
 /** A top-level comment with the replies posted under it. */
 export interface ICommentThread {
@@ -24,8 +47,29 @@ export interface ICommentThread {
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class GoalDetailsComponent extends TranslationBaseComponent implements OnInit {
-	goal: IGoal;
+export class GoalDetailsComponent extends TranslationBaseComponent implements OnInit, OnChanges {
+	@Input() goal: IGoal;
+	/**
+	 * Shown in the Goals page's side column instead of a dialog. There is no dialog to close there, so closing and
+	 * deleting are emitted (`closed`, `changed`) for the page to act on.
+	 */
+	@Input() @HostBinding('class.embedded') embedded = false;
+	@Output() readonly closed = new EventEmitter<void>();
+	/**
+	 * Embedded only: `deleted` once an objective is deleted, `updated` once one of its key results changed, each
+	 * with that objective's id.
+	 */
+	@Output() readonly changed = new EventEmitter<IGoalDetailsChange>();
+	/** Embedded only: the header's Edit, for the page's own objective dialog. */
+	@Output() readonly editGoal = new EventEmitter<void>();
+	/** Embedded only: Key results' "Add new key result", for the page's own key-result dialog. */
+	@Output() readonly addKeyResult = new EventEmitter<void>();
+	/** Embedded only: which list the Activity section shows. */
+	activityTab: 'comments' | 'updates' = 'comments';
+	/** The Activity tabs, in their on-screen order (the arrow keys follow it). */
+	readonly activityTabs = ['comments', 'updates'] as const;
+	/** Prefix of the Activity tabs' and panels' ids, unique per instance. */
+	readonly activityId = `goal-activity-${++nextActivityId}`;
 	src: string;
 	ownerName: string;
 	updates: Array<IKeyResultUpdate> = [];
@@ -48,12 +92,15 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	private commentsLoadId = 0;
 	/** `timeAgo`'s formatter, rebuilt only when the language changes. */
 	private relativeTimeFormat: { lang: string; format: Intl.RelativeTimeFormat } | null = null;
+	/** Set once `ngOnInit` has read the first objective; later `goal` inputs are read by `ngOnChanges`. */
+	private initialized = false;
 
 	@ViewChild(NbTabsetComponent) tabset: NbTabsetComponent;
 	@ViewChild('commentsTab') commentsTab: NbTabComponent;
 
 	constructor(
-		private readonly dialogRef: NbDialogRef<GoalDetailsComponent>,
+		// Absent when the details are embedded in the Goals page rather than opened as a dialog.
+		@Optional() private readonly dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private readonly employeeService: EmployeesService,
 		private readonly dialogService: NbDialogService,
 		private readonly goalService: GoalService,
@@ -66,24 +113,58 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	async ngOnInit() {
-		if (!!this.goal.ownerEmployee) {
-			const employee = await firstValueFrom(
-				this.employeeService.getEmployeeById(this.goal.ownerEmployee.id, ['user'])
-			);
-			this.src = employee.user.imageUrl;
-			this.ownerName = employee.user.name;
-		} else if (!!this.goal.organization) {
-			this.ownerName = this.goal.organization.name;
-			this.src = this.goal.organization.imageUrl;
+		this.initialized = true;
+		await this.readGoal(true);
+	}
+
+	/**
+	 * Embedded, the page hands in a fresh `goal` after every re-read and when another objective is picked. The
+	 * same objective re-read keeps its comments and any open thread or draft; another objective starts clean.
+	 */
+	ngOnChanges(changes: SimpleChanges) {
+		const change = changes['goal'];
+		if (!this.initialized || !change || change.firstChange || !this.goal) {
+			return;
+		}
+		const sameGoal = change.previousValue?.id === this.goal.id;
+		if (!sameGoal) {
+			this.comments = [];
+			this.threads = [];
+			this.openThreadId = null;
+			this.confirmingDeleteId = null;
+			this.commentsLoadError = false;
+			this.commentControl.reset();
+			this.replyControl.reset();
+		}
+		this.readGoal(!sameGoal);
+	}
+
+	/** The owner shown in the header, the updates of every key result and, when asked, the comments. */
+	private async readGoal(withComments: boolean) {
+		const goal = this.goal;
+		this.updates = (goal.keyResults ?? []).flatMap((keyResult) => keyResult.updates ?? []);
+		const comments = withComments ? this.loadComments() : Promise.resolve(true);
+
+		if (!!goal.ownerEmployee) {
+			// The Goals page reads the owner's user with the objective; the request is only for a goal without it.
+			const user =
+				goal.ownerEmployee.user ??
+				(await firstValueFrom(this.employeeService.getEmployeeById(goal.ownerEmployee.id, ['user']))).user;
+			// Another objective was picked while the owner was read: its own read sets the header.
+			if (this.goal !== goal) {
+				return;
+			}
+			this.src = user?.imageUrl;
+			this.ownerName = user?.name;
+		} else if (!!goal.organization) {
+			this.ownerName = goal.organization.name;
+			this.src = goal.organization.imageUrl;
 		} else {
-			this.ownerName = this.goal.ownerTeam.name;
+			this.ownerName = goal.ownerTeam?.name;
+			this.src = undefined;
 		}
 
-		this.goal.keyResults.forEach((keyResult) => {
-			this.updates.push(...keyResult.updates);
-		});
-
-		await this.loadComments();
+		await comments;
 	}
 
 	/**
@@ -125,14 +206,49 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			return;
 		}
 		this.postingComment = true;
-		if (await this.postComment(comment)) {
+		// Embedded, another objective can be picked while this posts: the box and tab then belong to it, so a
+		// finishing post must not clear its draft or switch its tab.
+		const goalId = this.goal.id;
+		if ((await this.postComment(comment)) && this.goal?.id === goalId) {
 			// The box stays editable while posting: clear it only if it still holds what was sent.
 			if (this.commentControl.value.trim() === comment) {
 				this.commentControl.reset();
 			}
 			this.tabset?.selectTab(this.commentsTab);
+			this.activityTab = 'comments';
 		}
 		this.postingComment = false;
+	}
+
+	/**
+	 * The Activity tabs' keyboard: Left / Right move to the previous / next tab (mirrored right-to-left) and
+	 * Home / End to the first / last, opening the tab reached and moving focus to it. Other keys are left alone.
+	 */
+	onActivityTabKeydown(event: KeyboardEvent): void {
+		const tablist = event.currentTarget as HTMLElement;
+		const count = this.activityTabs.length;
+		const index = this.activityTabs.indexOf(this.activityTab);
+		const rtl = getComputedStyle(tablist).direction === 'rtl';
+		let next: number;
+		switch (event.key) {
+			case 'ArrowRight':
+				next = (index + (rtl ? count - 1 : 1)) % count;
+				break;
+			case 'ArrowLeft':
+				next = (index + (rtl ? 1 : count - 1)) % count;
+				break;
+			case 'Home':
+				next = 0;
+				break;
+			case 'End':
+				next = count - 1;
+				break;
+			default:
+				return;
+		}
+		event.preventDefault();
+		this.activityTab = this.activityTabs[next];
+		tablist.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
 	}
 
 	/** Opens a thread's replies and reply box, or closes them when it is already open. */
@@ -224,12 +340,27 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	authorInitials(comment: IComment): string {
-		return this.authorName(comment)
+		return this.initials(this.authorName(comment));
+	}
+
+	/** Up to two initials, for a person or team with no picture. */
+	initials(name?: string): string {
+		return (name ?? '')
 			.trim()
 			.split(/\s+/)
 			.slice(0, 2)
 			.map((word) => word.charAt(0).toUpperCase())
 			.join('');
+	}
+
+	levelTitle(level?: string): string {
+		return level ? this.getTranslation(`GOALS_PAGE.LEVELS.${level.toUpperCase()}`) : '';
+	}
+
+	/** A key result's status as its `KEY_RESULT_PAGE.UPDATE.STATUS` key; one never reported reads as None. */
+	statusKey(status?: string): string {
+		const key = (status || 'none').trim().toUpperCase().replace(/\s+/g, '_');
+		return ['ON_TRACK', 'NEEDS_ATTENTION', 'OFF_TRACK', 'NONE'].includes(key) ? key : 'NONE';
 	}
 
 	/** How long ago, in the narrow form of the current language: "15d ago", "3h ago", "now". */
@@ -323,21 +454,35 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	async deleteGoal() {
-		const dialog = this.dialogService.open(AlertModalComponent, {
+		const dialog = this.dialogService.open(GoalDeleteConfirmComponent, {
 			context: {
 				data: {
 					title: this.getTranslation('GOALS_PAGE.DELETE_OBJECTIVE'),
-					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
-					status: 'danger'
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE')
 				}
 			},
-			closeOnBackdropClick: false
+			closeOnBackdropClick: true
 		});
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
-				await this.goalService.delete(this.goal.id).catch((error) => console.log(error));
-				this.dialogRef.close('deleted');
+				// Reported as deleted only once it is: on a failure the details stay open, to retry. The id is
+				// taken now: embedded, another objective can be picked while the request is out.
+				const goalId = this.goal.id;
+				try {
+					await this.goalService.delete(goalId);
+				} catch (error) {
+					this.toastrService.danger(
+						error?.error?.message ?? error?.message,
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+					return;
+				}
+				if (this.dialogRef) {
+					this.dialogRef.close('deleted');
+				} else {
+					this.changed.emit({ change: 'deleted', goalId });
+				}
 			}
 		}
 	}
@@ -355,6 +500,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	 * @param selectedKeyResult The key result to show.
 	 */
 	async keyResultDetails(index: number | null, selectedKeyResult: IKeyResult) {
+		const goalId = this.goal.id;
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -378,6 +524,10 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			} else if (index !== null) {
 				this.goal.keyResults[index] = response;
 				this.goal.progress = this.calculateGoalProgress(this.goal.keyResults);
+			}
+			// Embedded, the page's list shows the same key results: it re-reads them and hands the goal back in.
+			if (this.embedded) {
+				this.changed.emit({ change: 'updated', goalId });
 			}
 		}
 	}
@@ -405,6 +555,10 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	closeDialog(isSaved: boolean) {
+		if (!this.dialogRef) {
+			this.closed.emit();
+			return;
+		}
 		isSaved ? this.dialogRef.close(this.goal) : this.dialogRef.close();
 	}
 }

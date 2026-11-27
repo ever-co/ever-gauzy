@@ -2564,6 +2564,8 @@
 		"GOAL_TEMPLATES": "Szablony celów",
 		"CREATE_NEW_MENU": "Utwórz nowe",
 		"CREATE_FROM_PRESET": "Utwórz z szablonu",
+		"SEARCH_PLACEHOLDER": "Szukaj celów i kluczowych rezultatów",
+		"NO_MATCHING_OBJECTIVES": "Żaden cel nie pasuje do wyszukiwania.",
 		"SELECT_A_PRESET": "Wybierz szablon",
 		"ADDITIONAL_DETAILS": "Dodatkowe szczegóły",
 		"OWNERSHIP": {

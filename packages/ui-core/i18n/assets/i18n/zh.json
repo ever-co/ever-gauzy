@@ -3051,6 +3051,8 @@
 		"GOAL_TEMPLATES": "目标模板",
 		"CREATE_NEW_MENU": "创建新的",
 		"CREATE_FROM_PRESET": "从预设创建",
+		"SEARCH_PLACEHOLDER": "搜索目标和关键结果",
+		"NO_MATCHING_OBJECTIVES": "没有与搜索匹配的目标。",
 		"SELECT_A_PRESET": "选择预设",
 		"ADDITIONAL_DETAILS": "其他详情",
 		"OWNERSHIP": {

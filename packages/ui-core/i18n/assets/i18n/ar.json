@@ -2564,6 +2564,8 @@
 		"GOAL_TEMPLATES": "قوالب الأهداف",
 		"CREATE_NEW_MENU": "إنشاء جديد",
 		"CREATE_FROM_PRESET": "إنشاء من الضبط المسبق",
+		"SEARCH_PLACEHOLDER": "ابحث في الأهداف والنتائج الرئيسية",
+		"NO_MATCHING_OBJECTIVES": "لا توجد أهداف تطابق بحثك.",
 		"SELECT_A_PRESET": "اختر ضبطًا مسبقًا",
 		"ADDITIONAL_DETAILS": "تفاصيل إضافية",
 		"OWNERSHIP": {

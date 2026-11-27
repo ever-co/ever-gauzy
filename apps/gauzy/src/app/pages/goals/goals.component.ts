@@ -1,10 +1,20 @@
-import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	ViewChild,
+	ViewChildren,
+	QueryList,
+	ChangeDetectionStrategy,
+	ElementRef
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+	IEmployee,
 	IGoal,
 	IKeyResult,
 	IGoalGeneralSetting,
@@ -22,10 +32,10 @@ import {
 	KeyResultService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { AlertModalComponent } from '@gauzy/ui-core/shared';
+import { GoalDeleteConfirmComponent } from './delete-confirm/delete-confirm.component';
+import type { IGoalDetailsChange } from './goal-details/goal-details.component';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
-import { GoalDetailsComponent } from './goal-details/goal-details.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
@@ -36,16 +46,18 @@ import {
 	NbCardModule,
 	NbButtonModule,
 	NbIconModule,
+	NbInputModule,
 	NbSpinnerModule,
 	NbProgressBarModule,
-	NbAccordionModule,
 	NbTooltipModule,
 	NbPopoverModule,
 	NbListModule
 } from '@nebular/theme';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { GoalsComponentsModule } from './goals-components.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
+
+/** The key-result statuses the list knows how to show (`KEY_RESULT_PAGE.UPDATE.STATUS.*`). */
+const KEY_RESULT_STATUS_KEYS = ['ON_TRACK', 'NEEDS_ATTENTION', 'OFF_TRACK', 'NONE'];
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -61,19 +73,29 @@ import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
+		NbInputModule,
 		NbSpinnerModule,
 		NbProgressBarModule,
-		NbAccordionModule,
 		NbTooltipModule,
 		// `[nbPopover]` drives the Add Objective / Group By / Filter menus, whose bodies are `nb-list`s.
 		NbPopoverModule,
 		NbListModule,
-		SharedModule,
-		GauzyButtonActionModule
+		SharedModule
 	]
 })
 export class GoalsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
+	/** Every menu on the page: a pick in one closes it before its dialog opens. */
+	@ViewChildren(NbPopoverDirective) readonly popovers: QueryList<NbPopoverDirective>;
+	/** The details column, when an objective is open. */
+	@ViewChild('detailPane') readonly detailPane?: ElementRef<HTMLElement>;
+	/**
+	 * Below 1200px the details column lies over the list (`goals.component.scss`) rather than beside it. While
+	 * it does, the list is inert, so the keyboard cannot reach the controls hidden under the column.
+	 */
+	private readonly overlayQuery: MediaQueryList | null =
+		typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 1200px)') : null;
+	private readonly onOverlayChange = () => (this.detailOverlays = !!this.overlayQuery?.matches);
+	detailOverlays = !!this.overlayQuery?.matches;
 	loading = true;
 	selectedOrganizationId: string;
 	organizationName: string;
@@ -112,22 +134,20 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 			value: 'timeFrames'
 		}
 	];
-	goals: IGoal[];
-	allGoals: IGoal[];
+	/** The objectives the Filter menu lets through. */
+	goals: IGoal[] = [];
+	allGoals: IGoal[] = [];
+	/** `goals` narrowed by the search box: what the list shows. */
+	visibleGoals: IGoal[] = [];
 	noGoals = true;
-	keyResult: IKeyResult[];
 	organization: IOrganization;
 
-	selectedKeyResult = {
-		isSelected: false,
-		data: null,
-		index: null
-	};
-	selectedGoal = {
-		isSelected: false,
-		data: null,
-		index: null
-	};
+	/** The search box's text, matched against objective and key-result names. */
+	searchQuery = '';
+	/** Objectives whose key results are shown under them. */
+	readonly expandedGoalIds = new Set<string>();
+	/** The objective whose details are open beside the list, if any. */
+	detailGoalId: string | null = null;
 
 	constructor(
 		private readonly store: Store,
@@ -137,30 +157,105 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		private readonly goalService: GoalService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly keyResultService: KeyResultService,
-		private readonly goalSettingsService: GoalSettingsService
+		private readonly goalSettingsService: GoalSettingsService,
+		private readonly hostRef: ElementRef<HTMLElement>
 	) {
 		super(translateService);
+		this.overlayQuery?.addEventListener('change', this.onOverlayChange);
+	}
+
+	/** The details column is open and lies over the list. */
+	get detailCoversList(): boolean {
+		return this.detailOverlays && !!this.detailGoal;
 	}
 
 	get activeGroups() {
 		return this.objectiveGroup === 'timeFrames' ? this.goalTimeFrames : this.goalLevels;
 	}
 
+	get selectedFilterTitle(): string {
+		return this.filters.find((option) => option.value === this.selectedFilter)?.title ?? '';
+	}
+
+	get selectedGroupTitle(): string {
+		return this.groupObjectivesBy.find((option) => option.value === this.objectiveGroup)?.title ?? '';
+	}
+
+	/**
+	 * The objective open in the side column, read from the latest load: after every re-read the column is
+	 * handed the fresh object, so its key results, progress and updates follow the list.
+	 */
+	get detailGoal(): IGoal | null {
+		return this.detailGoalId ? this.allGoals.find((goal) => goal.id === this.detailGoalId) ?? null : null;
+	}
+
 	goalsForGroup(group: string): IGoal[] {
-		return this.goals.filter((goal) =>
+		return this.visibleGoals.filter((goal) =>
 			this.objectiveGroup === 'timeFrames' ? goal.deadline === group : goal.level === group
 		);
 	}
 
+	/** A group's heading: the time frame's own name, or the translated level. */
+	groupTitle(group: string): string {
+		return this.objectiveGroup === 'level' ? this.levelTitle(group) : group;
+	}
+
+	levelTitle(level: string): string {
+		return level ? this.getTranslation(`GOALS_PAGE.LEVELS.${level.toUpperCase()}`) : '';
+	}
+
+	/** Who owns the objective: its employee, else its team, else its organization. */
+	goalOwnerName(goal: IGoal): string {
+		return this.employeeName(goal.ownerEmployee) || goal.ownerTeam?.name || goal.organization?.name || '';
+	}
+
+	employeeName(employee?: IEmployee): string {
+		return employee?.user?.name || employee?.fullName || '';
+	}
+
+	/** A key result's status as its `KEY_RESULT_PAGE.UPDATE.STATUS` key; one never reported reads as None. */
+	statusKey(status?: string): string {
+		const key = (status || 'none').trim().toUpperCase().replace(/\s+/g, '_');
+		return KEY_RESULT_STATUS_KEYS.includes(key) ? key : 'NONE';
+	}
+
+	isExpanded(goal: IGoal): boolean {
+		return this.expandedGoalIds.has(goal.id);
+	}
+
+	/** The row's chevron: shows or hides its key results without opening the objective's details. */
+	toggleExpanded(goal: IGoal, event?: Event) {
+		event?.stopPropagation();
+		if (this.expandedGoalIds.has(goal.id)) {
+			this.expandedGoalIds.delete(goal.id);
+		} else {
+			this.expandedGoalIds.add(goal.id);
+		}
+	}
+
+	onSearch(query: string) {
+		this.searchQuery = query ?? '';
+		this.applySearch();
+	}
+
 	/**
-	 * Position of the given objective in `goals`.
-	 *
-	 * The template iterates a *group* (a filtered slice of `goals`), so its `$index` is group-local
-	 * while every handler indexes into `goals` — passing the loop index therefore addressed the
-	 * wrong objective as soon as more than one group was rendered.
+	 * Narrows the filtered objectives to those whose name, or one of whose key results' names, holds the search
+	 * text. An objective found through a key result is expanded, so the match is on screen.
 	 */
-	goalIndex(goal: IGoal): number {
-		return this.goals.indexOf(goal);
+	private applySearch() {
+		const query = this.searchQuery.trim().toLowerCase();
+		if (!query) {
+			this.visibleGoals = this.goals;
+			return;
+		}
+		const matches = (name?: string) => !!name && name.toLowerCase().includes(query);
+		this.visibleGoals = this.goals.filter((goal) => {
+			const keyResultMatch = (goal.keyResults ?? []).some((keyResult) => matches(keyResult.name));
+			if (keyResultMatch) {
+				this.expandedGoalIds.add(goal.id);
+			}
+			return matches(goal.name) || keyResultMatch;
+		});
 	}
 
 	ngOnInit() {
@@ -196,6 +291,11 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 			.subscribe(([organization, employee]) => {
 				this.employee = employee || null;
 				if (organization) {
+					// Another organization's objectives: whatever was open belonged to the last one.
+					if (this.organization && this.organization.id !== organization.id) {
+						this.detailGoalId = null;
+						this.expandedGoalIds.clear();
+					}
 					this.organization = organization;
 					this.organizationName = organization.name;
 					this.selectedOrganizationId = organization.id;
@@ -237,7 +337,10 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 						'lead',
 						'lead.user',
 						'keyResults.owner',
+						// The list names each key result's owner and lead.
+						'keyResults.owner.user',
 						'keyResults.lead',
+						'keyResults.lead.user',
 						'alignedKeyResult',
 						'alignedKeyResult.goal',
 						'alignedKeyResult.goal.ownerEmployee',
@@ -255,8 +358,14 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 						this.noGoals = goals.items.length > 0 ? false : true;
 						this.goals = goals.items;
 						this.allGoals = goals.items;
+						// The open objective was deleted elsewhere: close its column rather than show a stale copy.
+						if (this.detailGoalId && !this.allGoals.some((goal) => goal.id === this.detailGoalId)) {
+							this.detailGoalId = null;
+						}
 						if (!!this.selectedFilter) {
 							this.filterGoals(this.selectedFilter, this.allGoals);
+						} else {
+							this.applySearch();
 						}
 					}
 				});
@@ -268,14 +377,21 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 	}
 
-	async openKeyResultParameters() {
-		const index = this.selectedKeyResult.index;
-		const keyResult = this.selectedKeyResult.data;
+	/** Closes whichever menu is open, before the dialog its item opens. */
+	private hidePopovers() {
+		this.popovers?.forEach((popover) => {
+			if (popover.isShown) {
+				popover.hide();
+			}
+		});
+	}
+
+	async openKeyResultParameters(goal: IGoal, keyResult: IKeyResult) {
 		const dialog = this.dialogService.open(KeyResultParametersComponent, {
 			context: {
 				data: {
 					selectedKeyResult: keyResult,
-					allKeyResults: this.goals[index].keyResults,
+					allKeyResults: goal.keyResults,
 					settings: this.goalGeneralSettings,
 					orgId: this.selectedOrganizationId
 				}
@@ -284,9 +400,6 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		});
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
-			this.goals[index].progress = this.calculateGoalProgress(this.goals[index].keyResults);
-			const goalData = this.goals[index];
-			delete goalData.keyResults;
 			this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 			this.loadPage();
 		}
@@ -305,12 +418,11 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		this.goalTimeFrames.sort((a, b) => a.localeCompare(b));
 	}
 
-	async addKeyResult(index?, isAdd?) {
-		// `index` is 0 for the first objective, so it must be nullish-checked — `index ? … : …`
-		// discarded it and fell back to an unset `selectedKeyResult.index`.
-		index = index ?? this.selectedKeyResult.index;
-		const keyResult = isAdd ? null : this.selectedKeyResult.data;
-		if (!keyResult && this.goalGeneralSettings?.maxKeyResults <= this.goals[index].keyResults.length) {
+	/**
+	 * Adds a key result to the objective, or edits `keyResult` when one is given.
+	 */
+	async addKeyResult(goal: IGoal, keyResult?: IKeyResult) {
+		if (!keyResult && this.goalGeneralSettings?.maxKeyResults <= (goal.keyResults?.length ?? 0)) {
 			this.toastrService.info(
 				this.getTranslation('TOASTR.MESSAGE.MAX_KEY_RESULT_LIMIT'),
 				this.getTranslation('TOASTR.TITLE.MAX_LIMIT_REACHED'),
@@ -321,10 +433,10 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		const dialog = this.dialogService.open(EditKeyResultsComponent, {
 			hasScroll: true,
 			context: {
-				data: keyResult,
+				data: keyResult ?? null,
 				orgId: this.selectedOrganizationId,
 				orgName: this.organizationName,
-				goalDeadline: this.goals[index].deadline,
+				goalDeadline: goal.deadline,
 				settings: this.goalGeneralSettings
 			},
 			closeOnBackdropClick: false
@@ -332,10 +444,10 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		const response = await firstValueFrom(dialog.onClose);
 		if (response) {
 			if (!!keyResult) {
-				this.goals[index].progress = this.calculateGoalProgress(this.goals[index].keyResults);
-				const goalData = this.goals[index];
-				delete goalData.keyResults;
-				await this.goalService.update(this.goals[index].id, goalData);
+				// The objective is written without its key results, which `PUT /goals/:id` does not take.
+				const { keyResults, ...goalData } = goal;
+				goalData.progress = this.calculateGoalProgress(keyResults ?? []);
+				await this.goalService.update(goal.id, goalData as IGoal);
 				const keyResultData = response;
 				delete keyResultData.goal;
 				delete keyResultData.updates;
@@ -350,10 +462,12 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 					...response,
 					ownerId: response.ownerId,
 					leadId: response.leadId,
-					goalId: this.goals[index].id
+					goalId: goal.id
 				};
 				await this.keyResultService.createKeyResult(data).then((val) => {
 					if (val) {
+						// Shown under its objective once the list re-reads.
+						this.expandedGoalIds.add(goal.id);
 						this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_ADDED');
 						this.loadPage();
 					}
@@ -363,12 +477,8 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	}
 
 	groupBy(group) {
-		this.loading = true;
 		this.objectiveGroup = group;
-		if (this.popover?.isShown) {
-			this.popover.hide();
-		}
-		this.loading = false;
+		this.hidePopovers();
 	}
 
 	calculateGoalProgress(keyResults) {
@@ -378,10 +488,7 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	}
 
 	filterGoals(selection, allGoals) {
-		this.loading = true;
-		if (this.popover?.isShown) {
-			this.popover.hide();
-		}
+		this.hidePopovers();
 		this.selectedFilter = selection;
 		if (selection !== 'all') {
 			if (selection === 'employee' && !!this.employee) {
@@ -408,13 +515,11 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 			this.goalLevels = [];
 			this.goalTimeFrames = [];
 		}
-		this.loading = false;
+		this.applySearch();
 	}
 
 	async createObjectiveFromTemplate() {
-		if (this.popover?.isShown) {
-			this.popover.hide();
-		}
+		this.hidePopovers();
 		const dialog = this.dialogService.open(GoalTemplateSelectComponent, {
 			context: {
 				orgId: this.selectedOrganizationId,
@@ -427,13 +532,13 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 	}
 
-	async createObjective(isAdd?: boolean) {
-		// "Create New" in the Add Objective menu: close the menu as "Create from Preset" does, or it stays
-		// open behind the dialog and is still open once the dialog closes.
-		if (this.popover?.isShown) {
-			this.popover.hide();
-		}
-		const goal = isAdd ? null : this.selectedGoal.data;
+	/**
+	 * Creates an objective ("Create New" in the Add Objective menu), or edits `goal` when one is given (a row's
+	 * Edit).
+	 */
+	async createObjective(goal?: IGoal) {
+		// Close the menu as "Create from Preset" does, or it stays open behind the dialog.
+		this.hidePopovers();
 		if (!goal && this.goalGeneralSettings && this.goalGeneralSettings.maxObjectives <= this.allGoals.length) {
 			this.toastrService.info(
 				this.getTranslation('TOASTR.MESSAGE.MAX_OBJECTIVE_LIMIT'),
@@ -445,7 +550,7 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		const dialog = this.dialogService.open(EditObjectiveComponent, {
 			hasScroll: true,
 			context: {
-				data: goal,
+				data: goal ?? null,
 				orgId: this.selectedOrganizationId,
 				orgName: this.organizationName,
 				settings: this.goalGeneralSettings
@@ -471,7 +576,7 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 					progress: 0
 				};
 				try {
-					await this.goalService.createGoal(data).then((val) => {
+					await this.goalService.createGoal(data).then(() => {
 						this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.OBJECTIVE_ADDED'));
 						this.loadPage();
 					});
@@ -482,43 +587,90 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 	}
 
-	async openGoalDetails() {
-		const { data } = this.selectedGoal;
-		const dialog = this.dialogService.open(GoalDetailsComponent, {
-			hasScroll: true,
-			context: {
-				goal: data
-			},
-			closeOnBackdropClick: false
-		});
-		const response = await firstValueFrom(dialog.onClose);
-		if (!!response) {
-			if (response === 'deleted') {
-				this.toastrService.danger(
-					this.getTranslation('TOASTR.MESSAGE.OBJECTIVE_DELETED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this.loadPage();
-			} else {
-				const goalData = response;
-				delete goalData.keyResults;
-				await this.goalService.update(response.id, goalData).then((res) => {
-					if (res) {
-						this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.OBJECTIVE_UPDATED'));
-						this.loadPage();
-					}
-				});
-			}
+	/**
+	 * Enter on a row opens it, but only when the row itself has focus: Enter on one of its buttons is the
+	 * button's own, and is left alone (not cancelled) so the button still activates.
+	 */
+	onGoalRowEnter(event: Event, goal: IGoal): void {
+		if (event.target === event.currentTarget) {
+			this.openGoalDetails(goal);
 		}
 	}
 
-	async openKeyResultDetails() {
-		const index = this.selectedKeyResult.index;
-		const selectedKeyResult = this.selectedKeyResult.data;
+	onKeyResultRowEnter(event: Event, keyResult: IKeyResult): void {
+		if (event.target === event.currentTarget) {
+			this.openKeyResultDetails(keyResult);
+		}
+	}
+
+	/**
+	 * Opens the objective's details in the column beside the list. Where the column lies over the list, focus
+	 * moves into it, since the list under it is inert.
+	 */
+	openGoalDetails(goal: IGoal) {
+		this.detailGoalId = goal.id;
+		if (this.detailOverlays) {
+			// Once the column has rendered.
+			setTimeout(() => this.detailPane?.nativeElement.focus());
+		}
+	}
+
+	/** Closes the details; focus inside them goes back to the objective's row, not to the page. */
+	closeGoalDetails() {
+		const goalId = this.detailGoalId;
+		const pane = this.detailPane?.nativeElement;
+		const focusWasInPane = !!pane && pane.contains(document.activeElement);
+		this.detailGoalId = null;
+		if (goalId && (focusWasInPane || this.detailOverlays)) {
+			// Once the list is no longer inert.
+			setTimeout(() =>
+				this.hostRef.nativeElement.querySelector<HTMLElement>(`[data-goal-id="${CSS.escape(goalId)}"]`)?.focus()
+			);
+		}
+	}
+
+	/** Where the column lies over the list, Escape in it closes it, like a drawer. */
+	onDetailEscape(): void {
+		if (this.detailOverlays) {
+			this.closeGoalDetails();
+		}
+	}
+
+	/**
+	 * Where the column lies over the list, a click on the uncovered part of the list closes the column. The
+	 * list is inert then, so the click lands on the workspace around it.
+	 */
+	onWorkspaceClick(event: MouseEvent): void {
+		const pane = this.detailPane?.nativeElement;
+		if (this.detailCoversList && pane && !pane.contains(event.target as Node)) {
+			this.closeGoalDetails();
+		}
+	}
+
+	/**
+	 * The details column deleted an objective, or changed one of its key results: the list re-reads. A deletion
+	 * closes the column only if the deleted objective is still the one it shows — another may have been picked
+	 * while the request was out.
+	 */
+	onGoalDetailsChanged({ change, goalId }: IGoalDetailsChange) {
+		if (change === 'deleted') {
+			if (this.detailGoalId === goalId) {
+				this.detailGoalId = null;
+			}
+			this.expandedGoalIds.delete(goalId);
+			this.toastrService.danger(
+				this.getTranslation('TOASTR.MESSAGE.OBJECTIVE_DELETED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		}
+		this.loadPage();
+	}
+
+	async openKeyResultDetails(keyResult: IKeyResult) {
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
-				keyResult: selectedKeyResult
+				keyResult
 			},
 			closeOnBackdropClick: false
 		});
@@ -562,72 +714,51 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 	}
 
-	onClickObjective(objective, index) {
-		this.selectedGoal =
-			this.selectedGoal.data && objective.id === this.selectedGoal.data.id
-				? {
-						isSelected: !this.selectedGoal.isSelected,
-						data: objective,
-						index: index
-				  }
-				: { isSelected: true, data: objective, index: index };
-	}
-
-	onClickKeyResult(keyResult, index) {
-		this.selectedKeyResult =
-			this.selectedKeyResult.data && keyResult.id === this.selectedKeyResult.data.id
-				? {
-						isSelected: !this.selectedKeyResult.isSelected,
-						data: keyResult,
-						index: index
-				  }
-				: { isSelected: true, data: keyResult, index: index };
-		this.selectedGoal.isSelected = this.selectedKeyResult.isSelected ? false : true;
-	}
-
-	async deleteKeyResult() {
-		const dialog = this.dialogService.open(AlertModalComponent, {
+	async deleteKeyResult(keyResult: IKeyResult) {
+		const dialog = this.dialogService.open(GoalDeleteConfirmComponent, {
 			context: {
 				data: {
 					title: this.getTranslation('GOALS_PAGE.DELETE_KEY_RESULT'),
-					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
-					status: 'danger'
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE')
 				}
 			},
-			closeOnBackdropClick: false
+			closeOnBackdropClick: true
 		});
 		const response = await firstValueFrom(dialog.onClose);
-		if (!!response) {
-			if (response === 'yes') {
-				await this.keyResultService
-					.delete(this.selectedKeyResult.data.id)
-					.then(() => this.loadPage())
-					.catch((error) => console.log(error));
-			}
+		if (response === 'yes') {
+			await this.keyResultService
+				.delete(keyResult.id)
+				.then(() => this.loadPage())
+				.catch((error) => console.log(error));
 		}
 	}
 
-	async deleteGoal() {
-		const dialog = this.dialogService.open(AlertModalComponent, {
+	async deleteGoal(goal: IGoal) {
+		const dialog = this.dialogService.open(GoalDeleteConfirmComponent, {
 			context: {
 				data: {
 					title: this.getTranslation('GOALS_PAGE.DELETE_OBJECTIVE'),
-					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
-					status: 'danger'
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE')
 				}
 			},
-			closeOnBackdropClick: false
+			closeOnBackdropClick: true
 		});
 		const response = await firstValueFrom(dialog.onClose);
-		if (!!response) {
-			if (response === 'yes') {
-				await this.goalService
-					.delete(this.selectedGoal.data.id)
-					.then(() => this.loadPage())
-					.catch((error) => console.log(error));
-			}
+		if (response === 'yes') {
+			await this.goalService
+				.delete(goal.id)
+				.then(() => {
+					if (this.detailGoalId === goal.id) {
+						this.detailGoalId = null;
+					}
+					this.expandedGoalIds.delete(goal.id);
+					return this.loadPage();
+				})
+				.catch((error) => console.log(error));
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this.overlayQuery?.removeEventListener('change', this.onOverlayChange);
+	}
 }

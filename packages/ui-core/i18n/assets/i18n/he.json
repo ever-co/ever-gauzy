@@ -2605,6 +2605,8 @@
 		"GOAL_TEMPLATES": "Goal Templates",
 		"CREATE_NEW_MENU": "Create New",
 		"CREATE_FROM_PRESET": "Create from Preset",
+		"SEARCH_PLACEHOLDER": "חיפוש יעדים ותוצאות מפתח",
+		"NO_MATCHING_OBJECTIVES": "אין יעדים התואמים לחיפוש שלך.",
 		"SELECT_A_PRESET": "Select a Preset",
 		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {

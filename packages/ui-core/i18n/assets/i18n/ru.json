@@ -2612,6 +2612,8 @@
 		"GOAL_TEMPLATES": "Шаблоны целей",
 		"CREATE_NEW_MENU": "Создать новый",
 		"CREATE_FROM_PRESET": "Создать из пресета",
+		"SEARCH_PLACEHOLDER": "Поиск целей и ключевых результатов",
+		"NO_MATCHING_OBJECTIVES": "Нет целей, соответствующих поиску.",
 		"SELECT_A_PRESET": "Выберите пресет",
 		"ADDITIONAL_DETAILS": "Дополнительные сведения",
 		"OWNERSHIP": {

@@ -2565,6 +2565,8 @@
 		"GOAL_TEMPLATES": "Zielvorlagen",
 		"CREATE_NEW_MENU": "Erstellen Sie neu",
 		"CREATE_FROM_PRESET": "Erstellen aus Vorlage",
+		"SEARCH_PLACEHOLDER": "Ziele und Schlüsselergebnisse durchsuchen",
+		"NO_MATCHING_OBJECTIVES": "Keine Ziele entsprechen Ihrer Suche.",
 		"SELECT_A_PRESET": "Vorlage auswählen",
 		"ADDITIONAL_DETAILS": "Weitere Details",
 		"OWNERSHIP": {

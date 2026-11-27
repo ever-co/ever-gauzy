@@ -19,7 +19,6 @@ describe('GoalsComponent — after a progress report', () => {
 		const keyResultService = { update: jest.fn() };
 		Object.assign(component, {
 			goals: [{ id: 'goal-1', progress: 0, keyResults: [keyResult] }],
-			selectedKeyResult: { index: 0, data: keyResult, isSelected: true },
 			dialogService: { open: jest.fn(() => ({ onClose: of(dialogAnswer) })) },
 			goalService,
 			keyResultService,
@@ -33,7 +32,7 @@ describe('GoalsComponent — after a progress report', () => {
 	it('re-reads the page when the key result details close, without writing the goal back', async () => {
 		const { component, goalService, keyResultService } = build({ ...keyResult, progress: 75 });
 
-		await component.openKeyResultDetails();
+		await component.openKeyResultDetails(keyResult);
 
 		expect(goalService.update).not.toHaveBeenCalled();
 		expect(keyResultService.update).not.toHaveBeenCalled();
