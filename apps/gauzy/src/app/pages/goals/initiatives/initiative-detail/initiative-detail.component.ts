@@ -132,6 +132,11 @@ export class InitiativeDetailComponent extends TranslationBaseComponent implemen
 		}
 	}
 
+	/** The steward links to their profile only for those whom the profile page would let in. */
+	get canViewEmployees(): boolean {
+		return this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
+	}
+
 	stewardName(): string {
 		const user = this.steward?.user;
 		return user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || '—';

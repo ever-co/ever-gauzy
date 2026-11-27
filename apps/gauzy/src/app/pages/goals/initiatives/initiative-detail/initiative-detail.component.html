@@ -172,7 +172,21 @@
 							<dt>{{ 'STRATEGIC_INITIATIVES.STEWARD' | translate }}</dt>
 							<dd>
 								@if (steward) {
-									<span class="person">
+									<!-- Opens the steward's profile, for those who may see it; plain text for others,
+									     who the profile page would only turn away. -->
+									@if (canViewEmployees) {
+										<a
+											class="person person-link"
+											[routerLink]="['/pages/employees/view', steward.id]"
+										>
+											<ng-container *ngTemplateOutlet="stewardPerson"></ng-container>
+										</a>
+									} @else {
+										<span class="person">
+											<ng-container *ngTemplateOutlet="stewardPerson"></ng-container>
+										</span>
+									}
+									<ng-template #stewardPerson>
 										<span class="avatar" aria-hidden="true">
 											@if (steward.user?.imageUrl) {
 												<img [src]="steward.user.imageUrl" alt="" />
@@ -181,7 +195,7 @@
 											}
 										</span>
 										<span class="person-name">{{ stewardName() }}</span>
-									</span>
+									</ng-template>
 								} @else {
 									<span class="muted">—</span>
 								}

@@ -67,7 +67,7 @@ describe('Strategic initiatives pages', () => {
 	};
 	let dialogRef: { close: jest.Mock };
 	let dialogService: { open: jest.Mock };
-	let store: { selectedOrganization$: BehaviorSubject<any>; selectedOrganization: any };
+	let store: { selectedOrganization$: BehaviorSubject<any>; selectedOrganization: any; hasPermission: jest.Mock };
 
 	beforeEach(async () => {
 		initiatives = {
@@ -80,7 +80,11 @@ describe('Strategic initiatives pages', () => {
 		};
 		dialogRef = { close: jest.fn() };
 		dialogService = { open: jest.fn(() => ({ onClose: of(null) })) };
-		store = { selectedOrganization$: new BehaviorSubject(ORGANIZATION), selectedOrganization: ORGANIZATION };
+		store = {
+			selectedOrganization$: new BehaviorSubject(ORGANIZATION),
+			selectedOrganization: ORGANIZATION,
+			hasPermission: jest.fn(() => true)
+		};
 
 		await TestBed.configureTestingModule({
 			declarations: [InitiativesComponent, InitiativeMutationComponent, InitiativeDetailComponent],
