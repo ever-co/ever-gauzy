@@ -111,7 +111,7 @@ export class InitiativesComponent extends TranslationBaseComponent implements On
 	 * one of the row's buttons is theirs: the link already navigates, and Edit / Delete do their own thing.
 	 * Keyboard users have the title link, so the row itself is not a second tab stop.
 	 */
-	onRowClick(event: MouseEvent, initiative: IOrganizationStrategicInitiativeRead): void {
+	openInitiative(event: MouseEvent, initiative: IOrganizationStrategicInitiativeRead): void {
 		if ((event.target as Element).closest('a, button')) {
 			return;
 		}

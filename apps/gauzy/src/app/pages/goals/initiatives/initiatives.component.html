@@ -38,7 +38,7 @@
 					<tbody>
 						@for (initiative of initiatives; track initiative.id) {
 							<!-- The whole row opens the initiative; the title is its keyboard-reachable link. -->
-							<tr class="initiative-row" (click)="onRowClick($event, initiative)">
+							<tr class="initiative-row" (click)="openInitiative($event, initiative)">
 								<td class="col-title">
 									<a class="link" [routerLink]="['/pages/goals/initiatives', initiative.id]">{{
 										initiative.title
