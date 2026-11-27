@@ -80,13 +80,12 @@
 					@if (signals.knownRisks?.length) {
 						<section class="section">
 							<h6 class="section-title">{{ 'STRATEGIC_INITIATIVES.KNOWN_RISKS' | translate }}</h6>
-							<!-- Not `.row`: that is Bootstrap's grid row, whose negative margins pushed these
-							     rows out past their heading. -->
-							<ul class="items">
+							<!-- One outlined box, a row per risk with a warning glyph. -->
+							<ul class="risk-list">
 								@for (risk of signals.knownRisks; track $index) {
-									<li class="item risk">
-										<span class="marker" aria-hidden="true"></span>
-										<span class="item-name wrap">{{ risk }}</span>
+									<li class="risk">
+										<nb-icon class="risk-icon" icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+										<span class="risk-text">{{ risk }}</span>
 									</li>
 								}
 							</ul>
@@ -150,12 +149,18 @@
 							<ul class="items">
 								@for (project of initiative.projects; track project.id) {
 									<li class="item">
-										<!-- Opens the project's own page. -->
-										<a class="item-link" [routerLink]="['/pages/organization/projects/view', project.id]">
+										<!-- Opens the project's own page when it would open (see `canOpenProjects`);
+										     the name alone otherwise. -->
+										@if (canOpenProjects) {
+											<a class="item-link" [routerLink]="['/pages/organization/projects/view', project.id]">
+												<nb-icon class="item-icon" icon="briefcase-outline" aria-hidden="true"></nb-icon>
+												<span class="item-name">{{ project.name }}</span>
+												<nb-icon class="item-go" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+											</a>
+										} @else {
 											<nb-icon class="item-icon" icon="briefcase-outline" aria-hidden="true"></nb-icon>
 											<span class="item-name">{{ project.name }}</span>
-											<nb-icon class="item-go" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
-										</a>
+										}
 									</li>
 								}
 							</ul>
