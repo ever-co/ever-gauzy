@@ -210,8 +210,9 @@ $tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   .kr-progress {
     width: 100%;
 
+    // 3px, the same thin bar as the Goals list and its details column.
     ::ng-deep .progress-container {
-      height: 6px !important;
+      height: 3px !important;
       border-radius: 999px;
       background-color: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
     }
