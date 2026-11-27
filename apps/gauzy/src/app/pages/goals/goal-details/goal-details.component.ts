@@ -1,4 +1,16 @@
-import { Component, OnInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnChanges,
+	type SimpleChanges,
+	ChangeDetectionStrategy,
+	ViewChild,
+	Input,
+	Output,
+	EventEmitter,
+	HostBinding,
+	Optional
+} from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { BaseEntityEnum, IComment, ID, IGoal, IKeyResult, IKeyResultUpdate, PermissionsEnum } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/theme';
@@ -24,8 +36,22 @@ export interface ICommentThread {
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class GoalDetailsComponent extends TranslationBaseComponent implements OnInit {
-	goal: IGoal;
+export class GoalDetailsComponent extends TranslationBaseComponent implements OnInit, OnChanges {
+	@Input() goal: IGoal;
+	/**
+	 * Shown in the Goals page's side column instead of a dialog. There is no dialog to close there, so closing and
+	 * deleting are emitted (`closed`, `changed`) for the page to act on.
+	 */
+	@Input() @HostBinding('class.embedded') embedded = false;
+	@Output() closed = new EventEmitter<void>();
+	/** Embedded only: `deleted` once this objective is deleted, `updated` once one of its key results changed. */
+	@Output() changed = new EventEmitter<'deleted' | 'updated'>();
+	/** Embedded only: the header's Edit, for the page's own objective dialog. */
+	@Output() editGoal = new EventEmitter<void>();
+	/** Embedded only: Key results' "Add new key result", for the page's own key-result dialog. */
+	@Output() addKeyResult = new EventEmitter<void>();
+	/** Embedded only: which list the Activity section shows. */
+	activityTab: 'comments' | 'updates' = 'comments';
 	src: string;
 	ownerName: string;
 	updates: Array<IKeyResultUpdate> = [];
@@ -48,12 +74,15 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	private commentsLoadId = 0;
 	/** `timeAgo`'s formatter, rebuilt only when the language changes. */
 	private relativeTimeFormat: { lang: string; format: Intl.RelativeTimeFormat } | null = null;
+	/** Set once `ngOnInit` has read the first objective; later `goal` inputs are read by `ngOnChanges`. */
+	private initialized = false;
 
 	@ViewChild(NbTabsetComponent) tabset: NbTabsetComponent;
 	@ViewChild('commentsTab') commentsTab: NbTabComponent;
 
 	constructor(
-		private readonly dialogRef: NbDialogRef<GoalDetailsComponent>,
+		// Absent when the details are embedded in the Goals page rather than opened as a dialog.
+		@Optional() private readonly dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private readonly employeeService: EmployeesService,
 		private readonly dialogService: NbDialogService,
 		private readonly goalService: GoalService,
@@ -66,24 +95,58 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	async ngOnInit() {
-		if (!!this.goal.ownerEmployee) {
-			const employee = await firstValueFrom(
-				this.employeeService.getEmployeeById(this.goal.ownerEmployee.id, ['user'])
-			);
-			this.src = employee.user.imageUrl;
-			this.ownerName = employee.user.name;
-		} else if (!!this.goal.organization) {
-			this.ownerName = this.goal.organization.name;
-			this.src = this.goal.organization.imageUrl;
+		this.initialized = true;
+		await this.readGoal(true);
+	}
+
+	/**
+	 * Embedded, the page hands in a fresh `goal` after every re-read and when another objective is picked. The
+	 * same objective re-read keeps its comments and any open thread or draft; another objective starts clean.
+	 */
+	ngOnChanges(changes: SimpleChanges) {
+		const change = changes['goal'];
+		if (!this.initialized || !change || change.firstChange || !this.goal) {
+			return;
+		}
+		const sameGoal = change.previousValue?.id === this.goal.id;
+		if (!sameGoal) {
+			this.comments = [];
+			this.threads = [];
+			this.openThreadId = null;
+			this.confirmingDeleteId = null;
+			this.commentsLoadError = false;
+			this.commentControl.reset();
+			this.replyControl.reset();
+		}
+		this.readGoal(!sameGoal);
+	}
+
+	/** The owner shown in the header, the updates of every key result and, when asked, the comments. */
+	private async readGoal(withComments: boolean) {
+		const goal = this.goal;
+		this.updates = (goal.keyResults ?? []).flatMap((keyResult) => keyResult.updates ?? []);
+		const comments = withComments ? this.loadComments() : Promise.resolve(true);
+
+		if (!!goal.ownerEmployee) {
+			// The Goals page reads the owner's user with the objective; the request is only for a goal without it.
+			const user =
+				goal.ownerEmployee.user ??
+				(await firstValueFrom(this.employeeService.getEmployeeById(goal.ownerEmployee.id, ['user']))).user;
+			// Another objective was picked while the owner was read: its own read sets the header.
+			if (this.goal !== goal) {
+				return;
+			}
+			this.src = user?.imageUrl;
+			this.ownerName = user?.name;
+		} else if (!!goal.organization) {
+			this.ownerName = goal.organization.name;
+			this.src = goal.organization.imageUrl;
 		} else {
-			this.ownerName = this.goal.ownerTeam.name;
+			this.ownerName = goal.ownerTeam?.name;
+			this.src = undefined;
 		}
 
-		this.goal.keyResults.forEach((keyResult) => {
-			this.updates.push(...keyResult.updates);
-		});
-
-		await this.loadComments();
+		await comments;
 	}
 
 	/**
@@ -131,6 +194,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 				this.commentControl.reset();
 			}
 			this.tabset?.selectTab(this.commentsTab);
+			this.activityTab = 'comments';
 		}
 		this.postingComment = false;
 	}
@@ -224,12 +288,27 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	authorInitials(comment: IComment): string {
-		return this.authorName(comment)
+		return this.initials(this.authorName(comment));
+	}
+
+	/** Up to two initials, for a person or team with no picture. */
+	initials(name?: string): string {
+		return (name ?? '')
 			.trim()
 			.split(/\s+/)
 			.slice(0, 2)
 			.map((word) => word.charAt(0).toUpperCase())
 			.join('');
+	}
+
+	levelTitle(level?: string): string {
+		return level ? this.getTranslation(`GOALS_PAGE.LEVELS.${level.toUpperCase()}`) : '';
+	}
+
+	/** A key result's status as its `KEY_RESULT_PAGE.UPDATE.STATUS` key; one never reported reads as None. */
+	statusKey(status?: string): string {
+		const key = (status || 'none').trim().toUpperCase().replace(/\s+/g, '_');
+		return ['ON_TRACK', 'NEEDS_ATTENTION', 'OFF_TRACK', 'NONE'].includes(key) ? key : 'NONE';
 	}
 
 	/** How long ago, in the narrow form of the current language: "15d ago", "3h ago", "now". */
@@ -337,7 +416,11 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		if (!!response) {
 			if (response === 'yes') {
 				await this.goalService.delete(this.goal.id).catch((error) => console.log(error));
-				this.dialogRef.close('deleted');
+				if (this.dialogRef) {
+					this.dialogRef.close('deleted');
+				} else {
+					this.changed.emit('deleted');
+				}
 			}
 		}
 	}
@@ -379,6 +462,10 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 				this.goal.keyResults[index] = response;
 				this.goal.progress = this.calculateGoalProgress(this.goal.keyResults);
 			}
+			// Embedded, the page's list shows the same key results: it re-reads them and hands the goal back in.
+			if (this.embedded) {
+				this.changed.emit('updated');
+			}
 		}
 	}
 
@@ -405,6 +492,10 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	closeDialog(isSaved: boolean) {
+		if (!this.dialogRef) {
+			this.closed.emit();
+			return;
+		}
 		isSaved ? this.dialogRef.close(this.goal) : this.dialogRef.close();
 	}
 }
