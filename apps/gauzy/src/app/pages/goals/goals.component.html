@@ -1,238 +1,352 @@
 <nb-card>
-	<nb-card-header>
-		<div class="main-header">
+	<!-- The app's one-line page header (`_overrides.scss`): title and trail on the start side, Add new Objective
+	     level with the title. Stamped here because `ngx-header-title` only stamps it on headers holding an
+	     `ngx-gauzy-button-action`, which this page no longer uses. -->
+	<nb-card-header class="ga-page-header">
+		<div class="main-header ga-page-header-main">
 			<h4>
 				<ngx-header-title>
 					{{ 'GOALS_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div class="gauzy-button-container">
-			<ngx-gauzy-button-action
-				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="!selectedGoal.isSelected && !selectedKeyResult.isSelected"
-				[buttonTemplate]="
-					selectedGoal.isSelected
-						? actionButtonsObjective
-						: selectedKeyResult.isSelected
-						? actionButtons
-						: actionButtonsObjective
-				"
-				[hasLayoutSelector]="false"
-			></ngx-gauzy-button-action>
+		<div class="gauzy-button-container ga-page-header-actions">
+			@if (!isEmployee || goalGeneralSettings?.employeeCanCreateObjective) {
+			<button
+				nbButton
+				status="success"
+				size="small"
+				nbPopoverTrigger="click"
+				nbPopoverPlacement="bottom"
+				nbPopoverClass="goals-popover"
+				[nbPopover]="createObjectivePopover"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
+			</button>
+			}
 		</div>
 	</nb-card-header>
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-		<div class="goals-container">
-			@if (noGoals === true) {
-			<div class="h-100">
-				<ngx-no-data-message [loading]="loading" [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
-			</div>
-			} @for (group of activeGroups; track group) {
-			<div class="goal-group-block">
-				@if (noGoals === false) {
-				<h6 class="goal-group">{{ group }}</h6>
-				} @for (goal of goalsForGroup(group); track goal.id) {
-				<nb-accordion class="goal">
-					<nb-accordion-item>
-						<!-- Name, percentage and bar on one grid, shared with the key-result
-						     rows below so the three columns line up down the page. -->
-						<nb-accordion-item-header (click)="onClickObjective(goal, goalIndex(goal))">
-							<div class="goal-row">
-								<span class="goal-name">{{ goal.name }}</span>
-								<span class="goal-percent">{{ goal.progress }}%</span>
-								<nb-progress-bar
-									class="goal-bar"
-									nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
-									[value]="goal.progress"
-									[status]="goal.progress < 50 ? 'warning' : goal.progress < 75 ? 'info' : 'success'"
-									size="tiny"
-								>
-								</nb-progress-bar>
-							</div>
-						</nb-accordion-item-header>
-						@for (keyResult of goal.keyResults; track keyResult.id) {
-						<nb-accordion-item-body
-							[class]="
-								selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id
-									? 'selected item'
-									: ''
-							"
-						>
-							<div
-								(click)="onClickKeyResult(keyResult, goalIndex(goal))"
-								class="goal-row key-result keyResult"
-							>
-								<span class="goal-name">{{ keyResult.name }}</span>
-								<span class="goal-percent">{{ keyResult.progress }}%</span>
-								<nb-progress-bar
-									class="goal-bar"
-									nbTooltip="{{
-										'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
-											| translate : { weight: calculateKeyResultWeight(keyResult.weight, goal) }
-									}}"
-									[value]="keyResult.progress"
-									[status]="
-										keyResult.progress < 50
-											? 'warning'
-											: keyResult.progress < 75
-											? 'info'
-											: 'success'
-									"
-									size="tiny"
-								>
-								</nb-progress-bar>
-							</div>
-						</nb-accordion-item-body>
-						}
-						<nb-accordion-item-body class="add-key-result">
+		<!-- Search, filter and grouping on one compact row over the list. -->
+		<div class="goals-toolbar">
+			<span class="goals-search">
+				<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+				<input
+					nbInput
+					fullWidth
+					type="search"
+					[value]="searchQuery"
+					[placeholder]="'GOALS_PAGE.SEARCH_PLACEHOLDER' | translate"
+					[attr.aria-label]="'GOALS_PAGE.SEARCH_PLACEHOLDER' | translate"
+					(input)="onSearch($any($event.target).value)"
+				/>
+			</span>
+			<button
+				nbButton
+				ghost
+				status="basic"
+				size="small"
+				class="toolbar-button"
+				nbPopoverTrigger="click"
+				nbPopoverPlacement="bottom"
+				nbPopoverClass="goals-popover"
+				[nbPopover]="filterPopover"
+			>
+				<nb-icon icon="funnel-outline"></nb-icon>
+				{{ selectedFilterTitle }}
+				<nb-icon icon="chevron-down-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				ghost
+				status="basic"
+				size="small"
+				class="toolbar-button"
+				nbPopoverTrigger="click"
+				nbPopoverPlacement="bottom"
+				nbPopoverClass="goals-popover"
+				[nbPopover]="groupByPopover"
+			>
+				<nb-icon icon="layers-outline"></nb-icon>
+				{{ 'GOALS_PAGE.GROUP_BY' | translate }}: {{ selectedGroupTitle }}
+				<nb-icon icon="chevron-down-outline"></nb-icon>
+			</button>
+		</div>
+
+		<!-- The list, and the open objective's details in a column beside it. -->
+		<div class="goals-workspace">
+			<div class="goals-list" role="table" [attr.aria-label]="'GOALS_PAGE.HEADER' | translate">
+				<div class="goals-row goals-head" role="row">
+					<span role="columnheader" class="col-toggle"></span>
+					<span role="columnheader" class="col-name">{{ 'FORM.LABELS.NAME' | translate }}</span>
+					<span role="columnheader" class="col-level">{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}</span>
+					<span role="columnheader" class="col-status">{{ 'GOALS_PAGE.FORM.LABELS.STATUS' | translate }}</span>
+					<span role="columnheader" class="col-owner">{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}</span>
+					<span role="columnheader" class="col-lead">{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</span>
+					<span role="columnheader" class="col-session">{{ 'GOALS_PAGE.SESSION' | translate }}</span>
+					<span role="columnheader" class="col-progress">{{ 'GOALS_PAGE.PROGRESS' | translate }}</span>
+					<span role="columnheader" class="col-actions"></span>
+				</div>
+
+				<div class="goals-rows">
+					@if (noGoals) {
+					<div class="goals-empty">
+						<ngx-no-data-message
+							[loading]="loading"
+							[message]="'GOALS_PAGE.GOALS_EMPTY' | translate"
+						></ngx-no-data-message>
+					</div>
+					} @else if (!visibleGoals.length) {
+					<div class="goals-empty goals-no-match">{{ 'GOALS_PAGE.NO_MATCHING_OBJECTIVES' | translate }}</div>
+					}
+
+					@for (group of activeGroups; track group) {
+					@let groupGoals = goalsForGroup(group);
+					@if (groupGoals.length) {
+					<div class="goals-group" role="row">
+						<span role="cell">{{ groupTitle(group) }}</span>
+					</div>
+					@for (goal of groupGoals; track goal.id) {
+					@let expanded = isExpanded(goal);
+					<!-- The objective: a click opens its details beside the list. -->
+					<div
+						class="goals-row goal-row"
+						role="row"
+						tabindex="0"
+						[class.active]="detailGoalId === goal.id"
+						[attr.aria-expanded]="expanded"
+						(click)="openGoalDetails(goal)"
+						(keydown.enter)="$event.target === $event.currentTarget && openGoalDetails(goal)"
+					>
+						<span role="cell" class="col-toggle">
 							<button
+								type="button"
+								class="row-toggle"
+								[attr.aria-label]="'GOALS_PAGE.KEY_RESULTS' | translate"
+								[attr.aria-expanded]="expanded"
+								(click)="toggleExpanded(goal, $event)"
+							>
+								<nb-icon
+									[icon]="expanded ? 'chevron-down-outline' : 'chevron-right-outline'"
+									aria-hidden="true"
+								></nb-icon>
+							</button>
+						</span>
+						<span role="cell" class="col-name">
+							<span class="name-text" [title]="goal.name">{{ goal.name }}</span>
+						</span>
+						<span role="cell" class="col-level">{{ levelTitle(goal.level) }}</span>
+						<span role="cell" class="col-status"></span>
+						<span role="cell" class="col-owner" [title]="goalOwnerName(goal)">{{ goalOwnerName(goal) }}</span>
+						<span role="cell" class="col-lead" [title]="employeeName(goal.lead)">{{ employeeName(goal.lead) }}</span>
+						<span role="cell" class="col-session">{{ goal.deadline }}</span>
+						<span role="cell" class="col-progress">
+							<ng-container
+								*ngTemplateOutlet="progress; context: { $implicit: goal.progress, tooltip: 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }"
+							></ng-container>
+						</span>
+						<span role="cell" class="col-actions">
+							<button
+								type="button"
 								nbButton
-								status="success"
-								outline
-								size="small"
-								(click)="addKeyResult(goalIndex(goal), true)"
+								ghost
+								size="tiny"
+								class="row-action"
+								[nbTooltip]="'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate"
+								[attr.aria-label]="'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate"
+								(click)="$event.stopPropagation(); addKeyResult(goal)"
 							>
 								<nb-icon icon="plus-outline"></nb-icon>
+							</button>
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="tiny"
+								class="row-action"
+								[nbTooltip]="'GOALS_PAGE.TOOLTIPS.EDIT' | translate"
+								[attr.aria-label]="'GOALS_PAGE.TOOLTIPS.EDIT' | translate"
+								(click)="$event.stopPropagation(); createObjective(goal)"
+							>
+								<nb-icon icon="edit-outline"></nb-icon>
+							</button>
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="tiny"
+								class="row-action"
+								[nbTooltip]="'BUTTONS.DELETE' | translate"
+								[attr.aria-label]="'BUTTONS.DELETE' | translate"
+								(click)="$event.stopPropagation(); deleteGoal(goal)"
+							>
+								<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+							</button>
+						</span>
+					</div>
+
+					@if (expanded) {
+					<!-- Its key results, indented under it; a click opens the key result's details. -->
+					@for (keyResult of goal.keyResults; track keyResult.id) {
+					<div
+						class="goals-row key-result-row"
+						role="row"
+						tabindex="0"
+						(click)="openKeyResultDetails(keyResult)"
+						(keydown.enter)="$event.target === $event.currentTarget && openKeyResultDetails(keyResult)"
+					>
+						<span role="cell" class="col-toggle"></span>
+						<span role="cell" class="col-name">
+							<span class="name-text" [title]="keyResult.name">{{ keyResult.name }}</span>
+						</span>
+						<span role="cell" class="col-level"></span>
+						<span role="cell" class="col-status">
+							<span class="status" [attr.data-status]="statusKey(keyResult.status)">
+								<span class="status-dot" aria-hidden="true"></span>
+								<span class="status-label">{{
+									'KEY_RESULT_PAGE.UPDATE.STATUS.' + statusKey(keyResult.status) | translate
+								}}</span>
+							</span>
+						</span>
+						<span role="cell" class="col-owner" [title]="employeeName(keyResult.owner)">{{
+							employeeName(keyResult.owner)
+						}}</span>
+						<span role="cell" class="col-lead" [title]="employeeName(keyResult.lead)">{{
+							employeeName(keyResult.lead)
+						}}</span>
+						<span role="cell" class="col-session">{{ keyResult.hardDeadline | date }}</span>
+						<span role="cell" class="col-progress">
+							<ng-container
+								*ngTemplateOutlet="
+									progress;
+									context: {
+										$implicit: keyResult.progress,
+										tooltip:
+											'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
+											| translate : { weight: calculateKeyResultWeight(keyResult.weight, goal) }
+									}
+								"
+							></ng-container>
+						</span>
+						<span role="cell" class="col-actions">
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="tiny"
+								class="row-action"
+								[nbTooltip]="'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate"
+								[attr.aria-label]="'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate"
+								(click)="$event.stopPropagation(); addKeyResult(goal, keyResult)"
+							>
+								<nb-icon icon="edit-outline"></nb-icon>
+							</button>
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="tiny"
+								class="row-action"
+								[nbTooltip]="'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate"
+								[attr.aria-label]="'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate"
+								(click)="$event.stopPropagation(); openKeyResultParameters(goal, keyResult)"
+							>
+								<i class="fas fa-percentage" aria-hidden="true"></i>
+							</button>
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="tiny"
+								class="row-action"
+								[nbTooltip]="'BUTTONS.DELETE' | translate"
+								[attr.aria-label]="'BUTTONS.DELETE' | translate"
+								(click)="$event.stopPropagation(); deleteKeyResult(keyResult)"
+							>
+								<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+							</button>
+						</span>
+					</div>
+					}
+					<div class="goals-row add-row" role="row">
+						<span role="cell" class="col-toggle"></span>
+						<span role="cell" class="col-add">
+							<button type="button" class="add-link" (click)="addKeyResult(goal)">
+								<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
 								{{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
 							</button>
-						</nb-accordion-item-body>
-					</nb-accordion-item>
-				</nb-accordion>
-				}
+						</span>
+					</div>
+					}
+					}
+					}
+					}
+				</div>
 			</div>
+
+			@if (detailGoal; as goal) {
+			<aside class="goals-detail" [attr.aria-label]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate">
+				<ga-goal-details
+					[goal]="goal"
+					[embedded]="true"
+					(closed)="closeGoalDetails()"
+					(changed)="onGoalDetailsChanged($event)"
+					(editGoal)="createObjective(goal)"
+					(addKeyResult)="addKeyResult(goal)"
+				></ga-goal-details>
+			</aside>
 			}
 		</div>
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons>
-	<div class="btn-group actions">
-		<button nbButton status="basic" class="action secondary" size="small" (click)="openKeyResultDetails()">
-			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button nbButton status="basic" class="action primary" size="small" (click)="addKeyResult()">
-			<nb-icon icon="edit-outline"></nb-icon>{{ 'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate }}
-		</button>
-		<button nbButton status="basic" class="action primary" size="small" (click)="openKeyResultParameters()">
-			<span class="mr-1"><i class="fas fa-percentage"></i></span
-			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action"
-			size="small"
-			(click)="deleteKeyResult()"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
-	</div>
-</ng-template>
-<ng-template #actionButtonsObjective>
-	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			(click)="openGoalDetails()"
-			size="small"
-			[nbTooltip]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate"
-		>
-			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button nbButton status="basic" class="action primary" (click)="createObjective()" size="small">
-			<nb-icon icon="edit-outline"></nb-icon>{{ 'GOALS_PAGE.TOOLTIPS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="!selectedGoal.isSelected"
-			size="small"
-			(click)="deleteGoal()"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
-	</div>
-</ng-template>
-<ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		nbPopoverTrigger="click"
-		nbPopoverPlacement="bottom"
-		nbPopoverClass="goals-popover"
-		[nbPopover]="createObjectivePopover"
-		size="small"
-	>
-		<nb-icon icon="plus-outline"></nb-icon>
-		{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
-	</button>
-	<button
-		nbButton
-		status="basic"
-		nbPopoverTrigger="click"
-		nbPopoverPlacement="bottom"
-		nbPopoverClass="goals-popover"
-		[nbPopover]="groupByPopover"
-		size="small"
-		class="action"
-	>
-		<nb-icon icon="folder"></nb-icon>{{ 'GOALS_PAGE.GROUP_BY' | translate }}
-	</button>
-	<button
-		nbButton
-		status="basic"
-		nbPopoverTrigger="click"
-		nbPopoverPlacement="bottom"
-		nbPopoverClass="goals-popover"
-		[nbPopover]="filterPopover"
-		size="small"
-		class="action"
-	>
-		<nb-icon icon="funnel"></nb-icon>{{ 'FORM.FILTER' | translate }}
-	</button>
+
+<!-- A row's progress: a thin bar with the percentage beside it. Not `.progress` / `.progress-bar`: those are
+     Bootstrap's own classes, and the app loads Bootstrap. -->
+<ng-template #progress let-value let-tooltip="tooltip">
+	<span class="row-progress">
+		<nb-progress-bar
+			class="row-progress-bar"
+			[nbTooltip]="tooltip"
+			[value]="value"
+			[status]="value < 50 ? 'warning' : value < 75 ? 'info' : 'success'"
+			size="tiny"
+		></nb-progress-bar>
+		<span class="row-progress-percent">{{ value }}%</span>
+	</span>
 </ng-template>
 
-<ng-template class="p-2" #groupByPopover>
+<ng-template #groupByPopover>
 	<nb-list>
-		@for (group of groupObjectivesBy; track group) {
+		@for (group of groupObjectivesBy; track group.value) {
 		<nb-list-item
 			(click)="groupBy(group.value)"
-			[style.font-weight]="objectiveGroup === group.value ? 'bold' : 'normal'"
+			[class.selected]="objectiveGroup === group.value"
 			style="cursor: pointer"
 			>{{ group.title }}</nb-list-item
 		>
 		}
 	</nb-list>
 </ng-template>
-<ng-template class="p-2" #filterPopover>
+<ng-template #filterPopover>
 	<nb-list>
-		@for (filter of filters; track filter) {
+		@for (filter of filters; track filter.value) {
 		<nb-list-item
 			(click)="filterGoals(filter.value, allGoals)"
-			[style.font-weight]="selectedFilter === filter.value ? 'bold' : 'normal'"
+			[class.selected]="selectedFilter === filter.value"
 			style="cursor: pointer"
 			>{{ filter.title }}</nb-list-item
 		>
 		}
 	</nb-list>
 </ng-template>
-<ng-template class="p-2" #createObjectivePopover>
-	<div>
-		@if (!isEmployee || goalGeneralSettings?.employeeCanCreateObjective) {
-		<nb-list>
-			<nb-list-item (click)="createObjective(true)" style="cursor: pointer">
-				{{ 'GOALS_PAGE.CREATE_NEW_MENU' | translate }}
-			</nb-list-item>
-			<nb-list-item (click)="createObjectiveFromTemplate()" style="cursor: pointer">
-				{{ 'GOALS_PAGE.CREATE_FROM_PRESET' | translate }}
-			</nb-list-item>
-		</nb-list>
-		}
-	</div>
+<ng-template #createObjectivePopover>
+	<nb-list>
+		<nb-list-item (click)="createObjective()" style="cursor: pointer">
+			{{ 'GOALS_PAGE.CREATE_NEW_MENU' | translate }}
+		</nb-list-item>
+		<nb-list-item (click)="createObjectiveFromTemplate()" style="cursor: pointer">
+			{{ 'GOALS_PAGE.CREATE_FROM_PRESET' | translate }}
+		</nb-list-item>
+	</nb-list>
 </ng-template>
