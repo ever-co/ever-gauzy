@@ -999,7 +999,7 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     padding: 0;
     border: 0;
     background: none;
-    color: nb-theme(text-primary-color);
+    color: var(--text-primary-color);
     font: inherit;
     font-size: $control-font-size;
     line-height: 1rem;
@@ -1021,7 +1021,7 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     }
 
     &:focus-visible {
-      outline: 2px solid nb-theme(color-primary-default);
+      outline: 2px solid var(--color-primary-default);
       outline-offset: 2px;
       border-radius: 2px;
     }
@@ -1064,7 +1064,7 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     }
 
     &:focus-visible {
-      outline: 2px solid nb-theme(color-primary-default);
+      outline: 2px solid var(--color-primary-default);
       outline-offset: -2px;
     }
   }
@@ -1083,15 +1083,15 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     background: $muted;
 
     &[data-status='ON_TRACK'] {
-      background: nb-theme(color-success-default);
+      background: var(--color-success-default);
     }
 
     &[data-status='NEEDS_ATTENTION'] {
-      background: nb-theme(color-warning-default);
+      background: var(--color-warning-default);
     }
 
     &[data-status='OFF_TRACK'] {
-      background: nb-theme(color-danger-default);
+      background: var(--color-danger-default);
     }
   }
 
@@ -1122,12 +1122,12 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     }
 
     &.active {
-      border-bottom-color: nb-theme(color-primary-default);
+      border-bottom-color: var(--color-primary-default);
       color: var(--gauzy-text-color-1, inherit);
     }
 
     &:focus-visible {
-      outline: 2px solid nb-theme(color-primary-default);
+      outline: 2px solid var(--color-primary-default);
       outline-offset: 2px;
       border-radius: 2px;
     }

@@ -181,13 +181,18 @@
 
 		<section class="panel-section">
 			<h3 class="section-title">{{ 'PROJECT_VIEW.ACTIVITY' | translate }}</h3>
-			<div class="activity-tabs" role="tablist">
+			<!-- Tabs pattern: only the open tab is in the Tab sequence; the arrow keys (and Home / End) move between
+			     the tabs and open the one they reach. Each tab names the panel it controls. -->
+			<div class="activity-tabs" role="tablist" (keydown)="onActivityTabKeydown($event)">
 				<button
 					type="button"
 					role="tab"
 					class="activity-tab"
-					[class.active]="activityTab === 'comments'"
+					[id]="activityId + '-tab-comments'"
+					[attr.aria-controls]="activityId + '-panel-comments'"
 					[attr.aria-selected]="activityTab === 'comments'"
+					[attr.tabindex]="activityTab === 'comments' ? 0 : -1"
+					[class.active]="activityTab === 'comments'"
 					(click)="activityTab = 'comments'"
 				>
 					{{ 'GOALS_PAGE.COMMENTS' | translate }}
@@ -196,8 +201,11 @@
 					type="button"
 					role="tab"
 					class="activity-tab"
-					[class.active]="activityTab === 'updates'"
+					[id]="activityId + '-tab-updates'"
+					[attr.aria-controls]="activityId + '-panel-updates'"
 					[attr.aria-selected]="activityTab === 'updates'"
+					[attr.tabindex]="activityTab === 'updates' ? 0 : -1"
+					[class.active]="activityTab === 'updates'"
 					(click)="activityTab = 'updates'"
 				>
 					{{ 'GOALS_PAGE.UPDATES' | translate }}
@@ -205,6 +213,11 @@
 			</div>
 
 			@if (activityTab === 'comments') {
+			<div
+				role="tabpanel"
+				[id]="activityId + '-panel-comments'"
+				[attr.aria-labelledby]="activityId + '-tab-comments'"
+			>
 			<div class="compose">
 				<textarea
 					id="goal-comment"
@@ -237,8 +250,16 @@
 			<div class="activity-list">
 				<ng-container *ngTemplateOutlet="commentThreads"></ng-container>
 			</div>
+			</div>
 			} @else {
-			<div class="activity-list">
+			<!-- Focusable itself: the updates list may hold nothing that takes focus. -->
+			<div
+				class="activity-list"
+				role="tabpanel"
+				tabindex="0"
+				[id]="activityId + '-panel-updates'"
+				[attr.aria-labelledby]="activityId + '-tab-updates'"
+			>
 				<ng-container *ngTemplateOutlet="updateList"></ng-container>
 			</div>
 			}

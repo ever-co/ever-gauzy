@@ -23,6 +23,8 @@ import { GoalDeleteConfirmComponent } from '../delete-confirm/delete-confirm.com
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
 
+let nextActivityId = 0;
+
 /** A top-level comment with the replies posted under it. */
 export interface ICommentThread {
 	comment: IComment;
@@ -52,6 +54,10 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	@Output() readonly addKeyResult = new EventEmitter<void>();
 	/** Embedded only: which list the Activity section shows. */
 	activityTab: 'comments' | 'updates' = 'comments';
+	/** The Activity tabs, in their on-screen order (the arrow keys follow it). */
+	readonly activityTabs = ['comments', 'updates'] as const;
+	/** Prefix of the Activity tabs' and panels' ids, unique per instance. */
+	readonly activityId = `goal-activity-${++nextActivityId}`;
 	src: string;
 	ownerName: string;
 	updates: Array<IKeyResultUpdate> = [];
@@ -200,6 +206,37 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			this.activityTab = 'comments';
 		}
 		this.postingComment = false;
+	}
+
+	/**
+	 * The Activity tabs' keyboard: Left / Right move to the previous / next tab (mirrored right-to-left) and
+	 * Home / End to the first / last, opening the tab reached and moving focus to it. Other keys are left alone.
+	 */
+	onActivityTabKeydown(event: KeyboardEvent): void {
+		const tablist = event.currentTarget as HTMLElement;
+		const count = this.activityTabs.length;
+		const index = this.activityTabs.indexOf(this.activityTab);
+		const rtl = getComputedStyle(tablist).direction === 'rtl';
+		let next: number;
+		switch (event.key) {
+			case 'ArrowRight':
+				next = (index + (rtl ? count - 1 : 1)) % count;
+				break;
+			case 'ArrowLeft':
+				next = (index + (rtl ? 1 : count - 1)) % count;
+				break;
+			case 'Home':
+				next = 0;
+				break;
+			case 'End':
+				next = count - 1;
+				break;
+			default:
+				return;
+		}
+		event.preventDefault();
+		this.activityTab = this.activityTabs[next];
+		tablist.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
 	}
 
 	/** Opens a thread's replies and reply box, or closes them when it is already open. */
