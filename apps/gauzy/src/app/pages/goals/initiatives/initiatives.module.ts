@@ -7,6 +7,7 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
+	NbProgressBarModule,
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
@@ -33,6 +34,7 @@ import { InitiativeDetailComponent } from './initiative-detail/initiative-detail
 		NbDialogModule.forChild(),
 		NbIconModule,
 		NbInputModule,
+		NbProgressBarModule,
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
