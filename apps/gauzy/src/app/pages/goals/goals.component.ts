@@ -33,6 +33,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { GoalDeleteConfirmComponent } from './delete-confirm/delete-confirm.component';
+import type { IGoalDetailsChange } from './goal-details/goal-details.component';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
@@ -646,10 +647,17 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 	}
 
-	/** The details column deleted its objective, or changed one of its key results: the list re-reads. */
-	onGoalDetailsChanged(change: 'deleted' | 'updated') {
+	/**
+	 * The details column deleted an objective, or changed one of its key results: the list re-reads. A deletion
+	 * closes the column only if the deleted objective is still the one it shows — another may have been picked
+	 * while the request was out.
+	 */
+	onGoalDetailsChanged({ change, goalId }: IGoalDetailsChange) {
 		if (change === 'deleted') {
-			this.detailGoalId = null;
+			if (this.detailGoalId === goalId) {
+				this.detailGoalId = null;
+			}
+			this.expandedGoalIds.delete(goalId);
 			this.toastrService.danger(
 				this.getTranslation('TOASTR.MESSAGE.OBJECTIVE_DELETED'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')

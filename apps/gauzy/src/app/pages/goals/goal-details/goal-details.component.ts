@@ -25,6 +25,15 @@ import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-detail
 
 let nextActivityId = 0;
 
+/**
+ * What the embedded details report: the objective deleted, or one of its key results changed. `goalId` names
+ * the objective it happened to, which by then may no longer be the one shown.
+ */
+export interface IGoalDetailsChange {
+	change: 'deleted' | 'updated';
+	goalId: ID;
+}
+
 /** A top-level comment with the replies posted under it. */
 export interface ICommentThread {
 	comment: IComment;
@@ -46,8 +55,11 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	 */
 	@Input() @HostBinding('class.embedded') embedded = false;
 	@Output() readonly closed = new EventEmitter<void>();
-	/** Embedded only: `deleted` once this objective is deleted, `updated` once one of its key results changed. */
-	@Output() readonly changed = new EventEmitter<'deleted' | 'updated'>();
+	/**
+	 * Embedded only: `deleted` once an objective is deleted, `updated` once one of its key results changed, each
+	 * with that objective's id.
+	 */
+	@Output() readonly changed = new EventEmitter<IGoalDetailsChange>();
 	/** Embedded only: the header's Edit, for the page's own objective dialog. */
 	@Output() readonly editGoal = new EventEmitter<void>();
 	/** Embedded only: Key results' "Add new key result", for the page's own key-result dialog. */
@@ -454,9 +466,11 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
-				// Reported as deleted only once it is: on a failure the details stay open, to retry.
+				// Reported as deleted only once it is: on a failure the details stay open, to retry. The id is
+				// taken now: embedded, another objective can be picked while the request is out.
+				const goalId = this.goal.id;
 				try {
-					await this.goalService.delete(this.goal.id);
+					await this.goalService.delete(goalId);
 				} catch (error) {
 					this.toastrService.danger(
 						error?.error?.message ?? error?.message,
@@ -467,7 +481,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 				if (this.dialogRef) {
 					this.dialogRef.close('deleted');
 				} else {
-					this.changed.emit('deleted');
+					this.changed.emit({ change: 'deleted', goalId });
 				}
 			}
 		}
@@ -486,6 +500,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	 * @param selectedKeyResult The key result to show.
 	 */
 	async keyResultDetails(index: number | null, selectedKeyResult: IKeyResult) {
+		const goalId = this.goal.id;
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -512,7 +527,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			}
 			// Embedded, the page's list shows the same key results: it re-reads them and hands the goal back in.
 			if (this.embedded) {
-				this.changed.emit('updated');
+				this.changed.emit({ change: 'updated', goalId });
 			}
 		}
 	}
