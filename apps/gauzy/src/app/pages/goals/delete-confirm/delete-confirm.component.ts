@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -22,7 +22,7 @@ export class GoalDeleteConfirmComponent {
 	readonly titleId = `ga-goal-delete-confirm-title-${++nextId}`;
 	readonly messageId = `ga-goal-delete-confirm-message-${nextId}`;
 
-	constructor(private readonly dialogRef: NbDialogRef<GoalDeleteConfirmComponent>) {}
+	private readonly dialogRef = inject<NbDialogRef<GoalDeleteConfirmComponent>>(NbDialogRef);
 
 	close(answer: 'yes' | 'no'): void {
 		this.dialogRef.close(answer);

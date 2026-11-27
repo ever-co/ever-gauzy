@@ -1,4 +1,10 @@
-<nb-card class="confirm" role="alertdialog" [attr.aria-labelledby]="titleId" [attr.aria-describedby]="messageId">
+<nb-card
+	class="confirm"
+	role="alertdialog"
+	aria-modal="true"
+	[attr.aria-labelledby]="titleId"
+	[attr.aria-describedby]="messageId"
+>
 	<nb-card-body>
 		<div class="head">
 			<nb-icon class="icon" icon="alert-triangle" status="danger" aria-hidden="true"></nb-icon>
