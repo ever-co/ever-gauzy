@@ -180,7 +180,9 @@ jobs:
   release-linux:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 300
+    # 480, not 300: on our ARC runners `yarn install` of the monorepo takes ~1 h 40 m alone and over 3 h when the six
+    # app workflows install at once (stage-apps dry run 2026-11-27), plus ~1 h to build: 300 min cut it close.
+    timeout-minutes: 480
 
     strategy:
       matrix:
