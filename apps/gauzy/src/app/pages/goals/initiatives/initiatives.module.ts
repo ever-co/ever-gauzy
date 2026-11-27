@@ -8,7 +8,8 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -34,6 +35,7 @@ import { InitiativeDetailComponent } from './initiative-detail/initiative-detail
 		NbInputModule,
 		NbSelectModule,
 		NbSpinnerModule,
+		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
 		TranslatePipe,
 		SharedModule,
