@@ -14,7 +14,8 @@ $text: var(--gauzy-text-color-1, var(--text-basic-color, inherit));
 $hover: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 $surface: var(--gauzy-card-1, var(--card-background-color));
 $radius: var(--gauzy-radius-sm, 0.375rem);
-$panel-radius: 0.5rem;
+// The theme's card radius, so the list and the details column follow it.
+$panel-radius: var(--border-radius);
 $control-height: 1.75rem;
 $row-padding-x: 0.75rem;
 // Key results sit this far in from their objective's name.
@@ -131,14 +132,16 @@ $indent: 1.25rem;
   border-radius: $panel-radius;
   background: $surface;
   overflow: hidden;
-  container-type: inline-size;
 }
 
-// Only the rows scroll: the column titles stay over them.
+// The scroller, and the container the column queries measure: its content box
+// excludes a classic scrollbar's gutter, so each template is picked for the
+// width the rows actually get, and fits it.
 .goals-rows {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  container-type: inline-size;
 }
 
 .goals-row {
@@ -162,8 +165,13 @@ $indent: 1.25rem;
   }
 }
 
+// In the scroller with the rows, so both have the same width; it stays over
+// them as they scroll.
 .goals-head {
-  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: $surface;
   min-height: 2.25rem;
   font-size: 0.6875rem;
   font-weight: 600;
@@ -247,9 +255,10 @@ $indent: 1.25rem;
     color: $text;
   }
 
+  // Inset: the toggle fills its cell, which clips anything drawn outside it.
   &:focus-visible {
     outline: 2px solid var(--color-primary-default);
-    outline-offset: 1px;
+    outline-offset: -2px;
   }
 }
 
@@ -434,6 +443,12 @@ $indent: 1.25rem;
   border: $divider;
   border-radius: $panel-radius;
   background: $surface;
+
+  // Takes focus when it opens over the list; the panel's own controls show the
+  // keyboard where it is.
+  &:focus {
+    outline: none;
+  }
 }
 
 @media (min-width: 1800px) {

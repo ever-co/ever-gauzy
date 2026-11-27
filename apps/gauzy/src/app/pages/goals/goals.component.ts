@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, ViewChildren, QueryList, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	ViewChild,
+	ViewChildren,
+	QueryList,
+	ChangeDetectionStrategy,
+	ElementRef
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -76,6 +85,16 @@ const KEY_RESULT_STATUS_KEYS = ['ON_TRACK', 'NEEDS_ATTENTION', 'OFF_TRACK', 'NON
 export class GoalsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	/** Every menu on the page: a pick in one closes it before its dialog opens. */
 	@ViewChildren(NbPopoverDirective) readonly popovers: QueryList<NbPopoverDirective>;
+	/** The details column, when an objective is open. */
+	@ViewChild('detailPane') readonly detailPane?: ElementRef<HTMLElement>;
+	/**
+	 * Below 1200px the details column lies over the list (`goals.component.scss`) rather than beside it. While
+	 * it does, the list is inert, so the keyboard cannot reach the controls hidden under the column.
+	 */
+	private readonly overlayQuery: MediaQueryList | null =
+		typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 1200px)') : null;
+	private readonly onOverlayChange = () => (this.detailOverlays = !!this.overlayQuery?.matches);
+	detailOverlays = !!this.overlayQuery?.matches;
 	loading = true;
 	selectedOrganizationId: string;
 	organizationName: string;
@@ -137,9 +156,16 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		private readonly goalService: GoalService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly keyResultService: KeyResultService,
-		private readonly goalSettingsService: GoalSettingsService
+		private readonly goalSettingsService: GoalSettingsService,
+		private readonly hostRef: ElementRef<HTMLElement>
 	) {
 		super(translateService);
+		this.overlayQuery?.addEventListener('change', this.onOverlayChange);
+	}
+
+	/** The details column is open and lies over the list. */
+	get detailCoversList(): boolean {
+		return this.detailOverlays && !!this.detailGoal;
 	}
 
 	get activeGroups() {
@@ -179,7 +205,7 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 
 	/** Who owns the objective: its employee, else its team, else its organization. */
 	goalOwnerName(goal: IGoal): string {
-		return goal.ownerEmployee?.user?.name || goal.ownerTeam?.name || goal.organization?.name || '';
+		return this.employeeName(goal.ownerEmployee) || goal.ownerTeam?.name || goal.organization?.name || '';
 	}
 
 	employeeName(employee?: IEmployee): string {
@@ -560,13 +586,64 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 	}
 
-	/** Opens the objective's details in the column beside the list. */
-	openGoalDetails(goal: IGoal) {
-		this.detailGoalId = goal.id;
+	/**
+	 * Enter on a row opens it, but only when the row itself has focus: Enter on one of its buttons is the
+	 * button's own, and is left alone (not cancelled) so the button still activates.
+	 */
+	onGoalRowEnter(event: Event, goal: IGoal): void {
+		if (event.target === event.currentTarget) {
+			this.openGoalDetails(goal);
+		}
 	}
 
+	onKeyResultRowEnter(event: Event, keyResult: IKeyResult): void {
+		if (event.target === event.currentTarget) {
+			this.openKeyResultDetails(keyResult);
+		}
+	}
+
+	/**
+	 * Opens the objective's details in the column beside the list. Where the column lies over the list, focus
+	 * moves into it, since the list under it is inert.
+	 */
+	openGoalDetails(goal: IGoal) {
+		this.detailGoalId = goal.id;
+		if (this.detailOverlays) {
+			// Once the column has rendered.
+			setTimeout(() => this.detailPane?.nativeElement.focus());
+		}
+	}
+
+	/** Closes the details; focus inside them goes back to the objective's row, not to the page. */
 	closeGoalDetails() {
+		const goalId = this.detailGoalId;
+		const pane = this.detailPane?.nativeElement;
+		const focusWasInPane = !!pane && pane.contains(document.activeElement);
 		this.detailGoalId = null;
+		if (goalId && (focusWasInPane || this.detailOverlays)) {
+			// Once the list is no longer inert.
+			setTimeout(() =>
+				this.hostRef.nativeElement.querySelector<HTMLElement>(`[data-goal-id="${CSS.escape(goalId)}"]`)?.focus()
+			);
+		}
+	}
+
+	/** Where the column lies over the list, Escape in it closes it, like a drawer. */
+	onDetailEscape(): void {
+		if (this.detailOverlays) {
+			this.closeGoalDetails();
+		}
+	}
+
+	/**
+	 * Where the column lies over the list, a click on the uncovered part of the list closes the column. The
+	 * list is inert then, so the click lands on the workspace around it.
+	 */
+	onWorkspaceClick(event: MouseEvent): void {
+		const pane = this.detailPane?.nativeElement;
+		if (this.detailCoversList && pane && !pane.contains(event.target as Node)) {
+			this.closeGoalDetails();
+		}
 	}
 
 	/** The details column deleted its objective, or changed one of its key results: the list re-reads. */
@@ -673,5 +750,7 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this.overlayQuery?.removeEventListener('change', this.onOverlayChange);
+	}
 }

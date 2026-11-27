@@ -74,22 +74,29 @@
 			</button>
 		</div>
 
-		<!-- The list, and the open objective's details in a column beside it. -->
-		<div class="goals-workspace">
-			<div class="goals-list" role="table" [attr.aria-label]="'GOALS_PAGE.HEADER' | translate">
-				<div class="goals-row goals-head" role="row">
-					<span role="columnheader" class="col-toggle"></span>
-					<span role="columnheader" class="col-name">{{ 'FORM.LABELS.NAME' | translate }}</span>
-					<span role="columnheader" class="col-level">{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}</span>
-					<span role="columnheader" class="col-status">{{ 'GOALS_PAGE.FORM.LABELS.STATUS' | translate }}</span>
-					<span role="columnheader" class="col-owner">{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}</span>
-					<span role="columnheader" class="col-lead">{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</span>
-					<span role="columnheader" class="col-session">{{ 'GOALS_PAGE.SESSION' | translate }}</span>
-					<span role="columnheader" class="col-progress">{{ 'GOALS_PAGE.PROGRESS' | translate }}</span>
-					<span role="columnheader" class="col-actions"></span>
-				</div>
-
+		<!-- The list, and the open objective's details in a column beside it. Where the column lies over the list,
+		     the list is inert and a click on its uncovered part closes the column. -->
+		<div class="goals-workspace" (click)="onWorkspaceClick($event)">
+			<div
+				class="goals-list"
+				role="table"
+				[attr.aria-label]="'GOALS_PAGE.HEADER' | translate"
+				[attr.inert]="detailCoversList ? '' : null"
+			>
 				<div class="goals-rows">
+					<!-- Inside the scroller and sticky, so a scrollbar narrows the column titles with the rows. -->
+					<div class="goals-row goals-head" role="row">
+						<span role="columnheader" class="col-toggle"></span>
+						<span role="columnheader" class="col-name">{{ 'FORM.LABELS.NAME' | translate }}</span>
+						<span role="columnheader" class="col-level">{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}</span>
+						<span role="columnheader" class="col-status">{{ 'GOALS_PAGE.FORM.LABELS.STATUS' | translate }}</span>
+						<span role="columnheader" class="col-owner">{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}</span>
+						<span role="columnheader" class="col-lead">{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</span>
+						<span role="columnheader" class="col-session">{{ 'GOALS_PAGE.SESSION' | translate }}</span>
+						<span role="columnheader" class="col-progress">{{ 'GOALS_PAGE.PROGRESS' | translate }}</span>
+						<span role="columnheader" class="col-actions"></span>
+					</div>
+
 					@if (noGoals) {
 					<div class="goals-empty">
 						<ngx-no-data-message
@@ -114,10 +121,11 @@
 						class="goals-row goal-row"
 						role="row"
 						tabindex="0"
+						[attr.data-goal-id]="goal.id"
 						[class.active]="detailGoalId === goal.id"
 						[attr.aria-expanded]="expanded"
 						(click)="openGoalDetails(goal)"
-						(keydown.enter)="$event.target === $event.currentTarget && openGoalDetails(goal)"
+						(keydown.enter)="onGoalRowEnter($event, goal)"
 					>
 						<span role="cell" class="col-toggle">
 							<button
@@ -194,7 +202,7 @@
 						role="row"
 						tabindex="0"
 						(click)="openKeyResultDetails(keyResult)"
-						(keydown.enter)="$event.target === $event.currentTarget && openKeyResultDetails(keyResult)"
+						(keydown.enter)="onKeyResultRowEnter($event, keyResult)"
 					>
 						<span role="cell" class="col-toggle"></span>
 						<span role="cell" class="col-name">
@@ -286,7 +294,13 @@
 			</div>
 
 			@if (detailGoal; as goal) {
-			<aside class="goals-detail" [attr.aria-label]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate">
+			<aside
+				#detailPane
+				class="goals-detail"
+				tabindex="-1"
+				[attr.aria-label]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate"
+				(keydown.escape)="onDetailEscape()"
+			>
 				<ga-goal-details
 					[goal]="goal"
 					[embedded]="true"
