@@ -2,7 +2,6 @@
 import { ProposalLayoutComponent } from './proposal-layout.component';
 import { ProposalComponent } from './proposal/proposal.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
-import { ProposalRichTextComponent } from './proposal-details/proposal-rich-text.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
@@ -23,7 +22,6 @@ export const COMPONENTS = [
 	ProposalComponent,
 	ProposalRegisterComponent,
 	ProposalDetailsComponent,
-	ProposalRichTextComponent,
 	ProposalEditComponent,
 	ProposalStatusComponent,
 	JobTitleComponent

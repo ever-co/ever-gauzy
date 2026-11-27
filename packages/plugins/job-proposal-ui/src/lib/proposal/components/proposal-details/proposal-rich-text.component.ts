@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostBinding, Input, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 
 /**
@@ -17,11 +17,11 @@ import { SafeHtml } from '@angular/platform-browser';
 	styleUrls: ['./proposal-rich-text.component.scss'],
 	encapsulation: ViewEncapsulation.None,
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+	host: {
+		'[innerHTML]': 'html()'
+	}
 })
 export class ProposalRichTextComponent {
 	/** The text to show, already marked safe by the page. */
-	@Input()
-	@HostBinding('innerHTML')
-	html: SafeHtml | string = '';
+	readonly html = input<SafeHtml | string>('');
 }
