@@ -128,7 +128,7 @@ export class DealController extends CrudController<Deal> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateDealDTO
 	): Promise<UpdateResult | Deal> {
-		return await super.update(id, entity as QueryDeepPartialEntity<Deal>);
+		return await super.update(id, entity as unknown as QueryDeepPartialEntity<Deal>);
 	}
 
 	/**

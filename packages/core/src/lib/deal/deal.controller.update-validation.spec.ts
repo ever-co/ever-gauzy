@@ -67,7 +67,10 @@ describe('PUT /deals/:id body validation', () => {
 		['an empty title', { title: '' }],
 		['a non-string title', { title: { a: 1 } }],
 		['a stage that is not a UUID', { stageId: 'not-a-uuid' }],
-		['a client that is not a UUID', { clientId: 'not-a-uuid' }]
+		['a client that is not a UUID', { clientId: 'not-a-uuid' }],
+		['a null title', { title: null }],
+		['a null probability', { probability: null }],
+		['a null stage', { stageId: null }]
 	])('refuses %s with a 400', async (_name, body) => {
 		await expect(validateBody(body)).rejects.toBeInstanceOf(BadRequestException);
 	});
