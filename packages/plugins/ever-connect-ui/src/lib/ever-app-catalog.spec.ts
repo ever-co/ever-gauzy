@@ -32,7 +32,7 @@ describe('EVER_APP_CATALOG', () => {
 		}
 	});
 
-	it('links the apps, not the websites (Ever Tech has no app yet: its site)', () => {
+	it('links the apps, not the websites', () => {
 		const hosts = Object.fromEntries(EVER_APP_CATALOG.map((app) => [app.id, new URL(app.url).host]));
 		expect(hosts).toEqual({
 			platform: 'app.ever.co',
@@ -42,7 +42,7 @@ describe('EVER_APP_CATALOG', () => {
 			rec: 'app.rec.so',
 			traduora: 'app.traduora.co',
 			demand: 'app.everdemand.co',
-			tech: 'ever.tech'
+			tech: 'app.ever.tech'
 		});
 	});
 

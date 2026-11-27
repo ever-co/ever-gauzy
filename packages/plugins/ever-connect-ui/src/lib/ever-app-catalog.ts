@@ -11,10 +11,10 @@ import { IEverApp } from '@gauzy/ui-core/common';
  * no address. The logos are the Ever websites' tiles (`public/ever-apps/` of ever-website), byte for byte. Logo
  * paths are relative so they resolve under the web base href and the desktop builds' `./` base href.
  *
- * The addresses are the Ever-hosted apps' production hosts (`app.*`, not the websites; owner 2026-11-26). Ever Tech
- * has no app yet, so it links its site. Each Ever deployment points them at its own environment's apps with the web
- * app's `EVER_APP_LINKS` setting (`id=url` pairs, see `withEverAppLinks` of `@gauzy/ui-core/common`); unset, these
- * addresses are used.
+ * The addresses are the Ever-hosted apps' production hosts (`app.*`, not the websites; owner 2026-11-26), Ever Tech's
+ * client app included (`app.ever.tech`, live since 2026-11-27). Each Ever deployment points them at its own
+ * environment's apps with the web app's `EVER_APP_LINKS` setting (`id=url` pairs, see `withEverAppLinks` of
+ * `@gauzy/ui-core/common`); unset, these addresses are used.
  *
  * The catalog lives here, in an Ever Platform module, because it names Ever hosts: the egress audit keeps those out of
  * the core packages (`tools/egress-audit/static-hostnames.mjs`). `EverConnectUiPlugin` carries it in its options
@@ -91,7 +91,7 @@ export const EVER_APP_CATALOG: ReadonlyArray<IEverApp> = [
 		name: 'Ever Tech',
 		lineKey: 'APP_LAUNCHER.LINES.TECH',
 		logo: 'assets/images/ever-apps/tech.svg',
-		url: 'https://ever.tech',
-		domain: 'ever.tech'
+		url: 'https://app.ever.tech',
+		domain: 'app.ever.tech'
 	}
 ];
