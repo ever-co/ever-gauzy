@@ -4180,7 +4180,11 @@
 			"STATUS": "الحالة",
 			"JOB_POST_CONTENT": "محتوى إعلان الوظيفة",
 			"PROPOSAL_CONTENT": "محتوى الاقتراح",
-			"VIEW_JOB_POST": "عرض الوظيفة"
+			"VIEW_JOB_POST": "عرض الوظيفة",
+			"PROJECT_PROPOSAL": "عرض المشروع",
+			"ACCEPTED_BY": "تمت الموافقة من قبل",
+			"PREPARED_FOR": "مُعدّ لـ",
+			"PREPARED_BY": "أعدّه"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "تحرير الاقتراح",

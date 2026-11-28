@@ -25,14 +25,17 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	NebularModule,
-	FavoriteToggleModule
+	FavoriteToggleModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { getProposalsRoutes, JOB_PROPOSAL_PAGE_LINK } from './job-proposal.routes';
-import { COMPONENTS } from './components';
+import { COMPONENTS, ProposalRichTextComponent } from './components';
 
 @NgModule({
 	imports: [
+		ProposalRichTextComponent,
 		FavoriteToggleModule,
+		RecordViewModule,
 		RouterModule.forChild([]),
 		RichTextEditorModule,
 		NgSelectModule,

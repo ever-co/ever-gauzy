@@ -11,6 +11,7 @@ import { ProposalStatusComponent } from './table-components/proposal-status/prop
 export { ProposalLayoutComponent } from './proposal-layout.component';
 export { ProposalComponent } from './proposal/proposal.component';
 export { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
+export { ProposalRichTextComponent } from './proposal-details/proposal-rich-text.component';
 export { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 export { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 export { JobTitleComponent } from './table-components/job-title/job-title.component';

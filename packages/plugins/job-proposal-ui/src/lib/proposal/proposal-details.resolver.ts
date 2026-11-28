@@ -23,10 +23,13 @@ export const ProposalDetailsResolver: ResolveFn<Observable<IProposal>> = (
 		return of(null);
 	}
 
-	return _proposalsService.getById(proposalId, ['employee', 'employee.user', 'tags', 'organizationContact']).pipe(
-		catchError(() => {
-			_router.navigate(['/pages/employees']);
-			return of(null);
-		})
-	);
+	// `organization` is the proposal's sender: the details page signs its sheet with it.
+	return _proposalsService
+		.getById(proposalId, ['employee', 'employee.user', 'tags', 'organizationContact', 'organization'])
+		.pipe(
+			catchError(() => {
+				_router.navigate(['/pages/employees']);
+				return of(null);
+			})
+		);
 };

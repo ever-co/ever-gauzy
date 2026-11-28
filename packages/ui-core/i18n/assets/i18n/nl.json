@@ -4182,7 +4182,11 @@
 			"STATUS": "Status",
 			"JOB_POST_CONTENT": "Vacature Inhoud",
 			"PROPOSAL_CONTENT": "Voorstelinhoud",
-			"VIEW_JOB_POST": "Bekijk vacature"
+			"VIEW_JOB_POST": "Bekijk vacature",
+			"PROJECT_PROPOSAL": "Projectvoorstel",
+			"ACCEPTED_BY": "Geaccepteerd door",
+			"PREPARED_FOR": "Opgesteld voor",
+			"PREPARED_BY": "Opgesteld door"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Bewerk voorstel",

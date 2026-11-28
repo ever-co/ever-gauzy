@@ -1,0 +1,14 @@
+// Values shared by the proposal details page and the proposal text it shows. Every colour is a
+// theme variable, so both follow light and dark mode.
+$hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+$sheet-ink: var(--text-basic-color);
+// Body copy a step softer than headings: the text colour leaning towards the hint colour.
+$sheet-text: color-mix(in srgb, var(--text-basic-color) 82%, var(--text-hint-color));
+$sheet-muted: var(--text-hint-color);
+$sheet-rule: $hairline;
+$sheet-code-bg: color-mix(in srgb, var(--text-hint-color) 12%, transparent);
+$sheet-sign-line: color-mix(in srgb, var(--text-hint-color) 70%, transparent);
+$sheet-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+// Body copy and lists sit in from the start edge, past the section numbers.
+$sheet-indent: 2.75rem;

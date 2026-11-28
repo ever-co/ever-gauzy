@@ -1,183 +1,547 @@
-@use 'gauzy/_gauzy-cards' as *;
+@use './proposal-sheet-tokens' as *;
+
+// A proposal reads as a document: the proposal and job post text as headed sections
+// with no frames around them, and the proposal's properties in a sidebar beside them,
+// split off by one hairline and kept in view while the text scrolls. Colour only where
+// it carries meaning (the status dot, the tag washes).
 
 :host {
-  @include nb-card-overrides(auto, calc($default-card-height + 7.5rem), $default-radius);
-
-  nb-card {
-    background: var(--gauzy-card-2);
-  }
-
-  .card-header-title {
-    gap: 0.75rem;
-  }
+  display: block;
 }
 
-.main-content {
-  background: var(--gauzy-card-2);
-  font-size: 13px;
-  line-height: 1.25rem;
-}
-
-// Content on the left, a summary of the proposal's facts on the right; the
-// summary drops under the content on narrow screens.
-.details-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 1rem;
-  align-items: start;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: minmax(0, 1fr);
-
-    .summary {
-      order: -1;
-    }
-  }
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-width: 0;
-}
-
-.panel {
-  background: var(--gauzy-card-1);
-  border: 1px solid var(--gauzy-border-default-color);
-  border-radius: var(--border-radius);
-  padding: 1rem 1.25rem;
-}
-
-.panel-title {
-  margin: 0 0 0.75rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--gauzy-border-default-color);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--gauzy-text-color-2);
-}
-
-.rich-text {
-  font-size: 14px;
-  line-height: 1.5rem;
-  color: var(--gauzy-text-color-1);
-}
-
-.empty {
+.pd-muted {
+  margin: 0;
+  font-weight: 400;
   color: var(--text-hint-color);
 }
 
-.summary {
-  dl {
-    margin: 0;
-  }
+// ── Header actions: status, favourite, then Edit as the one filled button ──
+.pd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
 
-  .field {
-    display: flex;
-    flex-direction: column;
+  .pd-action {
+    display: inline-flex;
+    align-items: center;
     gap: 0.25rem;
-    padding: 0.5rem 0;
+    height: 1.625rem;
+    padding: 0 0.625rem;
+    border: 1px solid transparent;
+    border-radius: calc(var(--border-radius) * 0.75);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    text-transform: none;
+    box-shadow: none;
 
-    & + .field {
-      border-top: 1px dashed var(--gauzy-border-default-color);
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+      margin: 0;
+      color: inherit;
     }
   }
 
+  // Print: quiet, a hairline frame on the page's own background.
+  .pd-action-secondary {
+    background-color: transparent;
+    border-color: $hairline;
+    color: var(--text-basic-color);
+
+    nb-icon {
+      color: var(--text-hint-color);
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--background-basic-color-2);
+      border-color: var(--border-basic-color-4);
+      color: var(--text-basic-color);
+    }
+  }
+}
+
+// Previous and next, side by side as one control, a hairline after them — as on the payment page.
+.pd-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding-inline-end: 0.375rem;
+  border-inline-end: 1px solid $hairline;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+// A small dot carrying the status colour; a hairline sets it apart from the buttons.
+.pd-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-inline-end: 0.25rem;
+  padding-inline-end: 0.75rem;
+  border-inline-end: 1px solid $hairline;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.5rem;
+  color: var(--text-basic-color);
+
+  .pd-dot {
+    flex: 0 0 auto;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: var(--color-warning-500);
+  }
+
+  &.is-accepted .pd-dot {
+    background-color: var(--color-success-500);
+  }
+}
+
+// ── Layout: the text, then the sidebar ──────────────────────────────────────
+.pd-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17.5rem;
+  align-items: start;
+  color: var(--text-basic-color);
+}
+
+.pd-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+  min-width: 0;
+  padding-inline-end: 2.5rem;
+}
+
+// Both sections share the sheet's width, so their heading rules end where the sheet ends.
+.pd-section {
+  max-width: 50rem;
+}
+
+.pd-section-title {
+  margin: 0 0 1rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid $hairline;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+// The job post as written in the editor: in a hairline frame with the sheet's corner and
+// padding, the sheet's type and rhythm, its bold lines as subheadings with room above
+// them, lists tight under them.
+.pd-rich-text {
+  padding: 1.5rem 1.75rem;
+  border: 1px solid $hairline;
+  border-radius: calc(var(--border-radius) * 0.75);
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  font-size: 0.78125rem;
+  font-weight: 400;
+  line-height: 1.375rem;
+  color: color-mix(in srgb, var(--text-basic-color) 82%, var(--text-hint-color));
+  overflow-wrap: anywhere;
+}
+
+// ── Proposal sheet ───────────────────────────────────────────────────────────
+// The proposal as an engineering spec: a sheet in the theme's own surface (white in
+// light mode, a lifted card in dark), the app's sans for prose, monospace for the
+// reference code and section numbers, a facts table under the title, numbered
+// sections with dash lists, and a sign-off footer.
+//
+// Every colour is a theme variable (see the tokens partial), so the sheet follows light and dark mode.
+
+.pd-sheet {
+  max-width: 50rem;
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem 3rem 2rem;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  color: $sheet-text;
+  border: 1px solid $sheet-rule;
+  border-radius: calc(var(--border-radius) * 0.75);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+// On the dark themes the sheet sits a step lighter than the page, and its shadow is deeper,
+// so it reads as a document lying on the page rather than a hole cut in it.
+:host-context(.nb-theme-dark),
+:host-context(.nb-theme-gauzy-dark),
+:host-context(.nb-theme-material-dark),
+:host-context(.nb-theme-cosmic) {
+  .pd-sheet {
+    background: color-mix(in srgb, var(--text-basic-color) 4%, var(--gauzy-card-1, var(--background-basic-color-1)));
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+}
+
+// Sender (logo and name) and reference code on one line, above the title.
+.pd-sheet-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.pd-sheet-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.pd-sheet-logo {
+  flex: 0 0 auto;
+  height: 2rem;
+  max-width: 7rem;
+  object-fit: contain;
+  border-radius: calc(var(--border-radius) * 0.5);
+}
+
+.pd-sheet-org {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: $sheet-ink;
+}
+
+.pd-sheet-code {
+  flex: 0 0 auto;
+  font-family: $sheet-mono;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  color: $sheet-muted;
+}
+
+.pd-sheet-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 2.25rem;
+  letter-spacing: -0.02em;
+  color: $sheet-ink;
+}
+
+// Client, date, author, status: two to a row between two hairlines.
+.pd-sheet-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem 2rem;
+  margin: 0;
+  padding: 0.875rem 0;
+  border-top: 1px solid $sheet-rule;
+  border-bottom: 1px solid $sheet-rule;
+}
+
+.pd-sheet-fact {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+
   dt {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--gauzy-text-color-2);
+    font-size: 0.65625rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+    color: $sheet-muted;
   }
 
   dd {
     margin: 0;
-    font-size: 14px;
+    min-width: 0;
+    font-size: 0.71875rem;
     font-weight: 500;
     line-height: 1.25rem;
-    color: var(--gauzy-text-color-1);
+    color: $sheet-ink;
     overflow-wrap: anywhere;
   }
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem 0.625rem;
-  border-radius: 1rem;
-  font-size: 11px;
+.pd-sheet-fact dd.pd-sheet-code {
+  font-family: $sheet-mono;
+  font-size: 0.65625rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: $sheet-ink;
+}
+
+.pd-sheet-body {
+  flex: 1 1 auto;
+  padding: 2rem 0 2.5rem;
+}
+
+.pd-sheet-empty {
+  margin: 0;
+  color: $sheet-muted;
+}
+
+// The proposal text's box; the numbered headings, dash lists, code and tables inside it are
+// styled by the rich-text component.
+.pd-sheet-text {
+  counter-reset: pd-section;
+  font-size: 0.78125rem;
+  font-weight: 400;
+  line-height: 1.375rem;
+  color: $sheet-text;
+  overflow-wrap: anywhere;
+}
+
+// Sender and contacts on the left, lines for the client to sign and date on the right.
+// Sign-off: two columns, each a label, a line to sign on, the name under it and a dated line;
+// then the sender's contact details on one line.
+.pd-sheet-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid $sheet-rule;
+  break-inside: avoid;
+}
+
+.pd-sheet-signoff {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 3rem;
+}
+
+.pd-sheet-sign {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pd-sheet-sign-label {
+  margin-bottom: 2.25rem;
+  font-size: 0.65625rem;
+  line-height: 1rem;
+  color: $sheet-muted;
+}
+
+.pd-sheet-sign-line {
+  display: block;
+  height: 1px;
+  background: $sheet-sign-line;
+}
+
+.pd-sheet-sign-name {
+  margin-top: 0.375rem;
+  font-size: 0.71875rem;
   font-weight: 600;
-  line-height: 1.125rem;
-  // Mixing the status color with the theme's text color darkens it on the light
-  // theme and lightens it on the dark one, so the 11px label stays readable
-  // (about 5:1 on light) over its own faint tint.
-  --status-color: var(--color-warning-default);
-  color: color-mix(in srgb, var(--status-color) 45%, var(--text-basic-color));
-  background: color-mix(in srgb, var(--status-color) 16%, transparent);
-
-  &.accepted {
-    --status-color: var(--color-success-default);
-  }
+  line-height: 1.25rem;
+  color: $sheet-ink;
+  overflow-wrap: anywhere;
 }
 
-.person {
-  display: inline-flex;
-  align-items: center;
+// "Date ________" under the name.
+.pd-sheet-sign-date {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
   gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.65625rem;
+  line-height: 1rem;
+  color: $sheet-muted;
 
-  img,
-  .initial {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  img {
-    object-fit: cover;
-  }
-
-  .initial {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--color-primary-default);
-    background: var(--gauzy-hover-tint);
+  .pd-sheet-sign-line {
+    margin-bottom: 0.1875rem;
   }
 }
 
-.link {
+// Company · website · email · phone.
+.pd-sheet-company {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  min-width: 0;
+  font-style: normal;
+  font-size: 0.65625rem;
+  line-height: 1.125rem;
+  color: $sheet-muted;
+  overflow-wrap: anywhere;
+
+  > span + span::before {
+    content: '·';
+    margin: 0 0.5rem;
+    color: $sheet-muted;
+  }
+}
+
+.pd-sheet-company-name {
+  font-weight: 600;
+  color: $sheet-ink;
+}
+
+// ── Sidebar ──────────────────────────────────────────────────────────────────
+.pd-side {
+  position: sticky;
+  top: 1rem;
+  min-width: 0;
+  padding-inline-start: 1.5rem;
+  border-inline-start: 1px solid $hairline;
+}
+
+.pd-props {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  margin: 0;
+}
+
+// The record's dates: under a hairline, after the proposal's own properties.
+.pd-props-record {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid $hairline;
+}
+
+.pd-prop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+
+  dt {
+    font-size: 0.65625rem;
+    font-weight: 400;
+    line-height: 1rem;
+    color: var(--text-hint-color);
+  }
+
+  dd {
+    display: flex;
+    align-items: center;
+    min-height: 1.5rem;
+    margin: 0;
+    min-width: 0;
+    font-size: 0.71875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.pd-link {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  color: var(--color-primary-default);
+  color: var(--text-primary-color);
   text-decoration: none;
+
+  nb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    font-size: 0.75rem;
+  }
 
   &:hover {
     text-decoration: underline;
   }
+}
 
-  nb-icon {
-    font-size: 14px;
+// Tags as a soft wash of their own colour, in the page's text colour.
+.pd-tags {
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.pd-tag {
+  padding: 0.125rem 0.375rem;
+  border-radius: calc(var(--border-radius) * 0.5);
+  background-color: color-mix(in srgb, var(--tag-color, var(--text-hint-color)) 20%, transparent);
+  color: var(--text-basic-color);
+  font-size: 0.65625rem;
+  font-weight: 500;
+  line-height: 1rem;
+}
+
+.pd-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.pd-person-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pd-avatar {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pd-avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: color-mix(in srgb, var(--text-hint-color) 18%, transparent);
+}
+
+// ── Narrower screens: the properties move above the text, two to a row ──────
+@media screen and (max-width: 64rem) {
+  .pd-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
+  }
+
+  .pd-main {
+    padding-inline-end: 0;
+  }
+
+  .pd-side {
+    position: static;
+    order: -1;
+    padding: 0 0 1.5rem;
+    border-inline-start: 0;
+    border-bottom: 1px solid $hairline;
+  }
+
+  .pd-props {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
   }
 }
 
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
+// A phone-width sheet: tighter margins, facts and footer stacked.
+@media screen and (max-width: 40rem) {
+  .pd-sheet {
+    padding: 1.75rem 1.25rem 1.5rem;
+  }
 
-  .tag {
-    padding: 0.125rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1rem;
+  .pd-sheet-title {
+    font-size: 1.375rem;
+    line-height: 2rem;
+  }
+
+  .pd-sheet-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pd-sheet-signoff {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -4709,7 +4709,11 @@
 			"STATUS": "状态",
 			"JOB_POST_CONTENT": "职位发布内容",
 			"PROPOSAL_CONTENT": "建议内容",
-			"VIEW_JOB_POST": "查看工作岗位"
+			"VIEW_JOB_POST": "查看工作岗位",
+			"PROJECT_PROPOSAL": "项目提案",
+			"ACCEPTED_BY": "接受人",
+			"PREPARED_FOR": "提交对象",
+			"PREPARED_BY": "编制人"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "编辑提案",
