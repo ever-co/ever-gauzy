@@ -1,5 +1,14 @@
 import { NgModule } from '@angular/core';
-import { NbCardModule, NbIconModule, NbButtonModule, NbDialogModule, NbSpinnerModule } from '@nebular/theme';
+import { RouterModule } from '@angular/router';
+import {
+	NbCardModule,
+	NbIconModule,
+	NbButtonModule,
+	NbDialogModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -14,10 +23,14 @@ import {
 	SharedModule,
 	TableFiltersModule,
 	FavoriteToggleModule,
-	RecordViewModule
+	RecordViewModule,
+	TableComponentsModule
 } from '@gauzy/ui-core/shared';
 import { PaymentsComponent } from './payments.component';
 import { PaymentsRoutingModule } from './payments-routing.module';
+import { PaymentViewPageComponent } from './payment-view/payment-view-page.component';
+import { ExpenseBarChartComponent } from '../expenses/expense-view/expense-charts/expense-bar-chart.component';
+import { ExpenseShareChartComponent } from '../expenses/expense-view/expense-charts/expense-share-chart.component';
 
 @NgModule({
 	imports: [
@@ -30,13 +43,21 @@ import { PaymentsRoutingModule } from './payments-routing.module';
 		SharedModule,
 		NbIconModule,
 		NbSpinnerModule,
+		NbSelectModule,
 		NbButtonModule,
+		NbTooltipModule,
+		RouterModule,
+		// The page's amounts, drawn as the grid draws them
+		TableComponentsModule,
 		NbDialogModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
-		TableFiltersModule
+		TableFiltersModule,
+		// The page's charts, the expense page's own
+		ExpenseBarChartComponent,
+		ExpenseShareChartComponent
 	],
 	providers: [PaymentService, OrganizationContactService, InvoicesService, InvoiceEstimateHistoryService],
-	declarations: [PaymentsComponent]
+	declarations: [PaymentsComponent, PaymentViewPageComponent]
 })
 export class PaymentsModule {}

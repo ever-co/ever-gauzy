@@ -74,6 +74,13 @@ export class EverConnectConnection {
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	feedCursor?: string | null;
 
+	/**
+	 * A membership resync that failed is owed again from this time (epoch milliseconds), by whichever process holds the
+	 * lease then; empty when none is owed (added by the core `EverConnectMembershipResyncDue` migration).
+	 */
+	@MultiORMColumn({ type: 'bigint', nullable: true })
+	membershipResyncDueAt?: number | null;
+
 	/** SHA-256 of the `EVER_CONNECT_CODE` value already used (it is never used twice). */
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	envCodeConsumedHash?: string | null;

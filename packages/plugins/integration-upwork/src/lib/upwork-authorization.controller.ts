@@ -41,6 +41,10 @@ export class UpworkAuthorizationController {
 			/** Redirect to the URL */
 			return response.redirect(url);
 		} catch (error) {
+			// Keep an HTTP error we raised ourselves (a 400 for a bad query), so it is not reported as a server failure
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			// Handle errors and return an appropriate error response
 			throw new HttpException(
 				`Failed to add ${IntegrationEnum.UPWORK} integration: ${error.message}`,

@@ -12,7 +12,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbLayoutDirectionService, NbSidebarService } from '@nebular/theme';
-import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
+import {
+	AppLauncherService,
+	ChatSidebarService,
+	LayoutService,
+	NavigationBuilderService,
+	Store
+} from '@gauzy/ui-core/core';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
@@ -37,6 +43,8 @@ export class OneColumnLayoutComponent {
 	private readonly store = inject(Store);
 	public readonly navigationBuilderService = inject(NavigationBuilderService);
 	public readonly chatSidebarService = inject(ChatSidebarService);
+	/** Where the person keeps the App Launcher: the layout draws the rail for the `rail` position. */
+	public readonly launcher = inject(AppLauncherService);
 	private readonly sidebarService = inject(NbSidebarService);
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
@@ -87,6 +95,36 @@ export class OneColumnLayoutComponent {
 		this.navigationBuilderService.getSidebarWidgets();
 
 		this.themeLanguageSelectorService.initialize();
+
+		// While the full-page chat route covers the screen the WINDOW must not scroll: the layout scrolls
+		// the window (Nebular window mode), and the shell under the chat is taller than the screen, so a
+		// page scrollbar would show beside the chat and scroll nothing visible. (Maximize of the docked
+		// chat keeps the shell on screen — Menu | Chat — so the window keeps its own scroll then.)
+		/** Lock the window's scroll; the returned function puts back exactly what was there. */
+		const lockWindowScroll = (): (() => void) => {
+			const { documentElement: html, body } = document;
+			const previous = { html: html.style.overflow, body: body.style.overflow };
+			html.style.overflow = 'hidden';
+			body.style.overflow = 'hidden';
+			return () => {
+				html.style.overflow = previous.html;
+				body.style.overflow = previous.body;
+			};
+		};
+		let unlockScroll: (() => void) | null = null;
+		const releaseScroll = () => {
+			unlockScroll?.();
+			unlockScroll = null;
+		};
+		effect(() => {
+			const fullPage = this.chatSidebarService.fullPageOpen();
+			if (fullPage && !unlockScroll) {
+				unlockScroll = lockWindowScroll();
+			} else if (!fullPage) {
+				releaseScroll();
+			}
+		});
+		this.destroyRef.onDestroy(releaseScroll);
 
 		// No ResizeObserver mirroring the chat width any more: the panel takes its width straight from
 		// `--gz-chat-width` (the persisted user width), so there is a single source of truth and

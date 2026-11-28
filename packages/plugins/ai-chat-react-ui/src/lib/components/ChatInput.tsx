@@ -791,7 +791,7 @@ export function ChatInput({
 	const isTranscribing = dictation === 'transcribing';
 
 	return (
-		<div ref={containerRef} style={containerStyle}>
+		<div ref={containerRef} style={containerStyle} className="gz-ai-chat-composer">
 			{/* Recording happens IN the composer's action row (below), so starting a take never
 			    displaces the message the user may already have typed. */}
 			{/* The one live region: it changes only when a take starts or stops, so it is announced
@@ -877,6 +877,7 @@ export function ChatInput({
 					if (value.trim() && !isBusy) onSubmit();
 				}}
 				style={formStyle}
+				className="gz-ai-chat-composer-box"
 			>
 				{/* Attach and library become LIVE controls once the panel supplies their handlers;
 				    without them they stay the inert "coming soon" affordance they have always been.

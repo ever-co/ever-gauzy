@@ -60,10 +60,9 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 	const isApproval = state === 'approval-requested';
 
 	const cardStyle: CSSProperties = {
-		// Aligns the row with the text inside the assistant bubble beside it
-		// (11px of bubble padding + its 1px hairline).
-		padding: isApproval ? '7px 10px 7px 12px' : '3px 12px',
-		margin: isApproval ? '5px 0' : '2px 0 5px',
+		// Flush with the reply's text, which has no box or inset, with only a small gap around it.
+		padding: isApproval ? '7px 10px 7px 12px' : '2px 0',
+		margin: isApproval ? '5px 0' : '1px 0',
 		border: 'none',
 		// A left rule, not a box: the approval state keeps an edge to catch the eye
 		// without going back to a card.
@@ -72,7 +71,9 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 		backgroundColor: isApproval ? chatTheme.accentLight : 'transparent',
 		fontSize: chatTheme.fontSizeMessage,
 		lineHeight: 1.6,
-		color: chatTheme.textSecondary,
+		// The text colour, so the step label reads white on a dark theme; the status icon, the
+		// disclosure arrow and the approval note carry their own quieter colours.
+		color: chatTheme.textPrimary,
 		animation: 'fadeIn 0.2s ease'
 	};
 
@@ -85,13 +86,14 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 	};
 
 	const detailStyle: CSSProperties = {
-		marginTop: 5,
+		marginTop: 4,
 		maxHeight: 180,
 		overflow: 'auto',
-		backgroundColor: chatTheme.surfaceDeep,
-		border: `1px solid ${chatTheme.borderSoft}`,
+		// A frame without a fill: the opened content reads as one block, without the grey slab.
+		backgroundColor: 'transparent',
+		border: `1px solid ${chatTheme.border}`,
 		borderRadius: 8,
-		padding: '8px 9px',
+		padding: '8px 10px',
 		fontFamily: chatTheme.fontFamilyMono,
 		fontSize: chatTheme.fontSizeMessage,
 		lineHeight: 1.65,
@@ -135,7 +137,8 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 	} else if (isApproval) {
 		statusIcon = <span style={{ color: chatTheme.accent }}>⚠</span>;
 	} else {
-		statusIcon = <span style={{ color: chatTheme.green }}>✓</span>;
+		// Same white as the label beside it; only a failure (red) or a pending approval keeps a colour.
+		statusIcon = <span style={{ color: chatTheme.textPrimary }}>✓</span>;
 	}
 
 	return (
@@ -157,7 +160,7 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 				{statusIcon}
 				<span
 					className="gz-ai-chat-tool-label"
-					style={{ color: chatTheme.link, fontWeight: chatTheme.fontWeightMedium }}
+					style={{ color: chatTheme.textPrimary, fontWeight: chatTheme.fontWeightSemibold }}
 				>
 					{label}
 				</span>
@@ -179,7 +182,7 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 			)}
 
 			{expanded && (
-				<div style={detailStyle}>
+				<div style={detailStyle} className="gz-ai-chat-scroll">
 					{input !== undefined && `Input:\n${safeStringify(input)}`}
 					{output !== undefined && `\n\nResult:\n${safeStringify(output)}`}
 					{errorText && `\n\nError:\n${errorText}`}

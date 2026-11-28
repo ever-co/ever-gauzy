@@ -4,6 +4,7 @@ export * from './activity-log';
 export * from './ai-agent';
 export * from './analytics';
 export * from './app';
+export * from './app-launcher';
 export * from './appointment-employee';
 export * from './approval-policy';
 export * from './auth';

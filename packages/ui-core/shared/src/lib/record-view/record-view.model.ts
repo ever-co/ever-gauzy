@@ -86,6 +86,8 @@ export interface IRecordViewField {
 	wide?: boolean;
 	/** `link` rows: href to open. Falls back to the value itself. */
 	href?: string;
+	/** `link` rows: a page of the app to open in the same tab, e.g. `['/pages/contacts/view', id]`. Wins over `href`. */
+	route?: any[];
 	/** Eva icon shown before the label. */
 	icon?: string;
 	/** Hairline above this row — splits one section into groups (people / planning). */

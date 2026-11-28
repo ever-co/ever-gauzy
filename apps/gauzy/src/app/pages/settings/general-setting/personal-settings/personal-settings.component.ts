@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { NbThemeService } from '@nebular/theme';
 import { ComponentLayoutStyleEnum, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { LanguagesService, Store, ToastrService, UsersService } from '@gauzy/ui-core/core';
+import { AppLauncherService, LanguagesService, Store, ToastrService, UsersService } from '@gauzy/ui-core/core';
 import { getLanguageFlagUrl } from '@gauzy/ui-core/shared';
 import {
 	CORPORATE_THEME,
@@ -40,7 +40,7 @@ const THEME_OPTIONS: ThemeOption[] = [
 
 /**
  * Settings → General: the signed-in user's account summary and personal preferences
- * (theme, language, default page layout).
+ * (theme, App Launcher position, language, default page layout).
  *
  * The controls write to the same Store slices and endpoints as the Quick Settings panel
  * (`PUT /user/preferred-language`, `PUT /user/preferred-layout`; the theme is a local
@@ -59,6 +59,8 @@ export class PersonalSettingsComponent implements OnInit {
 	private readonly languagesService = inject(LanguagesService);
 	private readonly themeService = inject(NbThemeService);
 	private readonly toastr = inject(ToastrService);
+	/** The App Launcher's position row shows only when the deployment links another Ever app. */
+	public readonly launcher = inject(AppLauncherService);
 
 	public readonly themes = THEME_OPTIONS;
 	public readonly layouts = Object.values(ComponentLayoutStyleEnum);

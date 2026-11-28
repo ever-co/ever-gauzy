@@ -4,9 +4,9 @@ import type { IEverApp } from '../constants/ever-apps.constants';
  * `EVER_APP_LINKS`: where this deployment's app switcher sends people for each Ever app, as `id=url` pairs separated
  * by commas, for example `platform=https://platform.example.com,works=https://works.example.com` (the format Ever
  * Teams reads from `NEXT_PUBLIC_EVER_APP_LINKS`). The ids are those of the catalog (`platform`, `works`, `teams`,
- * `gauzy`, `demand`, `rec`, `traduora`).
+ * `gauzy`, `demand`, `rec`, `traduora`, `tech`).
  *
- * Each valid pair replaces the address (and the domain shown under the name) of the app with that id; every other
+ * Each valid pair replaces the address (and its domain) of the app with that id; every other
  * app keeps the catalog's address, so with the setting unset the switcher is exactly the catalog. A pair is ignored
  * when it has no `=`, an empty id, or a link that is not an absolute http(s) URL without credentials. When an id
  * is given twice, the last pair wins.
@@ -32,7 +32,9 @@ export function parseEverAppLinks(raw: string | null | undefined): Map<string, U
 
 /**
  * The catalog with this deployment's addresses (`EVER_APP_LINKS`, see {@link parseEverAppLinks}) in place of the
- * catalog's for the apps it names. The order, names and logos stay the catalog's; nothing is added or removed.
+ * catalog's for the apps it names. The order, names, lines and logos stay the catalog's; nothing is added or
+ * removed. An app the catalog marks "Soon" loses the mark when the setting links it: the deployment says it is
+ * reachable.
  *
  * @param apps - The Ever apps the switcher lists (the catalog).
  * @param raw - The `EVER_APP_LINKS` setting.
@@ -53,7 +55,14 @@ export function withEverAppLinks(
 	}
 	return apps.map((app) => {
 		const link = links.get(app.id);
-		return link ? { ...app, url: link.href, domain: link.host } : app;
+		if (!link) {
+			return app;
+		}
+		const linked: IEverApp = { ...app, url: link.href, domain: link.host };
+		if (linked.status === 'soon') {
+			delete linked.status;
+		}
+		return linked;
 	});
 }
 

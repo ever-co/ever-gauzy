@@ -560,3 +560,14 @@ export type {
 	IEmailTransportResolver
 } from './lib/email-send/email-transport.registry';
 export { describeEmailSendError, redactEmailAddresses } from './lib/email-send/email-send-error';
+// The automatic retry of failed emails. The worker application fires its schedule, so it imports the schedule's module
+// by name (the API consumes it).
+export {
+	EmailRetryMaintenanceModule,
+	EmailRetryModule,
+	EmailRetryScheduleModule
+} from './lib/email-send/email-retry.module';
+export { EmailRetryInlineModule } from './lib/email-send/email-retry-inline';
+export { EmailRetryService } from './lib/email-send/email-retry.service';
+export type { IEmailRetrySweepReport } from './lib/email-send/email-retry.service';
+export { isEmailRetryEnabled } from './lib/email-send/email-retry.policy';

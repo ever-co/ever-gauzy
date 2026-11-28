@@ -1,3 +1,4 @@
+export * from './app-launcher-placement';
 export * from './edit-profile-form/edit-profile-form.component';
 export * from './edit-profile-form/edit-profile-form.module';
 export * from './user-multi-select/user-multi-select.component';

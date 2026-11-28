@@ -1,16 +1,42 @@
 import { InjectionToken, Provider } from '@angular/core';
 
-export type EverAppId = 'gauzy' | 'teams' | 'works' | 'platform' | 'demand' | 'rec' | 'traduora';
+export type EverAppId = 'gauzy' | 'teams' | 'works' | 'platform' | 'demand' | 'rec' | 'traduora' | 'tech';
+
+/**
+ * Where an Ever app stands, shown as a chip beside its name in the App Launcher: `beta` ("Beta") or `soon`
+ * ("Soon"). Unset for an app that is generally available. The row still opens the app's address either way.
+ *
+ * `soon` lasts only while the deployment does not link the app: an `EVER_APP_LINKS` pair for it (see
+ * `withEverAppLinks`) says the app is reachable from this deployment, and the chip goes.
+ */
+export type EverAppStatus = 'beta' | 'soon';
 
 export interface IEverApp {
 	id: EverAppId;
+	/** The short name ("Works"). */
 	shortName: string;
+	/** The full name ("Ever Works"), shown in the App Launcher and never translated. */
+	name: string;
+	/** The i18n key of the one line under the name ("AI agents that run your business"). */
+	lineKey: string;
 	logo: string;
+	/** Where the row goes, in the same tab (the system browser inside the desktop apps). */
 	url: string;
+	/** The host of `url`. The App Launcher does not show it (no addresses in the list, owner 2026-11-26). */
 	domain: string;
+	status?: EverAppStatus;
 }
 
 export const CURRENT_EVER_APP_ID: EverAppId = 'gauzy';
+
+/** The Ever app whose `/apps` page adds a person's own apps: the "+ Add" row links there. */
+export const EVER_PLATFORM_APP_ID: EverAppId = 'platform';
+
+/**
+ * The page of Ever Platform where a person adds their own apps, with the "Add an app" dialog open, relative to
+ * Ever Platform's address. It carries no organization: Ever Platform picks the person's organization.
+ */
+export const EVER_PLATFORM_ADD_APP_PATH = '/apps?add=app';
 
 /**
  * The Ever apps the app switcher lists. Empty by default: the catalog (names, logos and web addresses of the Ever
@@ -68,4 +94,14 @@ export function everAppsFromPluginOptions(
 
 export function isCurrentEverApp(app: IEverApp): boolean {
 	return app.id === CURRENT_EVER_APP_ID;
+}
+
+/**
+ * Whether the list links at least one Ever app besides this one. The App Launcher (its button, its rail and its
+ * setting) shows only then, as Ever Teams does: a deployment that links no other app has nothing to launch.
+ *
+ * @param apps - The App Launcher's list, as this deployment serves it.
+ */
+export function hasOtherEverApp(apps: ReadonlyArray<IEverApp>): boolean {
+	return apps.some((app) => !isCurrentEverApp(app) && Boolean(app.url));
 }

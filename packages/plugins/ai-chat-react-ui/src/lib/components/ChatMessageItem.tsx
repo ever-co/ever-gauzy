@@ -10,6 +10,8 @@ import {
 } from './DocsCitationChips';
 import { parseAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { AttachmentCard } from './AttachmentCard';
+import { stripLeakedToolCalls } from './leaked-tool-calls';
+import { MessageActions, type MessageActionsProps } from './MessageActions';
 import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
 
@@ -96,18 +98,25 @@ export interface ChatMessageItemProps {
 	resolveAttachmentFile?: (messageId: string, index: number) => File | undefined;
 	/** `t(key, fallback)` from the panel. */
 	translate?: (key: string, fallback: string) => string;
+	/**
+	 * The action row under a finished assistant reply (Copy, Read aloud, Good / Bad response,
+	 * Regenerate). Omitted → no row.
+	 */
+	actions?: Omit<MessageActionsProps, 'text' | 'translate'>;
 }
 
 /**
  * ChatMessageItem
  *
  * Renders one UI message from its `parts`:
- * - text parts → markdown bubbles (user: accent right, assistant: subtle left)
+ * - text parts → markdown bubbles (user: accent right, assistant: subtle left), minus any tool
+ *   call the model wrote out as text instead of making it
  * - tool parts (`tool-*` / `dynamic-tool`) → compact ToolCallCard chips with
  *   live state, expandable details and Approve/Reject when the tool awaits
  *   the user's approval.
  * - `data-docs-citations` parts (contributed by @gauzy/plugin-docs) → clickable
  *   source chips deep-linking into the Documents hub.
+ * - under a finished assistant reply, the {@link MessageActions} row when `actions` is given.
  * Other part kinds (step markers, reasoning) are not rendered in the
  * compact sidebar view.
  */
@@ -118,9 +127,20 @@ export function ChatMessageItem({
 	onOpenCitation,
 	onPreviewAttachment,
 	resolveAttachmentFile,
-	translate
+	translate,
+	actions
 }: ChatMessageItemProps) {
 	const isUser = message.role === 'user';
+
+	// What Copy and Read aloud work on: the reply's words, as shown (leaked tool calls removed).
+	const replyText =
+		!isUser && actions
+			? message.parts
+					.filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+					.map((part) => stripLeakedToolCalls(part.text))
+					.filter((text) => !isBlankText(text))
+					.join('\n\n')
+			: '';
 
 	const rowStyle: CSSProperties = {
 		display: 'flex',
@@ -128,37 +148,49 @@ export function ChatMessageItem({
 		animation: 'fadeIn 0.2s ease'
 	};
 
-	const bubbleStyle: CSSProperties = {
-		maxWidth: isUser ? '88%' : '96%',
+	const textStyle: CSSProperties = {
 		minWidth: 0,
-		padding: isUser ? '7px 11px' : '8px 11px',
-		borderRadius: isUser
-			? `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight} ${chatTheme.bubbleRadius}`
-			: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight}`,
-		backgroundColor: isUser ? chatTheme.userBubbleBg : chatTheme.assistantBubbleBg,
-		// The assistant bubble is a quiet surface, so a hairline is what gives it an edge
-		// against the panel; the user bubble already has its own fill.
-		border: isUser ? '1px solid transparent' : `1px solid ${chatTheme.borderSoft}`,
-		color: isUser ? chatTheme.userBubbleText : chatTheme.assistantBubbleText,
 		fontSize: chatTheme.fontSizeMessage,
 		lineHeight: chatTheme.lineHeightMessage,
 		letterSpacing: '0.01em',
 		wordBreak: 'break-word'
 	};
 
+	// The user's words sit in their accent bubble on the right. The reply has no box at all — no
+	// fill, no border — and keeps the width the bubble had, so it reads as text rather than as a tile.
+	const bubbleStyle: CSSProperties = isUser
+		? {
+				...textStyle,
+				maxWidth: '88%',
+				padding: '7px 11px',
+				borderRadius: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight} ${chatTheme.bubbleRadius}`,
+				backgroundColor: chatTheme.userBubbleBg,
+				border: '1px solid transparent',
+				color: chatTheme.userBubbleText
+			}
+		: {
+				...textStyle,
+				// Sized to its text, up to the same 96% of the column the bubble used to have.
+				maxWidth: '96%',
+				padding: 0,
+				color: chatTheme.assistantBubbleText
+			};
+
 	return (
 		<div>
 			{message.parts.map((part, index) => {
 				if (part.type === 'text') {
+					// A tool call the model wrote out instead of making it is not for the reader.
+					const text = isUser ? part.text : stripLeakedToolCalls(part.text, isStreaming);
 					// Models often open a step with a whitespace-only text part (a bare "\n") right
 					// before a tool call; rendered, it is an empty bubble above the tool card.
-					if (isBlankText(part.text)) return null;
+					if (isBlankText(text)) return null;
 					// A user message that carries attachments starts with the preamble the panel
 					// composed. The MODEL needs that text (it is what makes `docs_read` actionable
 					// and keeps the attachment context alive across turns); the READER does not —
 					// render chips + the user's own words instead. Display-only: the message text
 					// is never altered.
-					const attachmentView = isUser ? parseAttachmentPreamble(part.text) : null;
+					const attachmentView = isUser ? parseAttachmentPreamble(text) : null;
 					if (attachmentView) {
 						// Cards in their own row ABOVE the bubble; the bubble holds only the words.
 						return (
@@ -187,9 +219,9 @@ export function ChatMessageItem({
 						<div style={rowStyle} key={`${message.id}-${index}`}>
 							<div style={bubbleStyle}>
 								{isUser ? (
-									<span style={{ whiteSpace: 'pre-wrap' }}>{part.text}</span>
+									<span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>
 								) : (
-									<MarkdownContent content={part.text} isStreaming={isStreaming} />
+									<MarkdownContent content={text} isStreaming={isStreaming} />
 								)}
 							</div>
 						</div>
@@ -237,6 +269,10 @@ export function ChatMessageItem({
 
 				return null;
 			})}
+
+			{!isUser && actions && !isStreaming && (replyText || actions.onRegenerate) && (
+				<MessageActions text={replyText} {...(translate ? { translate } : {})} {...actions} />
+			)}
 		</div>
 	);
 }

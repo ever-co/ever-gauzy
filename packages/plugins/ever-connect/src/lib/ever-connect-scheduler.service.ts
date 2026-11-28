@@ -59,7 +59,8 @@ export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' 
  *   to its Gauzy organization when the membership sync is on (`EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED`),
  *   and acknowledged and ignored otherwise; with it on, the current members of each linked organization are
  *   read again and applied once after each start and after each `410 resync_required`, before the feed is
- *   read (`MembershipSyncHandler.resync`), and again on a later read after one that failed. Types this release has no handler for are acknowledged and
+ *   read (`MembershipSyncHandler.resync`), and again on a later read after one that failed (owed on the connection
+ *   row, so the process holding the lease then runs it). Types this release has no handler for are acknowledged and
  *   ignored, and so are connection events (and a person's requests and membership changes) of another
  *   installation or of before this connection (a cursor read again from the start replays them).
  */
@@ -95,6 +96,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	private membershipResyncNotBefore = 0;
 	/** The membership resyncs that failed in a row (the wait before the next one doubles with each). */
 	private membershipResyncFailures = 0;
+	/**
+	 * The owed resync as the connection row last showed it (`membershipResyncDueAt`): a failed one is kept there too, so
+	 * whichever process holds the lease next runs it; null when the row owes none. Read at each read of the feed.
+	 */
+	private membershipResyncDueOnRow: number | null = null;
 	/** The run of the scheduler (one per start and stop): work of an earlier run must not go on in a later one. */
 	private generation = 0;
 
@@ -279,7 +285,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			throw error;
 		}
 		if (await stale()) return false;
-		if (this.membership && this.membershipResyncOwed && this.now() >= this.membershipResyncNotBefore) {
+		// A resync owed on the row: one that failed in this process, or in another one that held the lease before.
+		this.membershipResyncDueOnRow = connection.membershipResyncDueAt ?? null;
+		const owedOnRow = this.membershipResyncDueOnRow !== null && this.now() >= this.membershipResyncDueOnRow;
+		const owedHere = this.membershipResyncOwed && this.now() >= this.membershipResyncNotBefore;
+		if (this.membership && (owedHere || owedOnRow)) {
 			// Owed again on a failure, after a wait (see `afterMembershipResync`); the feed is read on meanwhile.
 			this.membershipResyncOwed = false;
 			const outcome = await this.membershipResync(client, guards);
@@ -291,7 +301,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			}
 			// A run stopped (and maybe started again) while `keep()` resolved records nothing into the new run's state.
 			if (!guards.current()) return false;
-			this.afterMembershipResync(outcome);
+			// The debt's write is fenced on the lease: one that changed no row means another process holds it now. And a
+			// stop while it was written ends this read here, before any request of the feed (nothing would abort it).
+			if (!(await this.afterMembershipResync(outcome)) || (await stale())) return false;
 		}
 		this.feedAbort = new AbortController();
 		const waitS = this.config.feedMode === 'longpoll' ? FEED_WAIT_S : 0;
@@ -493,7 +505,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			if (outcome === 'lease_lost' || !(await guards.keep()) || !guards.current()) {
 				return false;
 			}
-			this.afterMembershipResync(outcome);
+			// Kept on the row before the position moves on: a process that stops after the move leaves it owed. A write
+			// that changed no row (the lease passed on) leaves the position, as a lost lease does.
+			if (!(await this.afterMembershipResync(outcome))) {
+				return false;
+			}
 			// Kept in one compare-and-set on the lease holder, by the current run only: a process that lost the lease
 			// in between cannot move the position the next holder reads.
 			const cursor =
@@ -521,21 +537,46 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	/**
 	 * After a membership resync that kept the lease: one that failed is owed again, not before a wait that doubles with
 	 * each failure in a row (from `FEED_RETRY_MS`, at most `FEED_INTERVAL_MS`), so a membership read that keeps failing
-	 * never holds up the feed nor runs at every read; any other outcome is no longer owed and clears the wait. The debt
-	 * is this process's: a lease taken over by another process meanwhile runs it at that process's next start or `410`.
+	 * never holds up the feed nor runs at every read; any other outcome is no longer owed and clears the wait.
+	 *
+	 * The debt is kept on the connection row too (`membershipResyncDueAt`, written by the lease holder only), so a lease
+	 * taken over by another process meanwhile runs it at that process's next read of the feed once it is due, instead of
+	 * at its next start or `410`: a removal or a demotion the skipped part of the feed held is never left waiting. A
+	 * resync that worked clears it. A write that fails throws, before the feed moves on (the debt stays owed here). The
+	 * column is only ever written by the lease holder (each write is fenced on `leasedBy`), which is what lets this
+	 * process trust the value it last read or wrote.
+	 *
+	 * @returns false when the fenced write changed no row: the lease passed to another process, so the caller goes no
+	 * further (the debt stays owed in this process too).
 	 */
-	private afterMembershipResync(outcome: MembershipResyncOutcome): void {
+	private async afterMembershipResync(outcome: MembershipResyncOutcome): Promise<boolean> {
 		if (outcome !== 'failed') {
 			// Done (or nothing to do): no longer owed, also when an earlier failure had it owed and a 410 ran it first.
 			this.membershipResyncOwed = false;
 			this.membershipResyncFailures = 0;
 			this.membershipResyncNotBefore = 0;
-			return;
+			if (this.membershipResyncDueOnRow === null) {
+				return true;
+			}
+			if ((await this.store.updateConnection({ membershipResyncDueAt: null }, { leasedBy: this.holder })) !== 1) {
+				return false;
+			}
+			this.membershipResyncDueOnRow = null;
+			return true;
 		}
 		this.membershipResyncOwed = true;
 		this.membershipResyncFailures += 1;
 		const wait = Math.min(FEED_RETRY_MS * 2 ** (this.membershipResyncFailures - 1), FEED_INTERVAL_MS);
 		this.membershipResyncNotBefore = this.now() + wait;
+		const kept = await this.store.updateConnection(
+			{ membershipResyncDueAt: this.membershipResyncNotBefore },
+			{ leasedBy: this.holder }
+		);
+		if (kept !== 1) {
+			return false;
+		}
+		this.membershipResyncDueOnRow = this.membershipResyncNotBefore;
+		return true;
 	}
 
 	/**

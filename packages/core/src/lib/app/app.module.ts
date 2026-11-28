@@ -179,6 +179,8 @@ import { TaskDueReminderInlineModule } from '../tasks/due-reminder/task-due-remi
 import { isTaskDueRemindersEnabled } from '../tasks/due-reminder/task-due-reminder-enabled';
 import { InvoiceReminderMaintenanceModule } from '../invoice/invoice-reminder/invoice-reminder-maintenance.module';
 import { InvoiceReminderInlineModule } from '../invoice/invoice-reminder/invoice-reminder-inline';
+import { EmailRetryMaintenanceModule } from '../email-send/email-retry.module';
+import { EmailRetryInlineModule } from '../email-send/email-retry-inline';
 import { InvoiceScheduleMaintenanceModule } from '../invoice-schedule/invoice-schedule-maintenance.module';
 import { InvoiceScheduleInlineModule } from '../invoice-schedule/invoice-schedule-inline';
 import { OperationModule } from '../operation/operation.module';
@@ -746,6 +748,11 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		// With a queue, this process consumes the sweep the worker application schedules every hour: the mail settings
 		// and the invoice rendering it uses live here. Without a queue, this process sweeps on its own, every hour.
 		isSchedulerQueueRootEnabled() ? InvoiceReminderMaintenanceModule : InvoiceReminderInlineModule,
+		// The automatic retry of an email whose send failed before the mail server accepted it (EMAIL_RETRY_ENABLED, on
+		// by default; see email-retry.policy.ts). With a queue, this process consumes the sweep the worker application
+		// schedules every five minutes: the mail settings and the transports provider plugins register live here. Without
+		// a queue, this process sweeps on its own, every five minutes.
+		isSchedulerQueueRootEnabled() ? EmailRetryMaintenanceModule : EmailRetryInlineModule,
 		// The invoices of the clients billed on a schedule (#11855): nothing runs for an organization without one. With a
 		// queue, this process consumes the hourly sweep the worker application schedules; without one, it sweeps itself.
 		isSchedulerQueueRootEnabled() ? InvoiceScheduleMaintenanceModule : InvoiceScheduleInlineModule,

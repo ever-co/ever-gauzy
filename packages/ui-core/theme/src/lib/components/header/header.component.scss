@@ -89,6 +89,14 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       }
     }
 
+    // The App Launcher's grid button (the "Top bar" position), after the scrolling selector row.
+    .header-trail {
+      display: flex;
+      align-items: center;
+      flex: none;
+      margin-inline: 0.5rem 1rem;
+    }
+
     .logo-container {
       display: flex;
       align-items: center;
@@ -360,6 +368,11 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   &:hover {
     background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   }
+}
+
+// The light / dark switch draws its own square (the size of the icon actions before it).
+:host .actions nb-action.theme-toggle-action {
+  padding: 0;
 }
 
 .employee-selector,
