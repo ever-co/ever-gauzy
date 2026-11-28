@@ -30,7 +30,7 @@ import { TenantOrganizationBaseDTO } from '../core/dto';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { AbstractValidationPipe, UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
-import { CreateDealDTO } from './dto';
+import { CreateDealDTO, UpdateDealDTO } from './dto';
 
 @ApiTags('Deal')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -120,11 +120,15 @@ export class DealController extends CrudController<Deal> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@Put(':id')
+	// Validates the deal's own members without stripping or transforming the body, so a value the
+	// create route would refuse (probability 99, an empty title) is refused here too, and every other
+	// member reaches the service exactly as before.
+	@UseValidationPipe({ whitelist: false })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: QueryDeepPartialEntity<Deal>
+		@Body() entity: UpdateDealDTO
 	): Promise<UpdateResult | Deal> {
-		return await super.update(id, entity);
+		return await super.update(id, entity as unknown as QueryDeepPartialEntity<Deal>);
 	}
 
 	/**
