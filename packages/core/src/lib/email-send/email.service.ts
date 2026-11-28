@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { IsNull, MoreThanOrEqual } from 'typeorm';
+import { FindOptionsWhere, IsNull, MoreThanOrEqual, Not } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IInviteEmployeeModel,
@@ -28,11 +28,13 @@ import { allowedEmailBaseUrl, warnRejectedEmailLink, withAllowedEmailLinks } fro
 import { RequestContext } from '../core/context';
 import { printEmailCodeInLocalDevelopment } from '../logger';
 import { EmailSendService } from './../email-send/email-send.service';
+import { readAffectedRows } from '../database/database.helper';
 import { describeEmailSendError } from './email-send-error';
 import {
 	classifyEmailSendError,
 	EMAIL_RETRY_MAX_ATTEMPTS,
 	emailRetryDueAt,
+	emailRetryInFlightUntil,
 	emailSendErrorCode,
 	isEmailRetryEnabled,
 	isEmailRetryTemplate,
@@ -1501,10 +1503,36 @@ export class EmailService {
 			throw new BadRequestException(`Email address ${sendOptions.message.to} is blocked by domain restrictions.`);
 		}
 
+		// A resend by hand never goes while an automatic retry of the same email is going out: the sweep that claimed it
+		// holds no lock while it reads the mail settings and sends, and marks the row until it writes how that went
+		// (`email-retry.service.ts`).
+		const inFlightUntil = emailRetryInFlightUntil(emailHistory, new Date());
+		if (inFlightUntil) {
+			throw new ConflictException(
+				'An automatic retry of this email is going out; it can be re-sent by hand once it is over ' +
+					`(at the latest from ${inFlightUntil.toISOString()}).`
+			);
+		}
+
 		// A resend by hand takes the email out of the automatic retries before it goes, so the retry sweep can no
-		// longer claim it and send it as well; the save below then writes no stale retry time back either.
+		// longer claim it and send it as well; the save below then writes no stale retry time back either. The write
+		// holds only while no sweep has claimed the email since it was read (a claim moves `retryCount` on and clears
+		// `nextRetryAt`): a sweep that got there first sends it, and this resend does not.
 		if (emailHistory.nextRetryAt) {
-			await this.typeOrmEmailHistoryRepository.update({ id: emailHistory.id }, { nextRetryAt: null });
+			const taken = await this.typeOrmEmailHistoryRepository.update(
+				{
+					id: emailHistory.id,
+					status: emailHistory.status ?? IsNull(),
+					retryCount: Number.isInteger(emailHistory.retryCount) ? emailHistory.retryCount : IsNull(),
+					nextRetryAt: Not(IsNull())
+				} as FindOptionsWhere<EmailHistory>,
+				{ nextRetryAt: null }
+			);
+			if (readAffectedRows(taken) !== 1) {
+				throw new ConflictException(
+					'An automatic retry of this email has just started; it can be re-sent by hand once it is over.'
+				);
+			}
 			emailHistory.nextRetryAt = null;
 		}
 

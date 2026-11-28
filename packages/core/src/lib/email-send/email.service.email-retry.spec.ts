@@ -477,11 +477,81 @@ describe('EmailService: scheduling the automatic retry of a failed email', () =>
 
 			await service.resendEmail('row-1', {}, LanguagesEnum.ENGLISH);
 
-			expect(update).toHaveBeenCalledWith({ id: 'row-1' }, { nextRetryAt: null });
+			// Only while no sweep has claimed it since it was read: still failed, on the retry read, with a retry due
+			expect(update).toHaveBeenCalledWith(
+				{
+					id: 'row-1',
+					status: EmailStatusEnum.FAILED,
+					retryCount: 0,
+					nextRetryAt: expect.objectContaining({ _type: 'not' })
+				},
+				{ nextRetryAt: null }
+			);
 			expect(order).toEqual(['update', 'send']);
 			expect(save).toHaveBeenCalledWith(
 				expect.objectContaining({ status: EmailStatusEnum.SENT, nextRetryAt: null })
 			);
+		});
+
+		it('sends nothing when a sweep claimed the email between the read and the resend', async () => {
+			findOne.mockResolvedValueOnce(stored({ retryCount: 0, nextRetryAt: new Date(Date.now() - MINUTE) }));
+			// The claim moved `retryCount` on and cleared `nextRetryAt`: the resend's write matches no row
+			update.mockResolvedValueOnce({ affected: 0 });
+
+			await expect(service.resendEmail('row-1', {}, LanguagesEnum.ENGLISH)).rejects.toThrow(
+				'An automatic retry of this email has just started'
+			);
+
+			expect(sendMail).not.toHaveBeenCalled();
+			expect(save).not.toHaveBeenCalled();
+		});
+
+		it('is refused while a claimed retry is going out, however long it has taken, and writes and sends nothing', async () => {
+			// Claimed 50 minutes ago and still marked: the sweep has not written how its retry went
+			const claimedAt = new Date(Date.now() - 50 * MINUTE);
+			findOne.mockResolvedValueOnce(
+				stored({ retryCount: 1, nextRetryAt: null, lastRetryAt: claimedAt, lastErrorCode: 'IN_FLIGHT' })
+			);
+
+			await expect(service.resendEmail('row-1', {}, LanguagesEnum.ENGLISH)).rejects.toThrow(
+				`once it is over (at the latest from ${new Date(claimedAt.getTime() + 60 * MINUTE).toISOString()})`
+			);
+
+			expect(update).not.toHaveBeenCalled();
+			expect(sendMail).not.toHaveBeenCalled();
+			expect(save).not.toHaveBeenCalled();
+		});
+
+		it('re-sends as soon as the last automatic retry wrote how it went, even one claimed a moment ago', async () => {
+			findOne.mockResolvedValueOnce(
+				stored({
+					retryCount: 2,
+					nextRetryAt: null,
+					lastRetryAt: new Date(Date.now() - MINUTE),
+					lastErrorCode: 'ESOCKET ECONNREFUSED CONN'
+				})
+			);
+
+			await service.resendEmail('row-1', {}, LanguagesEnum.ENGLISH);
+
+			expect(update).not.toHaveBeenCalled();
+			expect(sendMail).toHaveBeenCalledTimes(1);
+			expect(save).toHaveBeenCalledWith(expect.objectContaining({ status: EmailStatusEnum.SENT }));
+		});
+
+		it('re-sends an email whose retry was claimed an hour ago by a sweep that never wrote how it went', async () => {
+			findOne.mockResolvedValueOnce(
+				stored({
+					retryCount: 1,
+					nextRetryAt: null,
+					lastRetryAt: new Date(Date.now() - 61 * MINUTE),
+					lastErrorCode: 'IN_FLIGHT'
+				})
+			);
+
+			await service.resendEmail('row-1', {}, LanguagesEnum.ENGLISH);
+
+			expect(sendMail).toHaveBeenCalledTimes(1);
 		});
 
 		it('writes nothing more for an email that has no retry due', async () => {
