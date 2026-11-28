@@ -15,5 +15,10 @@ import { isNotEmpty } from './is-not-empty';
  * ```
  */
 export const trimIfNotEmpty = (value?: string): string | undefined => {
-	return isNotEmpty(value) ? value.trim() : undefined;
+	if (!isNotEmpty(value)) {
+		return undefined;
+	}
+	// A whitespace-only value passes the emptiness check above but is empty once trimmed.
+	const trimmed = value.trim();
+	return trimmed === '' ? undefined : trimmed;
 };
