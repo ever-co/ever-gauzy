@@ -1,0 +1,131 @@
+:host {
+  display: block;
+}
+
+.placement {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.placement legend.label {
+  float: none;
+  width: auto;
+  margin: 0 0 0.125rem;
+  padding: 0;
+  font-size: inherit;
+}
+
+.placement__description,
+.placement__note {
+  margin: 0 0 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--text-hint-color);
+}
+
+.placement__note {
+  margin: 0.5rem 0 0;
+}
+
+// Read by screen readers, not drawn: the page shows the same title and description beside the tiles.
+.placement__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.placement__tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  // Pictures, not banners: past this width the tiles only grow empty.
+  max-width: 30rem;
+}
+
+.placement__tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--border-basic-color-4, rgba(143, 155, 179, 0.32));
+  border-radius: var(--gauzy-radius-md, 0.625rem);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out;
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
+
+  // The keyboard focus sits on the hidden radio: show it on the tile.
+  &:has(.placement__input:focus-visible) {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+  }
+}
+
+.placement__tile--picked {
+  border-color: var(--color-primary-default);
+}
+
+// The radio stays in the accessibility tree and takes the keyboard; the tile is what people see.
+.placement__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.placement__preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  // Nested in the tile: the tile's radius less its 0.5rem padding, never under 4px.
+  border-radius: max(4px, calc(var(--gauzy-radius-md, 0.625rem) - 0.5rem));
+
+  .frame {
+    fill: var(--background-basic-color-1, #ffffff);
+    stroke: var(--border-basic-color-4, rgba(143, 155, 179, 0.32));
+  }
+
+  .pane {
+    fill: var(--background-basic-color-3, #edf1f7);
+  }
+
+  .rule {
+    stroke: var(--border-basic-color-4, rgba(143, 155, 179, 0.32));
+  }
+
+  .line,
+  .mark {
+    fill: var(--text-hint-color, #8f9bb3);
+    opacity: 0.6;
+  }
+
+  // Where the launcher sits, in the one accent.
+  .spot {
+    fill: var(--color-primary-default);
+  }
+}
+
+.placement__name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  text-align: center;
+  color: var(--text-basic-color);
+}

@@ -180,6 +180,23 @@ describe.each(TEST_TARGETS)('EverConnect store on $name', (target) => {
 		expect(await store.takeLease('a', 60_000)).toBe(true);
 	});
 
+	it('the owed membership resync: kept on the row by the lease holder, read back, cleared; another process writes nothing', async () => {
+		const store = new EverConnectStore(dataSource, now);
+		expect((await store.connection()).membershipResyncDueAt).toBeNull();
+		expect(await store.takeLease('a', 60_000)).toBe(true);
+
+		expect(await store.updateConnection({ membershipResyncDueAt: clock + 30_000 }, { leasedBy: 'a' })).toBe(1);
+		// Read by another process (the one that takes the lease over).
+		expect((await new EverConnectStore(dataSource, now).connection()).membershipResyncDueAt).toBe(clock + 30_000);
+
+		// Fenced on the lease holder: a process that no longer holds it changes nothing.
+		expect(await store.updateConnection({ membershipResyncDueAt: null }, { leasedBy: 'b' })).toBe(0);
+		expect((await store.connection()).membershipResyncDueAt).toBe(clock + 30_000);
+
+		expect(await store.updateConnection({ membershipResyncDueAt: null }, { leasedBy: 'a' })).toBe(1);
+		expect((await store.connection()).membershipResyncDueAt).toBeNull();
+	});
+
 	it('EVER_CONNECT_CODE: one process claims an attempt (compare and set)', async () => {
 		const store = new EverConnectStore(dataSource, now);
 		const results = await Promise.all(

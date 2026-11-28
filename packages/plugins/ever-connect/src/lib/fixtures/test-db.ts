@@ -23,18 +23,22 @@ type Migration = { name: string; up(runner: unknown): Promise<void>; down(runner
 
 /**
  * The core migrations the plugin needs, in order: `ever_instance`, the six Ever Platform tables, Sign in
- * with Ever ID's, then those of creating a workspace from Ever.
+ * with Ever ID's, those of creating a workspace from Ever, then the connection's owed membership resync.
  */
 export function connectMigrations(): Migration[] {
 	const { EverInstance1790000021000 } = require(join(MIGRATIONS, '1790000021000-EverInstance'));
 	const { EverConnect1790000021200 } = require(join(MIGRATIONS, '1790000021200-EverConnect'));
 	const { EverConnectIdentity1791000003500 } = require(join(MIGRATIONS, '1791000003500-EverConnectIdentity'));
 	const { EverConnectProvision1791000003950 } = require(join(MIGRATIONS, '1791000003950-EverConnectProvision'));
+	const { EverConnectMembershipResyncDue1791000019900 } = require(
+		join(MIGRATIONS, '1791000019900-EverConnectMembershipResyncDue')
+	);
 	return [
 		new EverInstance1790000021000(),
 		new EverConnect1790000021200(),
 		new EverConnectIdentity1791000003500(),
-		new EverConnectProvision1791000003950()
+		new EverConnectProvision1791000003950(),
+		new EverConnectMembershipResyncDue1791000019900()
 	];
 }
 

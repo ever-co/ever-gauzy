@@ -4,19 +4,19 @@
   "routes": [
     {
       "path": "/",
-      "file": "apps/gauzy/src/app/app.routes.ts:59",
+      "file": "apps/gauzy/src/app/app.routes.ts:60",
       "redirect_to": "pages",
       "source": "router"
     },
     {
       "path": "/ai-chat",
-      "file": "packages/plugins/ai-chat-react-ui/src/lib/ai-chat-window.routes.ts:39",
-      "redirect_to": "window",
+      "file": "packages/plugins/ai-chat-react-ui/src/lib/ai-chat-window.routes.ts:46",
+      "redirect_to": "/pages/ai-chat",
       "source": "router"
     },
     {
       "path": "/ai-chat/window",
-      "file": "packages/plugins/ai-chat-react-ui/src/lib/ai-chat-window.routes.ts:28",
+      "file": "packages/plugins/ai-chat-react-ui/src/lib/ai-chat-window.routes.ts:40",
       "guards": [
         "PermissionsGuard"
       ],
@@ -352,6 +352,12 @@
         "PermissionsGuard"
       ],
       "source": "router"
+    },
+    {
+      "path": "/pages/ai-chat",
+      "file": "packages/plugins/ai-chat-react-ui/src/lib/ai-chat-page.routes.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
       "path": "/pages/auth/profile",
@@ -2056,7 +2062,7 @@
     }
   ],
   "notes": [
-    "apps/gauzy/src/app/app.routes.ts:64: the wildcard route under / is not walked",
+    "apps/gauzy/src/app/app.routes.ts:65: the wildcard route under / is not walked",
     "apps/gauzy/src/app/pages/dashboard/dashboard.routes.ts:148: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('dashboard-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/employees/activity/activity.routes.ts:26: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('time-activity-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/employees/timesheet/timesheet.routes.ts:38: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('timesheet-sections')): add the routes it adds as manual entries",

@@ -87,7 +87,8 @@ const dataOperation = async (
 		organization.tenant = tenant;
 
 		organization.startDay = startDate.getDate();
-		organization.startMonth = startDate.getMonth() + 1;
+		// Months are 0-based like Date.getMonth() (January is 0), as the API, the dialog and endMonth use them
+		organization.startMonth = startDate.getMonth();
 		organization.startYear = startDate.getFullYear();
 		organization.startDate = startDate;
 

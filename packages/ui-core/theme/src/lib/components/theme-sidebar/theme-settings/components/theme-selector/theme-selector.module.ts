@@ -6,19 +6,22 @@ import { ThemeSelectorContainerComponent } from './container/theme-selector-cont
 import { SwitchThemeComponent } from './switch-theme/switch-theme.component';
 import { ThemeSelectorImageComponent } from './theme-selector-image/theme-selector-image.component';
 import { ThemeSelectorComponent } from './theme-selector.component';
+import { ThemeToggleComponent } from './theme-toggle/theme-toggle.component';
 
 @NgModule({
 	declarations: [
 		ThemeSelectorComponent,
 		SwitchThemeComponent,
 		ThemeSelectorImageComponent,
-		ThemeSelectorContainerComponent
+		ThemeSelectorContainerComponent,
+		ThemeToggleComponent
 	],
 	exports: [
 		ThemeSelectorComponent,
 		SwitchThemeComponent,
 		ThemeSelectorImageComponent,
-		ThemeSelectorContainerComponent
+		ThemeSelectorContainerComponent,
+		ThemeToggleComponent
 	],
 	imports: [
 		CommonModule,

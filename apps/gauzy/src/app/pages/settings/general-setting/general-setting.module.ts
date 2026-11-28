@@ -16,7 +16,12 @@ import {
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LanguagesService, TenantService } from '@gauzy/ui-core/core';
-import { FeatureToggleModule, ImageUploaderModule, SharedModule } from '@gauzy/ui-core/shared';
+import {
+	AppLauncherPlacementComponent,
+	FeatureToggleModule,
+	ImageUploaderModule,
+	SharedModule
+} from '@gauzy/ui-core/shared';
 import { GeneralSettingRoutingModule } from './general-setting-routing.module';
 import { GeneralSettingComponent } from './general-setting.component';
 import { PersonalSettingsComponent } from './personal-settings/personal-settings.component';
@@ -40,7 +45,8 @@ import { PersonalSettingsComponent } from './personal-settings/personal-settings
 		GeneralSettingRoutingModule,
 		FeatureToggleModule,
 		ImageUploaderModule,
-		SharedModule
+		SharedModule,
+		AppLauncherPlacementComponent
 	],
 	declarations: [GeneralSettingComponent, PersonalSettingsComponent],
 	providers: [LanguagesService, TenantService]

@@ -266,7 +266,11 @@ export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWel
 	const assistantLine = 'color-mix(in srgb, currentColor 26%, transparent)';
 
 	return (
-		<div ref={rootRef} style={containerStyle} className={visible ? undefined : 'gz-ai-welcome-paused'}>
+		<div
+			ref={rootRef}
+			style={containerStyle}
+			className={visible ? 'gz-ai-chat-welcome' : 'gz-ai-chat-welcome gz-ai-welcome-paused'}
+		>
 			<style>{welcomeCss}</style>
 
 			<div className="gz-ai-welcome-robot">
@@ -332,6 +336,7 @@ export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWel
 				style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: '100%' }}
 			>
 				<h3
+					className="gz-ai-welcome-title"
 					style={{
 						fontSize: chatTheme.fontSizeLarge,
 						fontWeight: chatTheme.fontWeightSemibold,
@@ -340,9 +345,10 @@ export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWel
 						margin: 0
 					}}
 				>
-					{t('AI_ASSISTANT.TITLE', 'AI Assistant')}
+					{t('AI_ASSISTANT.TITLE', 'Ever SI')}
 				</h3>
 				<p
+					className="gz-ai-welcome-subtitle"
 					style={{
 						fontSize: chatTheme.fontSizeSmall,
 						color: chatTheme.textSecondary,

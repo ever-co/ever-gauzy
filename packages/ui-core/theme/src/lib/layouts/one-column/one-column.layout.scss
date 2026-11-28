@@ -80,8 +80,8 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       width: var(--gz-chat-width, 24rem) !important;
     }
 
-    // Maximized: take all space except the nav menu (Menu | Chat);
-    // the canvas is hidden (components stay alive) until restored.
+    // Maximized: take all space except the nav menu (Menu | Chat), still under the header band;
+    // the canvas is hidden (components stay alive, unsaved form input included) until restored.
     //
     // The fixed panel's horizontal start is its STATIC position — i.e. wherever the host lands in
     // the flex row — so pinning `right: 0` and letting the width compute keeps it exactly between
@@ -560,6 +560,37 @@ nb-sidebar[tag='menu-sidebar'] {
   position: relative;
 }
 
+// The App Launcher's rail (the person's "Left rail" position, wide screens only): a column at the sidebar's start
+// edge. The sidebar grows by the rail's width and everything in it keeps Nebular's widths, so the brand row, the menu
+// and the user block look as they do without the rail; the header band and the page follow the sidebar's measured
+// edge (`--gz-band-left`), as they do when it collapses. Nebular sizes the sidebar from these custom properties.
+$nebular-sidebar-width: 16rem; // Nebular's `sidebar-width`, which no Gauzy theme changes
+$nebular-sidebar-width-compact: 3.5rem; // Nebular's `sidebar-width-compact`
+$app-rail-width: 3rem;
+
+nb-sidebar.menu-sidebar.with-app-rail {
+  --sidebar-width: #{$nebular-sidebar-width + $app-rail-width};
+  --sidebar-width-compact: #{$nebular-sidebar-width-compact + $app-rail-width};
+}
+
+.custom-box.with-app-rail {
+  padding-inline-start: $app-rail-width;
+
+  // Back to Nebular's widths for the content: some of its rules size from these properties (the compact menu).
+  > :not(.app-rail-column) {
+    --sidebar-width: #{$nebular-sidebar-width};
+    --sidebar-width-compact: #{$nebular-sidebar-width-compact};
+  }
+}
+
+.app-rail-column {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: $app-rail-width;
+  z-index: 1;
+}
+
 .rail-edge-button {
   position: absolute;
   z-index: 1041;
@@ -835,5 +866,16 @@ nb-sidebar[tag='menu-sidebar'] {
   }
   40% {
     transform: translateY(1px);
+  }
+}
+
+// The full-page chat route (/pages/ai-chat): that page covers the screen, so the shell's chrome is
+// hidden rather than torn down — leaving the page shows it again instantly, with nothing to reload.
+// The window's scroll is locked meanwhile by the layout component.
+:host ::ng-deep nb-layout.gz-chat-full-page {
+  nb-layout-header,
+  nb-layout-footer,
+  nb-sidebar.menu-sidebar {
+    display: none !important;
   }
 }

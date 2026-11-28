@@ -48,7 +48,16 @@ export const MarkdownContent = memo(function MarkdownContent({ content, isStream
 
 	return (
 		<div style={style} className="gz-ai-chat-markdown">
-			<Streamdown mode={isStreaming ? 'streaming' : 'static'} components={{ li: MarkdownListItem }}>
+			{/* `prefix`: Streamdown tags its markup with Tailwind class names, and several of them —
+			    `border`, `rounded-lg`, `p-2`, `my-4` — are also Bootstrap utilities, some
+			    `!important`. On a table that drew two bright frames with padding between them.
+			    Prefixed (`gz-sd:border`), they match nothing; the chat's own sheet styles the
+			    markup by its `data-streamdown` attributes. */}
+			<Streamdown
+				mode={isStreaming ? 'streaming' : 'static'}
+				prefix="gz-sd"
+				components={{ li: MarkdownListItem }}
+			>
 				{content}
 			</Streamdown>
 		</div>

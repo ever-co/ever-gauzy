@@ -25,6 +25,7 @@ import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
+	AppLauncherService,
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	EmployeeStore,
@@ -112,6 +113,9 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	/** Hands a Quick Actions key back from a plugin's shortcut registry that took it first (`QuickActionShortcutBridge`). */
 	private readonly quickActionShortcutBridge = inject(QuickActionShortcutBridge);
+
+	/** The App Launcher: the top bar shows its grid button for the "Top bar" position. */
+	readonly launcher = inject(AppLauncherService);
 	private unregisterQuickActionRunner: (() => void) | null = null;
 
 	/**

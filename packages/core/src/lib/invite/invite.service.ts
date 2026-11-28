@@ -47,6 +47,7 @@ import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
+import { holdsProvenAddress } from '../auth/proven-address';
 import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import {
@@ -88,6 +89,7 @@ import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.reposito
 import { Invite } from './invite.entity';
 import { mayIssueInviteRole, withholdTokensNotIssuable } from './invite-role-issuer';
 import { InviteAcceptCommand } from './commands';
+import { UnconfirmedAddressException } from './unconfirmed-address';
 import { inviteClaimWhere, inviteRejectWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
 
 /**
@@ -1473,6 +1475,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 			const user = RequestContext.currentUser();
 
+			// The invitations are found by the caller's address. Those of another workspace are listed only to a caller
+			// who has proved they hold it (see holdsProvenAddress), as the workspaces that share it are: until then,
+			// the caller's own workspace is the only one, and a caller with none sees no invitation.
+			const ownWorkspaceOnly = !holdsProvenAddress(user);
+			if (ownWorkspaceOnly && !user.tenantId) {
+				return { items: [], total: 0 };
+			}
+			const scope = ownWorkspaceOnly ? { tenantId: user.tenantId } : {};
+
 			// Define common parameters for querying
 			const options: FindManyOptions<Invite> = {
 				select: {
@@ -1489,14 +1500,16 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						status: InviteStatusEnum.INVITED,
 						expireDate: MoreThanOrEqual(new Date()),
 						isActive: true,
-						isArchived: false
+						isArchived: false,
+						...scope
 					},
 					{
 						email: user.email,
 						status: InviteStatusEnum.INVITED,
 						expireDate: IsNull(),
 						isActive: true,
-						isArchived: false
+						isArchived: false,
+						...scope
 					}
 				],
 				relations: { teams: true }
@@ -1538,6 +1551,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		origin: string,
 		languageCode: LanguagesEnum
 	): Promise<IInvite> {
+		// The invitation is found by the caller's CURRENT address, which they may have typed into their own profile:
+		// only a caller who has proved they hold it answers it (see UnconfirmedAddressException). Checked before
+		// anything is read, so the 403 is not re-wrapped as a 400 below and says nothing about the invitation.
+		if (!holdsProvenAddress(RequestContext.currentUser())) {
+			throw new UnconfirmedAddressException();
+		}
+
 		try {
 			const user = RequestContext.currentUser();
 			const currentTenantId = RequestContext.currentTenantId();

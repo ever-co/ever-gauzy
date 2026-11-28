@@ -133,6 +133,7 @@ import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
+import { holdsProvenAddress } from './proven-address';
 import { EntitlementResult, StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
 import { paywallCheckoutUrl } from '../shared/guards/subscription-required.guard';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
@@ -3508,7 +3509,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns Whether the caller's address is confirmed.
 	 */
 	private sharesProvenAddress(user: IUser): boolean {
-		return !!user?.emailVerifiedAt;
+		return holdsProvenAddress(user);
 	}
 
 	/**
